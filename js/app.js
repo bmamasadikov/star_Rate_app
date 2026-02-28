@@ -3168,6 +3168,8 @@ function buildStarListingHtml(starLevel, type) {
             return type === 'mandatory' ? isMandatory : !isMandatory;
         })
         .sort((a, b) => compareCriterionIds(a.id, b.id));
+    const metrics = getStarTargetMetrics(starLevel.star);
+    const displayedCount = type === 'mandatory' ? metrics.mandatoryCount : metrics.optionalCount;
 
     return `<!DOCTYPE html>
 <html lang="${currentLang}">
@@ -3190,7 +3192,7 @@ function buildStarListingHtml(starLevel, type) {
 <body>
     <div class="wrap">
         <h1>${starLevel.label} ${t('starLabel')} - ${type === 'mandatory' ? t('mandatory') : t('optional')}</h1>
-        <p>${t('criterionLabel')}: ${criteria.length}</p>
+        <p>${t('criterionLabel')}: ${displayedCount}</p>
         <table>
             <thead>
                 <tr>
