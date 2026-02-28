@@ -465,16 +465,17 @@ const STORAGE_KEYS = {
     reports: 'hcs_reports'
 };
 const INVITE_TOKEN_PARAM = 'invite';
+const INVITE_PAYLOAD_PARAM = 'invite_data';
 const UI_TEXT = {
     en: {
         loginTitle: 'Hotel Classification System',
-        loginSubtitle: "Based on O'z DSt 3220:2023 and MST 125",
+        loginSubtitle: '',
         usernameLabel: 'Username',
         passwordLabel: 'Password',
         usernamePlaceholder: 'Enter username',
         passwordPlaceholder: 'Enter password',
         loginButton: 'Login',
-        loginHint: 'Administrator account: master / master',
+        loginHint: '',
         loadingData: 'Loading standards...',
         headerTitle: 'Hotel Classification System',
         navDashboard: 'Dashboard',
@@ -668,6 +669,13 @@ const UI_TEXT = {
         invitePasswordConfirmLabel: 'Confirm Password',
         invitePasswordConfirmPlaceholder: 'Confirm password',
         inviteSetupSubmitBtn: 'Create Access',
+        invitePageTitle: 'Create Username & Password',
+        invitePageSubtitle: 'Create your account access',
+        invitePageUsernameLabel: 'Username',
+        invitePagePasswordLabel: 'Create Password',
+        invitePagePasswordConfirmLabel: 'Rewrite Password',
+        invitePageSubmitBtn: 'Submit',
+        invitePageBackBtn: 'Back to Login',
         invalidEmail: 'Please enter a valid email address',
         emailExists: 'Email already exists',
         invitePrepared: 'Invitation link prepared',
@@ -677,13 +685,13 @@ const UI_TEXT = {
     },
     uz: {
         loginTitle: 'Hotel Classification System',
-        loginSubtitle: "O'z DSt 3220:2023 & MST 125",
+        loginSubtitle: '',
         usernameLabel: 'Foydalanuvchi nomi',
         passwordLabel: 'Parol',
         usernamePlaceholder: 'Foydalanuvchi nomini kiriting',
         passwordPlaceholder: 'Parolni kiriting',
         loginButton: 'Kirish',
-        loginHint: 'Master: master/master',
+        loginHint: '',
         loadingData: "Standartlar yuklanmoqda...",
         headerTitle: 'Hotel Classification System',
         navDashboard: 'Bosh sahifa',
@@ -877,6 +885,13 @@ const UI_TEXT = {
         invitePasswordConfirmLabel: 'Parolni tasdiqlang',
         invitePasswordConfirmPlaceholder: 'Parolni tasdiqlang',
         inviteSetupSubmitBtn: 'Kirishni yaratish',
+        invitePageTitle: 'Username va parol yarating',
+        invitePageSubtitle: 'Hisobingiz uchun kirish maʼlumotlarini yarating',
+        invitePageUsernameLabel: 'Foydalanuvchi nomi',
+        invitePagePasswordLabel: 'Parol yarating',
+        invitePagePasswordConfirmLabel: 'Parolni qayta kiriting',
+        invitePageSubmitBtn: 'Yuborish',
+        invitePageBackBtn: 'Login sahifasiga qaytish',
         invalidEmail: 'To‘g‘ri email manzil kiriting',
         emailExists: 'Bunday email allaqachon mavjud',
         invitePrepared: 'Taklif havolasi tayyorlandi',
@@ -886,13 +901,13 @@ const UI_TEXT = {
     },
     ru: {
         loginTitle: 'Hotel Classification System',
-        loginSubtitle: "O'z DSt 3220:2023 & MST 125",
+        loginSubtitle: '',
         usernameLabel: 'Имя пользователя',
         passwordLabel: 'Пароль',
         usernamePlaceholder: 'Введите имя пользователя',
         passwordPlaceholder: 'Введите пароль',
         loginButton: 'Войти',
-        loginHint: 'Master: master/master',
+        loginHint: '',
         loadingData: 'Загрузка стандартов...',
         headerTitle: 'Hotel Classification System',
         navDashboard: 'Панель',
@@ -1086,6 +1101,13 @@ const UI_TEXT = {
         invitePasswordConfirmLabel: 'Подтверждение пароля',
         invitePasswordConfirmPlaceholder: 'Подтвердите пароль',
         inviteSetupSubmitBtn: 'Создать доступ',
+        invitePageTitle: 'Создайте логин и пароль',
+        invitePageSubtitle: 'Создайте данные входа для вашего аккаунта',
+        invitePageUsernameLabel: 'Имя пользователя',
+        invitePagePasswordLabel: 'Создайте пароль',
+        invitePagePasswordConfirmLabel: 'Повторите пароль',
+        invitePageSubmitBtn: 'Отправить',
+        invitePageBackBtn: 'Назад ко входу',
         invalidEmail: 'Введите корректный email',
         emailExists: 'Email уже существует',
         invitePrepared: 'Ссылка-приглашение подготовлена',
@@ -1405,6 +1427,8 @@ function openAssessmentWindow() {
 function enterAppAsUser(user, targetPage = 'dashboard') {
     currentUser = user ? { ...user, role: normalizeUserRole(user.role) } : null;
     if (!currentUser) return;
+    const invitePage = document.getElementById('invitePage');
+    if (invitePage) invitePage.style.display = 'none';
     document.getElementById('loginPage').style.display = 'none';
     document.getElementById('appContainer').style.display = 'block';
     const fullName = getUserFullName(currentUser) || 'User';
@@ -1451,6 +1475,8 @@ function initEventListeners() {
     // Logout
     document.getElementById('logoutBtn').onclick = () => {
         currentUser = null;
+        const invitePage = document.getElementById('invitePage');
+        if (invitePage) invitePage.style.display = 'none';
         document.getElementById('loginPage').style.display = '';
         document.getElementById('appContainer').style.display = 'none';
     };
@@ -1676,6 +1702,26 @@ function initEventListeners() {
         inviteSetupForm.addEventListener('submit', (e) => {
             e.preventDefault();
             completeInviteSetup();
+        });
+    }
+
+    const invitePageForm = document.getElementById('invitePageForm');
+    if (invitePageForm) {
+        invitePageForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            completeInviteSetup();
+        });
+    }
+
+    const invitePageBackBtn = document.getElementById('invitePageBackBtn');
+    if (invitePageBackBtn) {
+        invitePageBackBtn.addEventListener('click', () => {
+            pendingInviteToken = null;
+            clearInviteTokenFromUrl();
+            const invitePage = document.getElementById('invitePage');
+            if (invitePage) invitePage.style.display = 'none';
+            document.getElementById('appContainer').style.display = 'none';
+            document.getElementById('loginPage').style.display = '';
         });
     }
 
@@ -3269,20 +3315,88 @@ function getInviteTokenFromUrl() {
     return inviteToken;
 }
 
-function buildInviteLink(inviteToken) {
+function encodeInvitePayload(payload) {
+    try {
+        return btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    } catch (err) {
+        return '';
+    }
+}
+
+function decodeInvitePayload(rawValue) {
+    try {
+        if (!rawValue) return null;
+        return JSON.parse(decodeURIComponent(escape(atob(rawValue))));
+    } catch (err) {
+        return null;
+    }
+}
+
+function getInvitePayloadFromUrl() {
+    const url = new URL(window.location.href);
+    let rawValue = String(url.searchParams.get(INVITE_PAYLOAD_PARAM) || '').trim();
+    if (!rawValue) {
+        const hash = String(url.hash || '').replace(/^#/, '');
+        if (hash) {
+            const hashParams = new URLSearchParams(hash);
+            rawValue = String(hashParams.get(INVITE_PAYLOAD_PARAM) || '').trim();
+        }
+    }
+    return decodeInvitePayload(rawValue);
+}
+
+function showInvitePage(message = '', disableSubmit = false) {
+    const loginPage = document.getElementById('loginPage');
+    const appContainer = document.getElementById('appContainer');
+    const invitePage = document.getElementById('invitePage');
+    if (loginPage) loginPage.style.display = 'none';
+    if (appContainer) appContainer.style.display = 'none';
+    if (invitePage) invitePage.style.display = 'flex';
+
+    const messageNode = document.getElementById('invitePageMessage');
+    if (messageNode) messageNode.textContent = message || '';
+
+    const submitBtn = document.getElementById('invitePageSubmitBtn');
+    if (submitBtn) submitBtn.disabled = Boolean(disableSubmit);
+}
+
+function getActiveInviteInputs() {
+    const invitePage = document.getElementById('invitePage');
+    const isInvitePageVisible = Boolean(invitePage && invitePage.style.display !== 'none');
+    if (isInvitePageVisible) {
+        return {
+            usernameInput: document.getElementById('invitePageUsername'),
+            passwordInput: document.getElementById('invitePagePassword'),
+            passwordConfirmInput: document.getElementById('invitePagePasswordConfirm')
+        };
+    }
+    return {
+        usernameInput: document.getElementById('inviteUsername'),
+        passwordInput: document.getElementById('invitePassword'),
+        passwordConfirmInput: document.getElementById('invitePasswordConfirm')
+    };
+}
+
+function buildInviteLink(inviteToken, payload = null) {
     const url = new URL(window.location.href);
     url.searchParams.set(INVITE_TOKEN_PARAM, inviteToken);
+    const encodedPayload = encodeInvitePayload(payload);
+    if (encodedPayload) {
+        url.searchParams.set(INVITE_PAYLOAD_PARAM, encodedPayload);
+    }
     return `${url.origin}${url.pathname}?${url.searchParams.toString()}`;
 }
 
 function clearInviteTokenFromUrl() {
     const url = new URL(window.location.href);
     url.searchParams.delete(INVITE_TOKEN_PARAM);
+    url.searchParams.delete(INVITE_PAYLOAD_PARAM);
     let hash = String(url.hash || '');
     if (hash) {
         const hashText = hash.replace(/^#/, '');
         const hashParams = new URLSearchParams(hashText);
         hashParams.delete(INVITE_TOKEN_PARAM);
+        hashParams.delete(INVITE_PAYLOAD_PARAM);
         const nextHash = hashParams.toString();
         hash = nextHash ? `#${nextHash}` : '';
     }
@@ -3292,7 +3406,16 @@ function clearInviteTokenFromUrl() {
 
 function sendUserInvite(user) {
     if (!user || !user.inviteToken || !user.email) return;
-    const inviteLink = buildInviteLink(user.inviteToken);
+    const inviteLink = buildInviteLink(user.inviteToken, {
+        id: user.id || '',
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        fullName: user.fullName || '',
+        email: user.email || '',
+        role: normalizeUserRole(user.role),
+        invitedAt: user.invitedAt || new Date().toISOString(),
+        inviteToken: user.inviteToken
+    });
     const subject = encodeURIComponent('Star-UZ account invitation');
     const body = encodeURIComponent(
         `Hello ${getUserFullName(user)},\n\n` +
@@ -3309,27 +3432,69 @@ function processInviteLinkFromUrl() {
     const inviteToken = getInviteTokenFromUrl();
     if (!inviteToken) return;
 
-    const users = getStoredUsers();
-    const inviteUser = users.find(user => user.status === 'invited' && user.inviteToken === inviteToken);
+    let users = getStoredUsers();
+    let inviteUser = users.find(user => user.status === 'invited' && user.inviteToken === inviteToken);
+
     if (!inviteUser) {
-        showToast(t('inviteInvalid'), 'error');
-        clearInviteTokenFromUrl();
+        const invitePayload = getInvitePayloadFromUrl();
+        if (invitePayload && String(invitePayload.inviteToken || '').trim() === inviteToken) {
+            const hydratedUser = normalizeStoredUser({
+                id: invitePayload.id || createId('user'),
+                firstName: invitePayload.firstName || '',
+                lastName: invitePayload.lastName || '',
+                fullName: invitePayload.fullName || '',
+                email: invitePayload.email || '',
+                username: '',
+                password: '',
+                role: normalizeUserRole(invitePayload.role),
+                status: 'invited',
+                inviteToken,
+                invitedAt: invitePayload.invitedAt || new Date().toISOString(),
+                activatedAt: ''
+            });
+            if (hydratedUser) {
+                const existingIndex = users.findIndex(user =>
+                    (user.inviteToken && user.inviteToken === inviteToken)
+                    || (hydratedUser.email && user.email === hydratedUser.email)
+                );
+                if (existingIndex >= 0) {
+                    users[existingIndex] = normalizeStoredUser({
+                        ...users[existingIndex],
+                        ...hydratedUser,
+                        status: 'invited',
+                        inviteToken
+                    });
+                } else {
+                    users.push(hydratedUser);
+                }
+                setStoredUsers(users);
+                users = getStoredUsers();
+                inviteUser = users.find(user => user.status === 'invited' && user.inviteToken === inviteToken);
+            }
+        }
+    }
+
+    if (!inviteUser) {
+        pendingInviteToken = null;
+        showInvitePage(t('inviteInvalid'), true);
         return;
     }
 
     pendingInviteToken = inviteToken;
-    document.getElementById('loginPage').style.display = 'none';
-    document.getElementById('appContainer').style.display = 'none';
-    openModal('inviteSetupModal');
-    const usernameInput = document.getElementById('inviteUsername');
+    showInvitePage('', false);
+    const { usernameInput, passwordInput, passwordConfirmInput } = getActiveInviteInputs();
+    if (usernameInput) usernameInput.value = '';
+    if (passwordInput) passwordInput.value = '';
+    if (passwordConfirmInput) passwordConfirmInput.value = '';
     if (usernameInput) usernameInput.focus();
 }
 
 function completeInviteSetup() {
-    if (!pendingInviteToken) return;
-    const usernameInput = document.getElementById('inviteUsername');
-    const passwordInput = document.getElementById('invitePassword');
-    const passwordConfirmInput = document.getElementById('invitePasswordConfirm');
+    if (!pendingInviteToken) {
+        showInvitePage(t('inviteInvalid'), true);
+        return;
+    }
+    const { usernameInput, passwordInput, passwordConfirmInput } = getActiveInviteInputs();
 
     const usernameVal = usernameInput ? usernameInput.value.trim() : '';
     const passwordVal = passwordInput ? passwordInput.value.trim() : '';
@@ -3358,8 +3523,7 @@ function completeInviteSetup() {
     if (userIndex === -1) {
         showToast(t('inviteInvalid'), 'error');
         pendingInviteToken = null;
-        clearInviteTokenFromUrl();
-        closeModal('inviteSetupModal');
+        showInvitePage(t('inviteInvalid'), true);
         return;
     }
 
@@ -3378,7 +3542,6 @@ function completeInviteSetup() {
     if (passwordConfirmInput) passwordConfirmInput.value = '';
     const activatedUser = users[userIndex];
     pendingInviteToken = null;
-    closeModal('inviteSetupModal');
     clearInviteTokenFromUrl();
 
     const loginUsernameInput = document.getElementById('username');
@@ -4224,6 +4387,13 @@ function applyLanguage() {
         invitePasswordLabel: 'invitePasswordLabel',
         invitePasswordConfirmLabel: 'invitePasswordConfirmLabel',
         inviteSetupSubmitBtn: 'inviteSetupSubmitBtn',
+        invitePageTitle: 'invitePageTitle',
+        invitePageSubtitle: 'invitePageSubtitle',
+        invitePageUsernameLabel: 'invitePageUsernameLabel',
+        invitePagePasswordLabel: 'invitePagePasswordLabel',
+        invitePagePasswordConfirmLabel: 'invitePagePasswordConfirmLabel',
+        invitePageSubmitBtn: 'invitePageSubmitBtn',
+        invitePageBackBtn: 'invitePageBackBtn',
         starModalMandatoryBtn: 'mandatory',
         starModalOptionalBtn: 'optional',
         starModalCloseBtn: 'closeAction'
@@ -4243,7 +4413,10 @@ function applyLanguage() {
         ['newEmail', 'newEmailPlaceholder'],
         ['inviteUsername', 'inviteUsernamePlaceholder'],
         ['invitePassword', 'invitePasswordPlaceholder'],
-        ['invitePasswordConfirm', 'invitePasswordConfirmPlaceholder']
+        ['invitePasswordConfirm', 'invitePasswordConfirmPlaceholder'],
+        ['invitePageUsername', 'inviteUsernamePlaceholder'],
+        ['invitePagePassword', 'invitePasswordPlaceholder'],
+        ['invitePagePasswordConfirm', 'invitePasswordConfirmPlaceholder']
     ];
     placeholders.forEach(([id, key]) => {
         const input = document.getElementById(id);

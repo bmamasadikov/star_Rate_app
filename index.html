@@ -45,6 +45,15 @@
             padding-bottom: 64px;
         }
 
+        .invite-container {
+            min-height: 100vh;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            padding-bottom: 64px;
+        }
+
         .login-box {
             background: var(--surface);
             border-radius: 12px;
@@ -125,6 +134,29 @@
             background: var(--primary);
             color: #fff;
             width: 100%;
+        }
+
+        .invite-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .invite-actions .btn {
+            min-width: 160px;
+        }
+
+        .invite-actions .btn-primary {
+            width: auto;
+        }
+
+        .invite-message {
+            margin-top: 12px;
+            text-align: center;
+            font-size: 13px;
+            color: var(--danger);
+            min-height: 18px;
         }
 
         .btn-primary:hover {
@@ -1810,7 +1842,6 @@
             <div class="login-logo">
                 <div class="stars">★★★★★</div>
                 <h1 id="loginTitle">Hotel Classification System</h1>
-                <p id="loginSubtitle">Based on O'z DSt 3220:2023 and MST 125</p>
             </div>
             <form id="loginForm">
                 <div class="form-group">
@@ -1823,7 +1854,35 @@
                 </div>
                 <button type="submit" class="btn btn-primary" id="loginButton">Login</button>
             </form>
-            <p id="loginHint" style="margin-top:20px;text-align:center;font-size:11px;color:var(--gray-400)">Administrator account: master / master</p>
+        </div>
+    </div>
+
+    <div class="invite-container" id="invitePage">
+        <div class="login-box">
+            <div class="login-logo">
+                <div class="stars">★★★★★</div>
+                <h1 id="invitePageTitle">Create Username & Password</h1>
+                <p id="invitePageSubtitle">Create your account access</p>
+            </div>
+            <form id="invitePageForm">
+                <div class="form-group">
+                    <label id="invitePageUsernameLabel">Username</label>
+                    <input type="text" id="invitePageUsername" placeholder="Username" required>
+                </div>
+                <div class="form-group">
+                    <label id="invitePagePasswordLabel">Create Password</label>
+                    <input type="password" id="invitePagePassword" placeholder="Password" required>
+                </div>
+                <div class="form-group">
+                    <label id="invitePagePasswordConfirmLabel">Rewrite Password</label>
+                    <input type="password" id="invitePagePasswordConfirm" placeholder="Confirm password" required>
+                </div>
+                <div class="invite-actions">
+                    <button type="submit" class="btn btn-primary" id="invitePageSubmitBtn">Submit</button>
+                    <button type="button" class="btn btn-secondary" id="invitePageBackBtn">Back to Login</button>
+                </div>
+                <div class="invite-message" id="invitePageMessage"></div>
+            </form>
         </div>
     </div>
 
@@ -2204,6 +2263,6 @@
     <input type="file" class="file-input" id="documentInput" accept=".pdf,.doc,.docx">
     <footer class="global-footer">powered by Seneca</footer>
 
-    <script src="js/app.js?v=20260228-14"></script>
+    <script src="js/app.js?v=20260228-15"></script>
 </body>
 </html>
