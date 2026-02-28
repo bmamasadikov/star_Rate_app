@@ -182,6 +182,7 @@ function normalizeClassificationData(rawData) {
             },
             points: Number(item.points) || 0,
             reference: item.reference || '',
+            assessable: !Boolean(item.is_group_header),
             isGroupHeader: Boolean(item.is_group_header)
         }))
     }));
@@ -196,6 +197,7 @@ function normalizeClassificationData(rawData) {
 
     categories.forEach(category => {
         (category.items || []).forEach(item => {
+            if (item.is_group_header) return;
             const mandatory = item.mandatory || {};
             [1, 2, 3, 4, 5].forEach(star => {
                 if (mandatory[`${star}_star`]) {
@@ -217,7 +219,7 @@ function normalizeClassificationData(rawData) {
     }, 0);
 
     return {
-        standard: rawData.standard || "O'z DSt 3296:2023",
+        standard: rawData.standard || 'MST 125',
         maxPoints: Number(rawData.max_points) || totalPoints,
         starLevels,
         sections,
@@ -261,7 +263,7 @@ const STORAGE_KEYS = {
 const UI_TEXT = {
     en: {
         loginTitle: 'Hotel Classification and Rating System',
-        loginSubtitle: "Based on O'z DSt 3220:2023 and 3296:2023",
+        loginSubtitle: "Based on O'z DSt 3220:2023 and MST 125",
         usernameLabel: 'Username',
         passwordLabel: 'Password',
         usernamePlaceholder: 'Enter username',
@@ -282,9 +284,9 @@ const UI_TEXT = {
         compareTitle: 'Star-Level Comparison',
         compareSubtitle: 'Compare mandatory requirements across all star levels',
         complianceTitle: "O'z DSt 3220:2023 - Compliance",
-        classificationTitle: "O'z DSt 3296:2023 - Classification",
+        classificationTitle: 'MST 125',
         complete3220: 'Complete 3220 Assessment',
-        complete3296: 'Complete 3296 Assessment',
+        complete3296: 'Complete MST 125 Assessment',
         generateReport: 'Generate Report',
         openCompliance: 'Open 3220 Compliance',
         openHotelInfo: 'Hotel Information',
@@ -315,6 +317,7 @@ const UI_TEXT = {
         assessEligibleLabel: 'Eligible Star Rating',
         resetAssessment: 'Reset Assessment',
         resetConfirm: 'Do you want to clear all assessment answers?',
+        assessmentRequiredFields: 'Please complete all required Hotel Information and Contact Details fields.',
         hotelInfo: 'Hotel Information',
         contactDetails: 'Contact Details',
         hotelName: 'Hotel Name',
@@ -325,9 +328,9 @@ const UI_TEXT = {
         phone: 'Phone',
         email: 'Email',
         start3220: '3220',
-        start3296: '3296',
+        start3296: 'MST 125',
         reportTitle: 'Hotel Classification Assessment Report',
-        reportStandard: "O'z DSt 3220:2023 & 3296:2023",
+        reportStandard: "O'z DSt 3220:2023 & MST 125",
         reportToolsTitle: 'Report Center',
         reportToolsSubtitle: 'Generate and export classification reports',
         reportCardFullTitle: 'Full Assessment Report',
@@ -355,7 +358,7 @@ const UI_TEXT = {
         reportAllMandatoryMet: 'All mandatory compliance requirements are met.',
         reportFailedRequirements: '{count} mandatory requirement(s) not met.',
         legalStatusTitle: 'Legal Status',
-        legalStatusText: "This hotel is NOT in compliance with O'z DSt 3220:2023. Any classification result from O'z DSt 3296:2023 is NOT legally valid until compliance is achieved.",
+        legalStatusText: "This hotel is NOT in compliance with O'z DSt 3220:2023. Any classification result from MST 125 is NOT legally valid until compliance is achieved.",
         reportClassificationAchieved: '{star}-Star Classification',
         reportClassificationNotAchieved: 'Classification Not Achieved',
         reportImportant: 'Important',
@@ -438,7 +441,7 @@ const UI_TEXT = {
     },
     uz: {
         loginTitle: 'Mehmonxona tasniflash tizimi',
-        loginSubtitle: "O'z DSt 3220:2023 & 3296:2023",
+        loginSubtitle: "O'z DSt 3220:2023 & MST 125",
         usernameLabel: 'Foydalanuvchi nomi',
         passwordLabel: 'Parol',
         usernamePlaceholder: 'Foydalanuvchi nomini kiriting',
@@ -459,9 +462,9 @@ const UI_TEXT = {
         compareTitle: 'Yulduz darajalarini taqqoslash',
         compareSubtitle: 'Yulduzlar bo‘yicha majburiy talablarni taqqoslang',
         complianceTitle: "O'z DSt 3220:2023 - Muvofiqlik",
-        classificationTitle: "O'z DSt 3296:2023 - Tasniflash",
+        classificationTitle: 'MST 125',
         complete3220: '3220 Yakunlash',
-        complete3296: '3296 Yakunlash',
+        complete3296: 'MST 125 Yakunlash',
         generateReport: 'Hisobot yaratish',
         openCompliance: '3220 Muvofiqlik',
         openHotelInfo: 'Mehmonxona maʼlumoti',
@@ -492,6 +495,7 @@ const UI_TEXT = {
         assessEligibleLabel: 'Mos keladigan reyting',
         resetAssessment: 'Qayta tiklash',
         resetConfirm: 'Baholash javoblarini tozalaysizmi?',
+        assessmentRequiredFields: "Mehmonxona ma'lumoti va aloqa ma'lumotlari bo'yicha barcha majburiy maydonlarni to'ldiring.",
         hotelInfo: 'Mehmonxona maʼlumoti',
         contactDetails: 'Aloqa maʼlumotlari',
         hotelName: 'Mehmonxona nomi',
@@ -502,9 +506,9 @@ const UI_TEXT = {
         phone: 'Telefon',
         email: 'Email',
         start3220: '3220',
-        start3296: '3296',
+        start3296: 'MST 125',
         reportTitle: 'Mehmonxona baholash hisobotı',
-        reportStandard: "O'z DSt 3220:2023 & 3296:2023",
+        reportStandard: "O'z DSt 3220:2023 & MST 125",
         reportToolsTitle: 'Hisobot yaratish',
         reportToolsSubtitle: 'Tasniflash bo‘yicha batafsil hisobotlar',
         reportCardFullTitle: 'To‘liq baholash',
@@ -532,7 +536,7 @@ const UI_TEXT = {
         reportAllMandatoryMet: 'Barcha majburiy talablar bajarilgan.',
         reportFailedRequirements: '{count} ta talab bajarilmadi.',
         legalStatusTitle: 'Yuridik holat',
-        legalStatusText: "Ushbu mehmonxona O'z DSt 3220:2023 ga MUVOFIQ EMAS. O'z DSt 3296:2023 bo‘yicha tasniflash natijasi muvofiqlik taʼminlanguncha yuridik kuchga ega emas.",
+        legalStatusText: "Ushbu mehmonxona O'z DSt 3220:2023 ga MUVOFIQ EMAS. MST 125 bo‘yicha tasniflash natijasi muvofiqlik taʼminlanguncha yuridik kuchga ega emas.",
         reportClassificationAchieved: '{star}-Yulduzli tasnif',
         reportClassificationNotAchieved: 'Tasniflashga erishilmadi',
         reportImportant: 'Muhim:',
@@ -615,7 +619,7 @@ const UI_TEXT = {
     },
     ru: {
         loginTitle: 'Система классификации гостиниц',
-        loginSubtitle: "O'z DSt 3220:2023 & 3296:2023",
+        loginSubtitle: "O'z DSt 3220:2023 & MST 125",
         usernameLabel: 'Имя пользователя',
         passwordLabel: 'Пароль',
         usernamePlaceholder: 'Введите имя пользователя',
@@ -636,9 +640,9 @@ const UI_TEXT = {
         compareTitle: 'Сравнение уровней',
         compareSubtitle: 'Сравнение обязательных требований по звездам',
         complianceTitle: "O'z DSt 3220:2023 - Соответствие",
-        classificationTitle: "O'z DSt 3296:2023 - Классификация",
+        classificationTitle: 'MST 125',
         complete3220: 'Завершить 3220',
-        complete3296: 'Завершить 3296',
+        complete3296: 'Завершить MST 125',
         generateReport: 'Сформировать отчет',
         openCompliance: 'Соответствие 3220',
         openHotelInfo: 'Информация об отеле',
@@ -669,6 +673,7 @@ const UI_TEXT = {
         assessEligibleLabel: 'Допустимый рейтинг',
         resetAssessment: 'Сбросить',
         resetConfirm: 'Сбросить ответы оценки?',
+        assessmentRequiredFields: 'Заполните все обязательные поля в разделах информации об отеле и контактных данных.',
         hotelInfo: 'Информация о гостинице',
         contactDetails: 'Контактные данные',
         hotelName: 'Название гостиницы',
@@ -679,9 +684,9 @@ const UI_TEXT = {
         phone: 'Телефон',
         email: 'Email',
         start3220: '3220',
-        start3296: '3296',
+        start3296: 'MST 125',
         reportTitle: 'Отчет об оценке гостиницы',
-        reportStandard: "O'z DSt 3220:2023 & 3296:2023",
+        reportStandard: "O'z DSt 3220:2023 & MST 125",
         reportToolsTitle: 'Генерация отчетов',
         reportToolsSubtitle: 'Детальные отчеты по классификации',
         reportCardFullTitle: 'Полная оценка',
@@ -709,7 +714,7 @@ const UI_TEXT = {
         reportAllMandatoryMet: 'Все обязательные требования выполнены.',
         reportFailedRequirements: 'Не выполнено требований: {count}.',
         legalStatusTitle: 'Юридический статус',
-        legalStatusText: "Эта гостиница НЕ соответствует O'z DSt 3220:2023. Результат классификации по O'z DSt 3296:2023 не имеет юридической силы до достижения соответствия.",
+        legalStatusText: "Эта гостиница НЕ соответствует O'z DSt 3220:2023. Результат классификации по MST 125 не имеет юридической силы до достижения соответствия.",
         reportClassificationAchieved: 'Классификация {star} звезды',
         reportClassificationNotAchieved: 'Классификация не достигнута',
         reportImportant: 'Важно:',
@@ -955,7 +960,7 @@ function initStarCards() {
     ensureAccommodationTypeSelection();
 
     CLASSIFICATION_DATA_3296.starLevels.forEach(level => {
-        const mandatoryCount = new Set(level.mandatoryIds).size;
+        const mandatoryCount = getMandatoryIdsForLevel(level).length;
         const optionalCount = Math.max(0, totalCriteriaCount - mandatoryCount);
         const minPoints = getMinPointsForStar(level.star);
         const card = document.createElement('div');
@@ -988,7 +993,7 @@ function openStarModal(star) {
     const subtitle = document.getElementById('starModalSubtitle');
     const totalCriteriaCount = getTotalClassificationCriteriaCount();
     const starLevel = CLASSIFICATION_DATA_3296.starLevels.find(l => l.star === star);
-    const mandatoryCount = starLevel ? new Set(starLevel.mandatoryIds).size : 0;
+    const mandatoryCount = starLevel ? getMandatoryIdsForLevel(starLevel).length : 0;
     const optionalCount = Math.max(0, totalCriteriaCount - mandatoryCount);
 
     if (title) title.textContent = `${star} ${t('starLabel')}`;
@@ -1410,6 +1415,7 @@ function renderClassificationCriteria() {
     container.innerHTML = '';
 
     const currentStarLevel = getStarLevel(selectedStar) || CLASSIFICATION_DATA_3296.starLevels[0];
+    const mandatorySet = new Set(getMandatoryIdsForLevel(currentStarLevel));
     const showMandatoryOnly = isFilterActive('filterMandatoryBtn');
     const showMissingOnly = isFilterActive('filterMissingBtn');
     const searchTerm = (document.getElementById('classificationSearch')?.value || '').trim().toLowerCase();
@@ -1418,7 +1424,6 @@ function renderClassificationCriteria() {
 
     CLASSIFICATION_DATA_3296.sections.forEach(section => {
         if (categoryFilter && String(section.id) !== String(categoryFilter)) return;
-        if (section.criteria.length === 0) return;
 
         const sectionId = String(section.id);
         const sectionCard = document.createElement('div');
@@ -1440,7 +1445,7 @@ function renderClassificationCriteria() {
             sectionHeader.querySelector('.toggle').classList.add('open');
         }
 
-        let criteria = section.criteria.slice();
+        let criteria = section.criteria.filter(isAssessableClassificationCriterion);
         if (searchTerm) {
             criteria = criteria.filter(criterion => {
                 const titleText = (criterion.title && (criterion.title[currentLang] || criterion.title.en)) || '';
@@ -1451,7 +1456,7 @@ function renderClassificationCriteria() {
             criteria = criteria.filter(criterion => !classificationAnswers[criterion.id]);
         }
         if (showMandatoryOnly) {
-            criteria = criteria.filter(criterion => currentStarLevel.mandatoryIds.includes(criterion.id));
+            criteria = criteria.filter(criterion => mandatorySet.has(String(criterion.id)));
         }
         if (showMissingOnly) {
             criteria = criteria.filter(criterion => {
@@ -1462,7 +1467,7 @@ function renderClassificationCriteria() {
         if (!criteria.length) return;
 
         criteria.forEach(criterion => {
-            const isMandatory = currentStarLevel.mandatoryIds.includes(criterion.id);
+            const isMandatory = mandatorySet.has(String(criterion.id));
             const item = renderClassificationCriterion(criterion, isMandatory);
             sectionContent.appendChild(item);
         });
@@ -1612,6 +1617,7 @@ function updateStats() {
 
     CLASSIFICATION_DATA_3296.sections.forEach(section => {
         section.criteria.forEach(criterion => {
+            if (!isAssessableClassificationCriterion(criterion)) return;
             const status = classificationAnswers[criterion.id];
             if (status === 'yes') {
                 totalPoints += criterion.points;
@@ -1651,7 +1657,7 @@ function updateStats() {
     const currentStarLevel = CLASSIFICATION_DATA_3296.starLevels.find(l => l.star === selectedStar);
     const mandatoryStatusEl = document.getElementById('mandatoryStatus');
     if (currentStarLevel && mandatoryStatusEl) {
-        const mandatoryIds = currentStarLevel.mandatoryIds || [];
+        const mandatoryIds = getMandatoryIdsForLevel(currentStarLevel);
         const fulfilledMandatory = mandatoryIds.filter(id => {
             const status = classificationAnswers[id];
             return status === 'yes' || status === 'na';
@@ -1738,6 +1744,7 @@ function evaluate3296() {
     let totalPoints = 0;
     CLASSIFICATION_DATA_3296.sections.forEach(section => {
         section.criteria.forEach(criterion => {
+            if (!isAssessableClassificationCriterion(criterion)) return;
             if (classificationAnswers[criterion.id] === 'yes') {
                 totalPoints += criterion.points;
             }
@@ -1746,7 +1753,7 @@ function evaluate3296() {
 
     // Step 2: Check all mandatory criteria
     const failedMandatory = [];
-    for (const mandatoryId of currentStarLevel.mandatoryIds) {
+    for (const mandatoryId of getMandatoryIdsForLevel(currentStarLevel)) {
         if (classificationAnswers[mandatoryId] !== 'yes' && classificationAnswers[mandatoryId] !== 'na') {
             failedMandatory.push(mandatoryId);
         }
@@ -1790,13 +1797,14 @@ function getClassificationPointsBreakdown() {
             optionalPointsRequired: 0
         };
     }
-    const mandatorySet = new Set(currentStarLevel.mandatoryIds);
+    const mandatorySet = new Set(getMandatoryIdsForLevel(currentStarLevel));
     let mandatoryPointsAchieved = 0;
     let optionalPointsAchieved = 0;
     let mandatoryPointsRequired = 0;
 
     CLASSIFICATION_DATA_3296.sections.forEach(section => {
         section.criteria.forEach(criterion => {
+            if (!isAssessableClassificationCriterion(criterion)) return;
             if (mandatorySet.has(criterion.id)) {
                 mandatoryPointsRequired += criterion.points;
                 if (classificationAnswers[criterion.id] === 'yes') {
@@ -1817,11 +1825,25 @@ function getClassificationPointsBreakdown() {
     };
 }
 
+function hasRequiredAssessmentData() {
+    const requiredFields = ['hotelName', 'hotelAddress', 'roomCount', 'assessmentDate', 'contactName', 'contactPhone', 'contactEmail'];
+    return requiredFields.every(field => {
+        const value = assessmentData[field];
+        return typeof value === 'string' ? value.trim() !== '' : Boolean(value);
+    });
+}
+
 // =====================================================
 // REPORT GENERATION
 // =====================================================
 
 function generateReport() {
+    if (!hasRequiredAssessmentData()) {
+        showToast(t('assessmentRequiredFields'), 'error');
+        openAssessmentWindow();
+        return;
+    }
+
     const hotelName = assessmentData.hotelName || 'Hotel Name';
     const address = assessmentData.hotelAddress || 'Address';
     const rooms = assessmentData.roomCount || '0';
@@ -2069,24 +2091,60 @@ function buildAssessmentWindowHtml(data) {
 <title>${text.assessmentTitle}</title>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: "Segoe UI", Tahoma, sans-serif; background: #f9fafb; color: #111827; }
+    :root {
+        --primary: #0b2e59;
+        --primary-light: #1f4d8b;
+        --success: #1f7a45;
+        --gray-50: #f8fafc;
+        --gray-200: #e2e8f0;
+        --gray-500: #64748b;
+        --gray-700: #334155;
+        --gray-800: #1f2937;
+    }
+    body {
+        font-family: "Segoe UI", Tahoma, sans-serif;
+        background-color: #eef2f6;
+        background-image:
+            linear-gradient(180deg, #f8fafc 0%, #eef2f6 100%),
+            repeating-linear-gradient(0deg, rgba(11,46,89,.04) 0 1px, transparent 1px 12px);
+        color: var(--gray-800);
+    }
     .container { max-width: 900px; margin: 0 auto; padding: 24px; }
-    h1 { font-size: 20px; margin-bottom: 16px; }
-    .section-card { background: #fff; border-radius: 12px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.05); overflow: hidden; }
-    .section-header { background: linear-gradient(135deg, #1e40af, #3b82f6); color: #fff; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+    h1 { font-size: 20px; margin-bottom: 16px; color: var(--primary); }
+    .section-card {
+        background: #fff;
+        border-radius: 12px;
+        margin-bottom: 16px;
+        border: 1px solid var(--gray-200);
+        box-shadow: 0 2px 8px rgba(15, 23, 42, .06);
+        overflow: hidden;
+    }
+    .section-header { background: var(--primary); color: #fff; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
     .section-header h3 { font-size: 14px; }
     .toggle { font-size: 16px; transition: transform .2s; }
     .toggle.open { transform: rotate(180deg); }
     .section-content { padding: 16px; display: none; }
     .section-content.open { display: block; }
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
-    .form-group label { display: block; margin-bottom: 6px; color: #374151; font-weight: 600; font-size: 13px; }
-    .form-group input { width: 100%; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 14px; }
-    .form-group input:focus { outline: none; border-color: #3b82f6; }
+    .form-group label { display: block; margin-bottom: 6px; color: var(--gray-700); font-weight: 600; font-size: 13px; }
+    .required-mark { color: #b91c1c; font-weight: 700; margin-left: 4px; }
+    .form-group input { width: 100%; padding: 10px 12px; border: 1.5px solid var(--gray-200); border-radius: 10px; font-size: 14px; }
+    .form-group input:focus { outline: none; border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(31,77,139,.12); }
+    .form-group input.invalid { border-color: #b91c1c; background: #fff1f2; }
+    .validation-message {
+        display: none;
+        margin-top: 8px;
+        margin-bottom: 2px;
+        font-size: 12px;
+        color: #b91c1c;
+        font-weight: 600;
+    }
+    .validation-message.active { display: block; }
     .actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
     .btn { padding: 10px 20px; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; }
-    .btn-primary { background: linear-gradient(135deg, #1e40af, #3b82f6); color: #fff; }
-    .btn-success { background: #16a34a; color: #fff; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-light); }
+    .btn-success { background: var(--success); color: #fff; }
 </style>
 </head>
 <body>
@@ -2100,20 +2158,20 @@ function buildAssessmentWindowHtml(data) {
             <div class="section-content open">
                 <div class="grid">
                     <div class="form-group">
-                        <label>${text.hotelName}</label>
-                        <input type="text" id="hotelName" placeholder="${text.hotelName}">
+                        <label>${text.hotelName}<span class="required-mark">*</span></label>
+                        <input type="text" id="hotelName" placeholder="${text.hotelName}" required>
                     </div>
                     <div class="form-group">
-                        <label>${text.address}</label>
-                        <input type="text" id="hotelAddress" placeholder="${text.address}">
+                        <label>${text.address}<span class="required-mark">*</span></label>
+                        <input type="text" id="hotelAddress" placeholder="${text.address}" required>
                     </div>
                     <div class="form-group">
-                        <label>${text.roomCount}</label>
-                        <input type="number" id="roomCount" placeholder="${text.roomCount}">
+                        <label>${text.roomCount}<span class="required-mark">*</span></label>
+                        <input type="number" id="roomCount" min="1" placeholder="${text.roomCount}" required>
                     </div>
                     <div class="form-group">
-                        <label>${text.assessmentDate}</label>
-                        <input type="date" id="assessmentDate">
+                        <label>${text.assessmentDate}<span class="required-mark">*</span></label>
+                        <input type="date" id="assessmentDate" required>
                     </div>
                 </div>
             </div>
@@ -2126,20 +2184,21 @@ function buildAssessmentWindowHtml(data) {
             <div class="section-content open">
                 <div class="grid">
                     <div class="form-group">
-                        <label>${text.contactPerson}</label>
-                        <input type="text" id="contactName" placeholder="${text.contactPerson}">
+                        <label>${text.contactPerson}<span class="required-mark">*</span></label>
+                        <input type="text" id="contactName" placeholder="${text.contactPerson}" required>
                     </div>
                     <div class="form-group">
-                        <label>${text.phone}</label>
-                        <input type="tel" id="contactPhone" placeholder="${text.phone}">
+                        <label>${text.phone}<span class="required-mark">*</span></label>
+                        <input type="tel" id="contactPhone" placeholder="${text.phone}" required>
                     </div>
                     <div class="form-group">
-                        <label>${text.email}</label>
-                        <input type="email" id="contactEmail" placeholder="${text.email}">
+                        <label>${text.email}<span class="required-mark">*</span></label>
+                        <input type="email" id="contactEmail" placeholder="${text.email}" required>
                     </div>
                 </div>
             </div>
         </div>
+        <div class="validation-message" id="assessmentValidationMessage">${text.assessmentRequiredFields || ''}</div>
         <div class="actions">
             <button class="btn btn-primary" onclick="startAssessment('compliance')">${text.start3220}</button>
             <button class="btn btn-success" onclick="startAssessment('classification')">${text.start3296}</button>
@@ -2161,12 +2220,33 @@ function buildAssessmentWindowHtml(data) {
         if (!input) return;
         input.value = data[field] || '';
         input.addEventListener('input', () => {
+            input.classList.remove('invalid');
+            const validationMessage = document.getElementById('assessmentValidationMessage');
+            if (validationMessage) validationMessage.classList.remove('active');
             if (window.opener && window.opener.setAssessmentField) {
                 window.opener.setAssessmentField(field, input.value);
             }
         });
     }
+    function validateRequiredFields() {
+        const requiredIds = ['hotelName', 'hotelAddress', 'roomCount', 'assessmentDate', 'contactName', 'contactPhone', 'contactEmail'];
+        let firstInvalid = null;
+        requiredIds.forEach(id => {
+            const input = document.getElementById(id);
+            if (!input) return;
+            const value = (input.value || '').trim();
+            const isInvalid = !value || (id === 'roomCount' && Number(value) <= 0);
+            input.classList.toggle('invalid', isInvalid);
+            if (isInvalid && !firstInvalid) firstInvalid = input;
+        });
+        const validationMessage = document.getElementById('assessmentValidationMessage');
+        const isValid = !firstInvalid;
+        if (validationMessage) validationMessage.classList.toggle('active', !isValid);
+        if (firstInvalid) firstInvalid.focus();
+        return isValid;
+    }
     function startAssessment(page) {
+        if (!validateRequiredFields()) return;
         if (window.opener && window.opener.showPage) {
             window.opener.showPage(page);
             window.opener.focus();
@@ -2349,9 +2429,39 @@ function getStarLevel(star) {
     return CLASSIFICATION_DATA_3296.starLevels.find(level => Number(level.star) === Number(star)) || null;
 }
 
+function isAssessableClassificationCriterion(criterion) {
+    if (!criterion || typeof criterion !== 'object') return false;
+    if (typeof criterion.assessable === 'boolean') return criterion.assessable;
+    return !Boolean(criterion.isGroupHeader);
+}
+
+function getAssessableCriterionIdSet() {
+    const ids = new Set();
+    if (!CLASSIFICATION_DATA_3296 || !Array.isArray(CLASSIFICATION_DATA_3296.sections)) return ids;
+    CLASSIFICATION_DATA_3296.sections.forEach(section => {
+        (section.criteria || []).forEach(criterion => {
+            if (isAssessableClassificationCriterion(criterion)) {
+                ids.add(String(criterion.id));
+            }
+        });
+    });
+    return ids;
+}
+
+function getMandatoryIdsForLevel(level) {
+    if (!level) return [];
+    const assessableIds = getAssessableCriterionIdSet();
+    return Array.from(new Set((level.mandatoryIds || [])
+        .map(id => String(id))
+        .filter(id => assessableIds.has(id))));
+}
+
 function getTotalClassificationCriteriaCount() {
     if (!CLASSIFICATION_DATA_3296 || !Array.isArray(CLASSIFICATION_DATA_3296.sections)) return TOTAL_CRITERIA_3296;
-    return CLASSIFICATION_DATA_3296.sections.reduce((sum, section) => sum + section.criteria.length, 0);
+    return CLASSIFICATION_DATA_3296.sections.reduce((sum, section) => {
+        const count = (section.criteria || []).filter(isAssessableClassificationCriterion).length;
+        return sum + count;
+    }, 0);
 }
 
 function getAllClassificationCriteria() {
@@ -2359,6 +2469,7 @@ function getAllClassificationCriteria() {
     const items = [];
     CLASSIFICATION_DATA_3296.sections.forEach(section => {
         section.criteria.forEach(criterion => {
+            if (!isAssessableClassificationCriterion(criterion)) return;
             items.push({
                 ...criterion,
                 sectionId: String(section.id),
@@ -2372,7 +2483,7 @@ function getAllClassificationCriteria() {
 function getCriterionById(id) {
     const target = String(id);
     for (const section of (CLASSIFICATION_DATA_3296.sections || [])) {
-        const criterion = section.criteria.find(c => String(c.id) === target);
+        const criterion = section.criteria.find(c => String(c.id) === target && isAssessableClassificationCriterion(c));
         if (criterion) {
             return {
                 ...criterion,
@@ -2386,9 +2497,11 @@ function getCriterionById(id) {
 
 function buildMandatoryStarMap() {
     const map = new Map();
+    const assessableIds = getAssessableCriterionIdSet();
     (CLASSIFICATION_DATA_3296.starLevels || []).forEach(level => {
-        (level.mandatoryIds || []).forEach(id => {
+        getMandatoryIdsForLevel(level).forEach(id => {
             const key = String(id);
+            if (!assessableIds.has(key)) return;
             if (!map.has(key)) map.set(key, new Set());
             map.get(key).add(Number(level.star));
         });
@@ -2833,7 +2946,7 @@ function sendToResolution() {
     const currentStarLevel = getStarLevel(selectedStar);
     if (!currentStarLevel) return;
 
-    const missingIds = (currentStarLevel.mandatoryIds || []).filter(id => {
+    const missingIds = getMandatoryIdsForLevel(currentStarLevel).filter(id => {
         const status = classificationAnswers[id];
         return status !== 'yes' && status !== 'na';
     });
@@ -2891,6 +3004,7 @@ function renderCompareTable() {
     let rowsHtml = '';
     sections.forEach(section => {
         const sectionRows = section.criteria
+            .filter(isAssessableClassificationCriterion)
             .filter(criterion => (mandatoryMap.get(String(criterion.id)) || new Set()).size > 0)
             .sort((a, b) => compareCriterionIds(a.id, b.id));
         if (!sectionRows.length) return;
@@ -2940,6 +3054,7 @@ function calculateTotalYesPoints() {
     let points = 0;
     (CLASSIFICATION_DATA_3296.sections || []).forEach(section => {
         section.criteria.forEach(criterion => {
+            if (!isAssessableClassificationCriterion(criterion)) return;
             if (classificationAnswers[criterion.id] === 'yes') points += criterion.points;
         });
     });
@@ -2949,7 +3064,7 @@ function calculateTotalYesPoints() {
 function isStarAchievable(star, totalPoints) {
     const starLevel = getStarLevel(star);
     if (!starLevel) return false;
-    const mandatoryOk = (starLevel.mandatoryIds || []).every(id => {
+    const mandatoryOk = getMandatoryIdsForLevel(starLevel).every(id => {
         const status = classificationAnswers[id];
         return status === 'yes' || status === 'na';
     });
@@ -2965,14 +3080,18 @@ function getEligibleStar(totalPoints) {
 
 function updateAssessmentPanel() {
     const points = calculateTotalYesPoints();
-    const assessedCount = Object.values(classificationAnswers).filter(Boolean).length;
+    const assessableIds = getAssessableCriterionIdSet();
+    const assessedCount = Object.entries(classificationAnswers)
+        .filter(([id, status]) => Boolean(status) && assessableIds.has(String(id)))
+        .length;
     const mandatoryFiveStar = getStarLevel(5) || { mandatoryIds: [] };
-    const fulfilledMandatory = (mandatoryFiveStar.mandatoryIds || []).filter(id => {
+    const mandatoryIds = getMandatoryIdsForLevel(mandatoryFiveStar);
+    const fulfilledMandatory = mandatoryIds.filter(id => {
         const status = classificationAnswers[id];
         return status === 'yes' || status === 'na';
     }).length;
-    const mandatoryPct = mandatoryFiveStar.mandatoryIds.length
-        ? Math.round((fulfilledMandatory / mandatoryFiveStar.mandatoryIds.length) * 100)
+    const mandatoryPct = mandatoryIds.length
+        ? Math.round((fulfilledMandatory / mandatoryIds.length) * 100)
         : 0;
     const eligibleStar = getEligibleStar(points);
     const starsString = eligibleStar > 0
@@ -2994,7 +3113,7 @@ function updateDashboardStats() {
     const totalCriteria = getTotalClassificationCriteriaCount();
     const categories = (CLASSIFICATION_DATA_3296.sections || []).length;
     const maxPoints = CLASSIFICATION_DATA_3296.maxPoints || 0;
-    const mandatory5 = new Set((getStarLevel(5)?.mandatoryIds || []).map(id => String(id))).size;
+    const mandatory5 = getMandatoryIdsForLevel(getStarLevel(5)).length;
 
     const statTotalCriteria = document.getElementById('statTotalCriteria');
     const statCategories = document.getElementById('statCategories');
@@ -3008,7 +3127,7 @@ function updateDashboardStats() {
 }
 
 function buildStarListingHtml(starLevel, type) {
-    const mandatorySet = new Set((starLevel.mandatoryIds || []).map(id => String(id)));
+    const mandatorySet = new Set(getMandatoryIdsForLevel(starLevel));
     const criteria = getAllClassificationCriteria()
         .filter(criterion => {
             const isMandatory = mandatorySet.has(String(criterion.id));
@@ -3105,7 +3224,7 @@ function showGapReport() {
     [1, 2, 3, 4, 5].forEach(star => {
         const level = getStarLevel(star);
         if (!level) return;
-        const failedMandatory = (level.mandatoryIds || []).filter(id => {
+        const failedMandatory = getMandatoryIdsForLevel(level).filter(id => {
             const status = classificationAnswers[id];
             return status !== 'yes' && status !== 'na';
         });
@@ -3128,7 +3247,7 @@ function showGapReport() {
 function showMandatoryChecklist() {
     const level = getStarLevel(selectedStar);
     if (!level) return;
-    const items = (level.mandatoryIds || [])
+    const items = getMandatoryIdsForLevel(level)
         .map(id => getCriterionById(id))
         .filter(Boolean)
         .sort((a, b) => compareCriterionIds(a.id, b.id));
