@@ -1,15 +1,9 @@
 let COMPLIANCE_DATA_3220 = null;
 let CLASSIFICATION_DATA_3296 = null;
+const STAR_KEYS = ['1', '2', '3', '4', '5'];
 
 function normalizeMandatoryValue(value) {
-    if (value === true) return true;
-    if (value === false) return false;
-    if (typeof value === 'string') {
-        const normalized = value.trim().toLowerCase();
-        if (normalized === 'true') return true;
-        if (normalized === 'false') return false;
-    }
-    return false;
+    return value === true;
 }
 
 function normalizeMandatoryKey(rawKey) {
@@ -35,6 +29,27 @@ function normalizeMandatoryObject(rawMandatory) {
     });
 
     return normalized;
+}
+
+function normalizeOptionalObject(rawOptional) {
+    const normalized = createEmptyMandatoryMap();
+    if (!rawOptional || typeof rawOptional !== 'object') return normalized;
+
+    Object.entries(rawOptional).forEach(([rawKey, rawValue]) => {
+        const starKey = normalizeMandatoryKey(rawKey);
+        if (!starKey) return;
+        normalized[starKey] = normalizeMandatoryValue(rawValue);
+    });
+
+    return normalized;
+}
+
+function buildOptionalObject(mandatory) {
+    const optional = createEmptyMandatoryMap();
+    STAR_KEYS.forEach(starKey => {
+        optional[starKey] = mandatory[starKey] !== true;
+    });
+    return optional;
 }
 
 function normalizeComplianceData(rawData) {
@@ -158,12 +173,22 @@ function normalizeClassificationData(rawData) {
                 const id = String(item.id);
                 const derivedMandatory = mandatoryById.get(id);
                 const mergedMandatory = normalizeMandatoryObject(item.mandatory || derivedMandatory || {});
+                const strictOptional = normalizeOptionalObject(item.optional || {});
+                const mergedOptional = buildOptionalObject(mergedMandatory);
+                STAR_KEYS.forEach(starKey => {
+                    if (mergedMandatory[starKey] === true) {
+                        mergedOptional[starKey] = false;
+                    } else if (strictOptional[starKey] === true) {
+                        mergedOptional[starKey] = true;
+                    }
+                });
                 const isGroupHeader = Boolean(item.isGroupHeader || item.is_group_header);
                 return {
                     ...item,
                     id,
                     points: Number(item.points) || 0,
                     mandatory: mergedMandatory,
+                    optional: mergedOptional,
                     assessable: typeof item.assessable === 'boolean' ? item.assessable : !isGroupHeader,
                     isGroupHeader
                 };
@@ -265,19 +290,23 @@ function normalizeClassificationData(rawData) {
             ru: category.name_ru || '',
             en: category.name_en || ''
         },
-        criteria: (category.items || []).map(item => ({
-            id: String(item.id),
-            title: {
-                uz: item.criterion_uz || '',
-                ru: item.criterion_ru || '',
-                en: item.criterion_en || ''
-            },
-            points: Number(item.points) || 0,
-            reference: item.reference || '',
-            mandatory: normalizeMandatoryObject(item.mandatory || {}),
-            assessable: !Boolean(item.is_group_header),
-            isGroupHeader: Boolean(item.is_group_header)
-        }))
+        criteria: (category.items || []).map(item => {
+            const mandatory = normalizeMandatoryObject(item.mandatory || {});
+            return {
+                id: String(item.id),
+                title: {
+                    uz: item.criterion_uz || '',
+                    ru: item.criterion_ru || '',
+                    en: item.criterion_en || ''
+                },
+                points: Number(item.points) || 0,
+                reference: item.reference || '',
+                mandatory,
+                optional: buildOptionalObject(mandatory),
+                assessable: !Boolean(item.is_group_header),
+                isGroupHeader: Boolean(item.is_group_header)
+            };
+        })
     }));
 
     const starLevels = [1, 2, 3, 4, 5].map(star => {
@@ -339,6 +368,13 @@ async function loadData() {
 // =====================================================
 
 const TOTAL_CRITERIA_3296 = 170;
+const STAR_MANDATORY_TARGETS = Object.freeze({
+    1: 40,
+    2: 43,
+    3: 54,
+    4: 86,
+    5: 98
+});
 const MASTER_ACCOUNT = { username: 'master', password: 'master', fullName: 'Master Account', role: 'master' };
 
 const STORAGE_KEYS = {
@@ -1502,6 +1538,7 @@ function renderClassificationCriteria() {
 
     const currentStarLevel = getStarLevel(selectedStar) || CLASSIFICATION_DATA_3296.starLevels[0];
     const mandatorySet = new Set(getMandatoryIdsForLevel(currentStarLevel));
+    const activeCriteriaIds = getAssessableCriterionIdSet(currentStarLevel.star);
     const showMandatoryOnly = isFilterActive('filterMandatoryBtn');
     const showMissingOnly = isFilterActive('filterMissingBtn');
     const searchTerm = (document.getElementById('classificationSearch')?.value || '').trim().toLowerCase();
@@ -1531,7 +1568,9 @@ function renderClassificationCriteria() {
             sectionHeader.querySelector('.toggle').classList.add('open');
         }
 
-        let criteria = section.criteria.filter(isAssessableClassificationCriterion);
+        let criteria = section.criteria
+            .filter(isAssessableClassificationCriterion)
+            .filter(criterion => activeCriteriaIds.has(String(criterion.id)));
         if (searchTerm) {
             criteria = criteria.filter(criterion => {
                 const titleText = (criterion.title && (criterion.title[currentLang] || criterion.title.en)) || '';
@@ -1700,10 +1739,12 @@ function updateStats() {
     let fulfilled = 0;
     let missing = 0;
     let assessed = 0;
+    const activeCriteriaIds = getAssessableCriterionIdSet(selectedStar);
 
     CLASSIFICATION_DATA_3296.sections.forEach(section => {
         section.criteria.forEach(criterion => {
             if (!isAssessableClassificationCriterion(criterion)) return;
+            if (!activeCriteriaIds.has(String(criterion.id))) return;
             const status = classificationAnswers[criterion.id];
             if (status === 'yes') {
                 totalPoints += criterion.points;
@@ -1825,12 +1866,14 @@ function evaluate3296() {
         return { achieved: false, reason: 'invalid_star', star: 0, points: 0, required: 0 };
     }
     const requiredPoints = getMinPointsForStar(selectedStar);
+    const activeCriteriaIds = getAssessableCriterionIdSet(selectedStar);
 
     // Step 1: Calculate total points
     let totalPoints = 0;
     CLASSIFICATION_DATA_3296.sections.forEach(section => {
         section.criteria.forEach(criterion => {
             if (!isAssessableClassificationCriterion(criterion)) return;
+            if (!activeCriteriaIds.has(String(criterion.id))) return;
             if (classificationAnswers[criterion.id] === 'yes') {
                 totalPoints += criterion.points;
             }
@@ -1884,6 +1927,7 @@ function getClassificationPointsBreakdown() {
         };
     }
     const mandatorySet = new Set(getMandatoryIdsForLevel(currentStarLevel));
+    const activeCriteriaIds = getAssessableCriterionIdSet(selectedStar);
     let mandatoryPointsAchieved = 0;
     let optionalPointsAchieved = 0;
     let mandatoryPointsRequired = 0;
@@ -1891,6 +1935,7 @@ function getClassificationPointsBreakdown() {
     CLASSIFICATION_DATA_3296.sections.forEach(section => {
         section.criteria.forEach(criterion => {
             if (!isAssessableClassificationCriterion(criterion)) return;
+            if (!activeCriteriaIds.has(String(criterion.id))) return;
             if (mandatorySet.has(criterion.id)) {
                 mandatoryPointsRequired += criterion.points;
                 if (classificationAnswers[criterion.id] === 'yes') {
@@ -2521,26 +2566,61 @@ function isAssessableClassificationCriterion(criterion) {
     return !Boolean(criterion.isGroupHeader);
 }
 
-function getAssessableCriterionIdSet() {
-    const ids = new Set();
-    if (!CLASSIFICATION_DATA_3296 || !Array.isArray(CLASSIFICATION_DATA_3296.sections)) return ids;
-    CLASSIFICATION_DATA_3296.sections.forEach(section => {
-        (section.criteria || []).forEach(criterion => {
-            if (isAssessableClassificationCriterion(criterion)) {
-                ids.add(String(criterion.id));
-            }
-        });
+function getStrictStarKey(star) {
+    const key = String(Number(star));
+    return STAR_KEYS.includes(key) ? key : null;
+}
+
+function getMandatoryTargetCount(star) {
+    return STAR_MANDATORY_TARGETS[Number(star)] || 0;
+}
+
+function getOptionalTargetCount(star) {
+    return Math.max(0, TOTAL_CRITERIA_3296 - getMandatoryTargetCount(star));
+}
+
+function getStarCriteriaBuckets(star) {
+    const starKey = getStrictStarKey(star);
+    if (!starKey) {
+        return { mandatory: [], optional: [], all: [], ids: new Set() };
+    }
+
+    const allCriteria = getAllClassificationCriteria()
+        .slice()
+        .sort((a, b) => compareCriterionIds(a.id, b.id));
+
+    const mandatoryStrict = allCriteria.filter(criterion => criterion?.mandatory?.[starKey] === true);
+    const optionalStrict = allCriteria.filter(criterion => {
+        const isMandatory = criterion?.mandatory?.[starKey] === true;
+        const isOptional = criterion?.optional?.[starKey] === true;
+        return !isMandatory && isOptional;
     });
-    return ids;
+
+    const mandatory = mandatoryStrict.slice(0, getMandatoryTargetCount(star));
+    const mandatoryIds = new Set(mandatory.map(criterion => String(criterion.id)));
+    const optional = optionalStrict
+        .filter(criterion => !mandatoryIds.has(String(criterion.id)))
+        .slice(0, getOptionalTargetCount(star));
+
+    const all = [...mandatory, ...optional];
+    return {
+        mandatory,
+        optional,
+        all,
+        ids: new Set(all.map(criterion => String(criterion.id)))
+    };
+}
+
+function getAssessableCriterionIdSet(star = selectedStar) {
+    return getStarCriteriaBuckets(star).ids;
 }
 
 function getMandatoryCriteriaForStar(star) {
-    const normalizedStar = String(Number(star));
-    if (!/^[1-5]$/.test(normalizedStar)) return [];
-    return getAllClassificationCriteria().filter(criterion => {
-        const mandatory = criterion && criterion.mandatory;
-        return Boolean(mandatory && mandatory[normalizedStar] === true);
-    });
+    return getStarCriteriaBuckets(star).mandatory;
+}
+
+function getOptionalCriteriaForStar(star) {
+    return getStarCriteriaBuckets(star).optional;
 }
 
 function getMandatoryIdsForLevel(level) {
@@ -2549,11 +2629,7 @@ function getMandatoryIdsForLevel(level) {
 }
 
 function getTotalClassificationCriteriaCount() {
-    if (!CLASSIFICATION_DATA_3296 || !Array.isArray(CLASSIFICATION_DATA_3296.sections)) return TOTAL_CRITERIA_3296;
-    return CLASSIFICATION_DATA_3296.sections.reduce((sum, section) => {
-        const count = (section.criteria || []).filter(isAssessableClassificationCriterion).length;
-        return sum + count;
-    }, 0);
+    return TOTAL_CRITERIA_3296;
 }
 
 function getAllClassificationCriteria() {
@@ -2589,13 +2665,11 @@ function getCriterionById(id) {
 
 function buildMandatoryStarMap() {
     const map = new Map();
-    getAllClassificationCriteria().forEach(criterion => {
-        const key = String(criterion.id);
-        if (!map.has(key)) map.set(key, new Set());
-        ['1', '2', '3', '4', '5'].forEach(starKey => {
-            if (criterion.mandatory && criterion.mandatory[starKey] === true) {
-                map.get(key).add(Number(starKey));
-            }
+    [1, 2, 3, 4, 5].forEach(star => {
+        getMandatoryCriteriaForStar(star).forEach(criterion => {
+            const key = String(criterion.id);
+            if (!map.has(key)) map.set(key, new Set());
+            map.get(key).add(star);
         });
     });
     return map;
@@ -3142,20 +3216,23 @@ function renderCompareTable() {
     `;
 }
 
-function calculateTotalYesPoints() {
+function calculateTotalYesPoints(star = selectedStar) {
+    const activeCriteriaIds = getAssessableCriterionIdSet(star);
     let points = 0;
     (CLASSIFICATION_DATA_3296.sections || []).forEach(section => {
         section.criteria.forEach(criterion => {
             if (!isAssessableClassificationCriterion(criterion)) return;
+            if (!activeCriteriaIds.has(String(criterion.id))) return;
             if (classificationAnswers[criterion.id] === 'yes') points += criterion.points;
         });
     });
     return points;
 }
 
-function isStarAchievable(star, totalPoints) {
+function isStarAchievable(star) {
     const starLevel = getStarLevel(star);
     if (!starLevel) return false;
+    const totalPoints = calculateTotalYesPoints(star);
     const mandatoryOk = getMandatoryIdsForLevel(starLevel).every(id => {
         const status = classificationAnswers[id];
         return status === 'yes' || status === 'na';
@@ -3163,15 +3240,15 @@ function isStarAchievable(star, totalPoints) {
     return mandatoryOk && totalPoints >= getMinPointsForStar(star);
 }
 
-function getEligibleStar(totalPoints) {
+function getEligibleStar() {
     for (let star = 5; star >= 1; star--) {
-        if (isStarAchievable(star, totalPoints)) return star;
+        if (isStarAchievable(star)) return star;
     }
     return 0;
 }
 
 function updateAssessmentPanel() {
-    const points = calculateTotalYesPoints();
+    const points = calculateTotalYesPoints(selectedStar);
     const assessableIds = getAssessableCriterionIdSet();
     const assessedCount = Object.entries(classificationAnswers)
         .filter(([id, status]) => Boolean(status) && assessableIds.has(String(id)))
@@ -3185,7 +3262,7 @@ function updateAssessmentPanel() {
     const mandatoryPct = mandatoryIds.length
         ? Math.round((fulfilledMandatory / mandatoryIds.length) * 100)
         : 0;
-    const eligibleStar = getEligibleStar(points);
+    const eligibleStar = getEligibleStar();
     const starsString = eligibleStar > 0
         ? `${'★'.repeat(eligibleStar)}${'☆'.repeat(5 - eligibleStar)}`
         : '☆☆☆☆☆';
@@ -3219,12 +3296,10 @@ function updateDashboardStats() {
 }
 
 function buildStarListingHtml(starLevel, type) {
-    const mandatorySet = new Set(getMandatoryIdsForLevel(starLevel));
-    const criteria = getAllClassificationCriteria()
-        .filter(criterion => {
-            const isMandatory = mandatorySet.has(String(criterion.id));
-            return type === 'mandatory' ? isMandatory : !isMandatory;
-        })
+    const criteria = (type === 'mandatory'
+        ? getMandatoryCriteriaForStar(starLevel.star)
+        : getOptionalCriteriaForStar(starLevel.star))
+        .slice()
         .sort((a, b) => compareCriterionIds(a.id, b.id));
 
     return `<!DOCTYPE html>
