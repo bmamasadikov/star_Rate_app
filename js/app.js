@@ -253,6 +253,13 @@ async function loadData() {
 // =====================================================
 
 const TOTAL_CRITERIA_3296 = 170;
+const STAR_TARGET_METRICS = {
+    1: { minPoints: 320, mandatory: 40, total: 170 },
+    2: { minPoints: 378, mandatory: 43, total: 170 },
+    3: { minPoints: 407, mandatory: 54, total: 170 },
+    4: { minPoints: 465, mandatory: 86, total: 170 },
+    5: { minPoints: 494, mandatory: 98, total: 170 }
+};
 const MASTER_ACCOUNT = { username: 'master', password: 'master', fullName: 'Master Account', role: 'master' };
 
 const STORAGE_KEYS = {
@@ -955,22 +962,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function initStarCards() {
     const container = document.getElementById('starCards');
-    const totalCriteriaCount = getTotalClassificationCriteriaCount();
     container.innerHTML = '';
     ensureAccommodationTypeSelection();
 
     CLASSIFICATION_DATA_3296.starLevels.forEach(level => {
-        const mandatoryCount = getMandatoryIdsForLevel(level).length;
-        const optionalCount = Math.max(0, totalCriteriaCount - mandatoryCount);
-        const minPoints = getMinPointsForStar(level.star);
+        const metrics = getStarTargetMetrics(level.star);
         const card = document.createElement('div');
         card.className = 'star-card' + (level.star === selectedStar ? ' selected' : '');
         card.innerHTML = `
             <div class="stars">${level.label}</div>
             <div class="label">${level.star} ${t('starLabel')}</div>
-            <div class="points">${t('minPts')}: ${minPoints} ${t('pointsLabel')}</div>
-            <div class="points">${t('mandatory')}: ${mandatoryCount}</div>
-            <div class="points">${t('optional')}: ${optionalCount}</div>
+            <div class="points">${t('minPts')}: ${metrics.minPoints} ${t('pointsLabel')}</div>
+            <div class="points">${t('mandatory')}: ${metrics.mandatoryCount}</div>
+            <div class="points">${t('optional')}: ${metrics.optionalCount}</div>
         `;
         card.onclick = () => openStarModal(level.star);
         container.appendChild(card);
@@ -991,13 +995,10 @@ function openStarModal(star) {
     const modal = document.getElementById('starModal');
     const title = document.getElementById('starModalTitle');
     const subtitle = document.getElementById('starModalSubtitle');
-    const totalCriteriaCount = getTotalClassificationCriteriaCount();
-    const starLevel = CLASSIFICATION_DATA_3296.starLevels.find(l => l.star === star);
-    const mandatoryCount = starLevel ? getMandatoryIdsForLevel(starLevel).length : 0;
-    const optionalCount = Math.max(0, totalCriteriaCount - mandatoryCount);
+    const metrics = getStarTargetMetrics(star);
 
     if (title) title.textContent = `${star} ${t('starLabel')}`;
-    if (subtitle) subtitle.textContent = `${t('mandatory')}: ${mandatoryCount} | ${t('optional')}: ${optionalCount}`;
+    if (subtitle) subtitle.textContent = `${t('mandatory')}: ${metrics.mandatoryCount} | ${t('optional')}: ${metrics.optionalCount}`;
     if (modal) {
         modal.dataset.star = String(star);
         modal.classList.add('active');
@@ -1658,11 +1659,12 @@ function updateStats() {
     const mandatoryStatusEl = document.getElementById('mandatoryStatus');
     if (currentStarLevel && mandatoryStatusEl) {
         const mandatoryIds = getMandatoryIdsForLevel(currentStarLevel);
+        const targetMandatory = STAR_TARGET_METRICS[selectedStar]?.mandatory || mandatoryIds.length;
         const fulfilledMandatory = mandatoryIds.filter(id => {
             const status = classificationAnswers[id];
             return status === 'yes' || status === 'na';
         }).length;
-        mandatoryStatusEl.textContent = `${fulfilledMandatory}/${mandatoryIds.length}`;
+        mandatoryStatusEl.textContent = `${Math.min(fulfilledMandatory, targetMandatory)}/${targetMandatory}`;
     }
 
     const evidenceCountEl = document.getElementById('evidenceCount');
@@ -2456,6 +2458,37 @@ function getMandatoryIdsForLevel(level) {
         .filter(id => assessableIds.has(id))));
 }
 
+function getStarTargetMetrics(star) {
+    const normalizedStar = Number(star);
+    const target = STAR_TARGET_METRICS[normalizedStar];
+    const level = getStarLevel(normalizedStar);
+    const mandatoryCount = getMandatoryIdsForLevel(level).length;
+    const minPoints = getMinPointsForStar(normalizedStar);
+    const total = getTotalClassificationCriteriaCount();
+
+    if (!target) {
+        return {
+            minPoints,
+            mandatoryCount,
+            total,
+            optionalCount: Math.max(0, total - mandatoryCount)
+        };
+    }
+
+    const configuredTotal = Number(target.total) || total;
+    const configuredMandatory = Number(target.mandatory);
+    const configuredMin = Number(target.minPoints);
+    const finalMandatory = Number.isFinite(configuredMandatory) ? configuredMandatory : mandatoryCount;
+    const finalMin = Number.isFinite(configuredMin) ? configuredMin : minPoints;
+
+    return {
+        minPoints: finalMin,
+        mandatoryCount: finalMandatory,
+        total: configuredTotal,
+        optionalCount: Math.max(0, configuredTotal - finalMandatory)
+    };
+}
+
 function getTotalClassificationCriteriaCount() {
     if (!CLASSIFICATION_DATA_3296 || !Array.isArray(CLASSIFICATION_DATA_3296.sections)) return TOTAL_CRITERIA_3296;
     return CLASSIFICATION_DATA_3296.sections.reduce((sum, section) => {
@@ -3086,12 +3119,13 @@ function updateAssessmentPanel() {
         .length;
     const mandatoryFiveStar = getStarLevel(5) || { mandatoryIds: [] };
     const mandatoryIds = getMandatoryIdsForLevel(mandatoryFiveStar);
+    const targetMandatory = STAR_TARGET_METRICS[5]?.mandatory || mandatoryIds.length;
     const fulfilledMandatory = mandatoryIds.filter(id => {
         const status = classificationAnswers[id];
         return status === 'yes' || status === 'na';
     }).length;
-    const mandatoryPct = mandatoryIds.length
-        ? Math.round((fulfilledMandatory / mandatoryIds.length) * 100)
+    const mandatoryPct = targetMandatory
+        ? Math.round((Math.min(fulfilledMandatory, targetMandatory) / targetMandatory) * 100)
         : 0;
     const eligibleStar = getEligibleStar(points);
     const starsString = eligibleStar > 0
@@ -3110,10 +3144,10 @@ function updateAssessmentPanel() {
 }
 
 function updateDashboardStats() {
-    const totalCriteria = getTotalClassificationCriteriaCount();
+    const totalCriteria = STAR_TARGET_METRICS[5]?.total || getTotalClassificationCriteriaCount();
     const categories = (CLASSIFICATION_DATA_3296.sections || []).length;
     const maxPoints = CLASSIFICATION_DATA_3296.maxPoints || 0;
-    const mandatory5 = getMandatoryIdsForLevel(getStarLevel(5)).length;
+    const mandatory5 = STAR_TARGET_METRICS[5]?.mandatory || getMandatoryIdsForLevel(getStarLevel(5)).length;
 
     const statTotalCriteria = document.getElementById('statTotalCriteria');
     const statCategories = document.getElementById('statCategories');
