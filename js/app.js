@@ -1402,6 +1402,26 @@ function openAssessmentWindow() {
     win.document.close();
 }
 
+function enterAppAsUser(user, targetPage = 'dashboard') {
+    currentUser = user ? { ...user, role: normalizeUserRole(user.role) } : null;
+    if (!currentUser) return;
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('appContainer').style.display = 'block';
+    const fullName = getUserFullName(currentUser) || 'User';
+    document.getElementById('displayUserName').textContent = fullName;
+    document.getElementById('displayUserRole').textContent = getUserRoleLabel(currentUser.role);
+    document.getElementById('userAvatar').textContent = fullName.charAt(0).toUpperCase();
+
+    applyMasterVisibility();
+    renderComplianceSections();
+    renderClassificationCriteria();
+    updateStats();
+    renderManagementLists();
+    updateNotifications();
+    renderResolutions();
+    showPage(targetPage);
+}
+
 // =====================================================
 // EVENT LISTENERS
 // =====================================================
@@ -1413,8 +1433,9 @@ function initEventListeners() {
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value.trim();
 
+        let matchedUser = null;
         if (username === MASTER_ACCOUNT.username && password === MASTER_ACCOUNT.password) {
-            currentUser = { ...MASTER_ACCOUNT };
+            matchedUser = { ...MASTER_ACCOUNT };
         } else {
             const users = getStoredUsers();
             const match = users.find(u => u.status === 'active' && u.username === username && u.password === password);
@@ -1422,23 +1443,9 @@ function initEventListeners() {
                 showToast(t('invalidCredentials'), 'error');
                 return;
             }
-            currentUser = { ...match, role: normalizeUserRole(match.role) };
+            matchedUser = { ...match, role: normalizeUserRole(match.role) };
         }
-
-        document.getElementById('loginPage').style.display = 'none';
-        document.getElementById('appContainer').style.display = 'block';
-        const fullName = getUserFullName(currentUser) || 'User';
-        document.getElementById('displayUserName').textContent = fullName;
-        document.getElementById('displayUserRole').textContent = getUserRoleLabel(currentUser.role);
-        document.getElementById('userAvatar').textContent = fullName.charAt(0).toUpperCase();
-
-        applyMasterVisibility();
-        renderComplianceSections();
-        renderClassificationCriteria();
-        updateStats();
-        renderManagementLists();
-        updateNotifications();
-        renderResolutions();
+        enterAppAsUser(matchedUser, 'dashboard');
     };
 
     // Logout
@@ -3249,6 +3256,19 @@ function isValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
+function getInviteTokenFromUrl() {
+    const url = new URL(window.location.href);
+    let inviteToken = String(url.searchParams.get(INVITE_TOKEN_PARAM) || '').trim();
+    if (!inviteToken) {
+        const hash = String(url.hash || '').replace(/^#/, '');
+        if (hash) {
+            const hashParams = new URLSearchParams(hash);
+            inviteToken = String(hashParams.get(INVITE_TOKEN_PARAM) || '').trim();
+        }
+    }
+    return inviteToken;
+}
+
 function buildInviteLink(inviteToken) {
     const url = new URL(window.location.href);
     url.searchParams.set(INVITE_TOKEN_PARAM, inviteToken);
@@ -3258,7 +3278,15 @@ function buildInviteLink(inviteToken) {
 function clearInviteTokenFromUrl() {
     const url = new URL(window.location.href);
     url.searchParams.delete(INVITE_TOKEN_PARAM);
-    const clean = `${url.pathname}${url.searchParams.toString() ? `?${url.searchParams.toString()}` : ''}${url.hash || ''}`;
+    let hash = String(url.hash || '');
+    if (hash) {
+        const hashText = hash.replace(/^#/, '');
+        const hashParams = new URLSearchParams(hashText);
+        hashParams.delete(INVITE_TOKEN_PARAM);
+        const nextHash = hashParams.toString();
+        hash = nextHash ? `#${nextHash}` : '';
+    }
+    const clean = `${url.pathname}${url.searchParams.toString() ? `?${url.searchParams.toString()}` : ''}${hash}`;
     window.history.replaceState({}, document.title, clean);
 }
 
@@ -3278,8 +3306,7 @@ function sendUserInvite(user) {
 }
 
 function processInviteLinkFromUrl() {
-    const url = new URL(window.location.href);
-    const inviteToken = String(url.searchParams.get(INVITE_TOKEN_PARAM) || '').trim();
+    const inviteToken = getInviteTokenFromUrl();
     if (!inviteToken) return;
 
     const users = getStoredUsers();
@@ -3291,7 +3318,11 @@ function processInviteLinkFromUrl() {
     }
 
     pendingInviteToken = inviteToken;
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('appContainer').style.display = 'none';
     openModal('inviteSetupModal');
+    const usernameInput = document.getElementById('inviteUsername');
+    if (usernameInput) usernameInput.focus();
 }
 
 function completeInviteSetup() {
@@ -3345,12 +3376,14 @@ function completeInviteSetup() {
     if (usernameInput) usernameInput.value = '';
     if (passwordInput) passwordInput.value = '';
     if (passwordConfirmInput) passwordConfirmInput.value = '';
+    const activatedUser = users[userIndex];
     pendingInviteToken = null;
     closeModal('inviteSetupModal');
     clearInviteTokenFromUrl();
 
     const loginUsernameInput = document.getElementById('username');
     if (loginUsernameInput) loginUsernameInput.value = usernameVal;
+    enterAppAsUser(activatedUser, 'dashboard');
     showToast(t('inviteSetupSuccess'), 'success');
 }
 
