@@ -2040,6 +2040,11 @@
                                 <h4 id="reportCardExportTitle">Export Data</h4>
                                 <p id="reportCardExportDesc">Download assessment as JSON</p>
                             </div>
+                            <div class="report-card" id="reportCardExportPdf">
+                                <div class="icon">🧾</div>
+                                <h4 id="reportCardExportPdfTitle">Export Data PDF</h4>
+                                <p id="reportCardExportPdfDesc">Download assessment data as PDF</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2089,7 +2094,7 @@
                         <table class="user-table">
                             <thead>
                                 <tr>
-                                    <th id="userTableUsername">Username</th>
+                                    <th id="userTableUsername">Login / Email</th>
                                     <th id="userTableName">Full Name</th>
                                     <th id="userTableRole">Role</th>
                                     <th id="userTableStatus">Status</th>
@@ -2123,23 +2128,54 @@
     <div class="modal" id="addUserModal" data-master-only aria-hidden="true">
         <div class="modal-content">
             <div class="modal-title" id="addUserTitle">Add User</div>
-            <div class="modal-subtitle" id="addUserSubtitle">Create inspector access</div>
+            <div class="modal-subtitle" id="addUserSubtitle">Create account invitation</div>
             <form id="addUserForm">
                 <div class="form-group">
-                    <label id="newFullNameLabel">Full Name</label>
-                    <input type="text" id="newFullName" placeholder="Full name">
+                    <label id="newFirstNameLabel">Name</label>
+                    <input type="text" id="newFirstName" placeholder="Name">
                 </div>
                 <div class="form-group">
-                    <label id="newUsernameLabel">Username</label>
-                    <input type="text" id="newUsername" placeholder="Username">
+                    <label id="newLastNameLabel">Last Name</label>
+                    <input type="text" id="newLastName" placeholder="Last name">
                 </div>
                 <div class="form-group">
-                    <label id="newPasswordLabel">Password</label>
-                    <input type="password" id="newPassword" placeholder="Password">
+                    <label id="newEmailLabel">Email</label>
+                    <input type="email" id="newEmail" placeholder="email@example.com">
+                </div>
+                <div class="form-group">
+                    <label id="newRoleLabel">Role</label>
+                    <select id="newRole">
+                        <option value="user" id="roleOptionUser">User</option>
+                        <option value="admin" id="roleOptionAdmin">Admin</option>
+                    </select>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn btn-secondary" id="addUserCancelBtn">Cancel</button>
-                    <button type="submit" class="btn btn-success" id="addUserSubmitBtn">Add User</button>
+                    <button type="submit" class="btn btn-success" id="addUserSubmitBtn">Send Invite</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="inviteSetupModal" aria-hidden="true">
+        <div class="modal-content">
+            <div class="modal-title" id="inviteSetupTitle">Create Login Access</div>
+            <div class="modal-subtitle" id="inviteSetupSubtitle">Set username and password for your account</div>
+            <form id="inviteSetupForm">
+                <div class="form-group">
+                    <label id="inviteUsernameLabel">Username</label>
+                    <input type="text" id="inviteUsername" placeholder="Username">
+                </div>
+                <div class="form-group">
+                    <label id="invitePasswordLabel">Password</label>
+                    <input type="password" id="invitePassword" placeholder="Password">
+                </div>
+                <div class="form-group">
+                    <label id="invitePasswordConfirmLabel">Confirm Password</label>
+                    <input type="password" id="invitePasswordConfirm" placeholder="Confirm password">
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-success" id="inviteSetupSubmitBtn">Create Access</button>
                 </div>
             </form>
         </div>
@@ -2149,6 +2185,6 @@
     <input type="file" class="file-input" id="videoInput" accept="video/*">
     <input type="file" class="file-input" id="documentInput" accept=".pdf,.doc,.docx">
 
-    <script src="js/app.js?v=20260228-11"></script>
+    <script src="js/app.js?v=20260228-12"></script>
 </body>
 </html>

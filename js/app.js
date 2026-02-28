@@ -464,6 +464,7 @@ const STORAGE_KEYS = {
     assessments: 'hcs_assessments',
     reports: 'hcs_reports'
 };
+const INVITE_TOKEN_PARAM = 'invite';
 const UI_TEXT = {
     en: {
         loginTitle: 'Hotel Classification and Rating System',
@@ -545,6 +546,8 @@ const UI_TEXT = {
         reportCardMandatoryDesc: 'Required criteria for target star',
         reportCardExportTitle: 'Export Data',
         reportCardExportDesc: 'Download assessment as JSON',
+        reportCardExportPdfTitle: 'Export Data PDF',
+        reportCardExportPdfDesc: 'Download assessment data as PDF',
         gapReportTitle: 'Gap Analysis',
         mandatoryReportTitle: 'Mandatory Checklist',
         exportFileName: 'hotel-assessment',
@@ -556,6 +559,8 @@ const UI_TEXT = {
         reportInspector: 'Inspector',
         reportTarget: 'Target Classification',
         roleMaster: 'Administrator',
+        roleAdmin: 'Admin',
+        roleUser: 'User',
         roleInspector: 'Inspector',
         reportCompliant: 'COMPLIANT',
         reportNotCompliant: 'NOT COMPLIANT',
@@ -636,16 +641,39 @@ const UI_TEXT = {
         documentLabel: 'Document',
         adminUsersTitle: 'User Management',
         addUserTitle: 'Add User',
-        addUserSubtitle: 'Create inspector access',
+        addUserSubtitle: 'Create account invitation',
         addUserOpen: '+ Add User',
         addUserCancel: 'Cancel',
-        addUserSubmit: 'Add User',
-        userTableUsername: 'Username',
+        addUserSubmit: 'Send Invite',
+        userTableUsername: 'Login / Email',
         userTableName: 'Full Name',
         userTableRole: 'Role',
         userTableStatus: 'Status',
         userTableActions: 'Actions',
-        statusActive: 'Active'
+        statusActive: 'Active',
+        statusInvited: 'Invited',
+        newFirstNameLabel: 'Name',
+        newFirstNamePlaceholder: 'Name',
+        newLastNameLabel: 'Last Name',
+        newLastNamePlaceholder: 'Last name',
+        newEmailLabel: 'Email',
+        newEmailPlaceholder: 'email@example.com',
+        newRoleLabel: 'Role',
+        inviteSetupTitle: 'Create Login Access',
+        inviteSetupSubtitle: 'Set username and password for your account',
+        inviteUsernameLabel: 'Username',
+        inviteUsernamePlaceholder: 'Username',
+        invitePasswordLabel: 'Password',
+        invitePasswordPlaceholder: 'Password',
+        invitePasswordConfirmLabel: 'Confirm Password',
+        invitePasswordConfirmPlaceholder: 'Confirm password',
+        inviteSetupSubmitBtn: 'Create Access',
+        invalidEmail: 'Please enter a valid email address',
+        emailExists: 'Email already exists',
+        invitePrepared: 'Invitation link prepared',
+        inviteInvalid: 'Invalid or expired invitation link',
+        inviteSetupSuccess: 'Login created successfully. You can now sign in.',
+        passwordMismatch: 'Passwords do not match'
     },
     uz: {
         loginTitle: 'Mehmonxona tasniflash tizimi',
@@ -727,6 +755,8 @@ const UI_TEXT = {
         reportCardMandatoryDesc: 'Tanlangan yulduz uchun majburiy mezonlar',
         reportCardExportTitle: 'Maʼlumot eksporti',
         reportCardExportDesc: 'Baholashni JSON ko‘rinishda yuklab olish',
+        reportCardExportPdfTitle: 'PDF eksport',
+        reportCardExportPdfDesc: 'Baholash maʼlumotlarini PDF ko‘rinishda yuklab olish',
         gapReportTitle: 'Farq tahlili',
         mandatoryReportTitle: 'Majburiy ro‘yxat',
         exportFileName: 'hotel-baholash',
@@ -738,6 +768,8 @@ const UI_TEXT = {
         reportInspector: 'Inspektor',
         reportTarget: 'Maqsadli tasnif',
         roleMaster: 'Master',
+        roleAdmin: 'Admin',
+        roleUser: 'Foydalanuvchi',
         roleInspector: 'Inspektor',
         reportCompliant: 'MUVOFIQ',
         reportNotCompliant: 'MUVOFIQ EMAS',
@@ -818,16 +850,39 @@ const UI_TEXT = {
         documentLabel: 'Hujjat',
         adminUsersTitle: 'Foydalanuvchilar boshqaruvi',
         addUserTitle: 'Foydalanuvchi qo‘shish',
-        addUserSubtitle: 'Inspektor kirishini yaratish',
+        addUserSubtitle: 'Hisob uchun taklif yaratish',
         addUserOpen: '+ Foydalanuvchi qo‘shish',
         addUserCancel: 'Bekor qilish',
-        addUserSubmit: 'Qo‘shish',
-        userTableUsername: 'Foydalanuvchi nomi',
+        addUserSubmit: 'Taklif yuborish',
+        userTableUsername: 'Login / Email',
         userTableName: 'To‘liq ism',
         userTableRole: 'Rol',
         userTableStatus: 'Holat',
         userTableActions: 'Amallar',
-        statusActive: 'Faol'
+        statusActive: 'Faol',
+        statusInvited: 'Taklif yuborilgan',
+        newFirstNameLabel: 'Ism',
+        newFirstNamePlaceholder: 'Ism',
+        newLastNameLabel: 'Familiya',
+        newLastNamePlaceholder: 'Familiya',
+        newEmailLabel: 'Email',
+        newEmailPlaceholder: 'email@example.com',
+        newRoleLabel: 'Rol',
+        inviteSetupTitle: 'Kirish maʼlumotlarini yaratish',
+        inviteSetupSubtitle: 'Hisob uchun login va parolni kiriting',
+        inviteUsernameLabel: 'Foydalanuvchi nomi',
+        inviteUsernamePlaceholder: 'Foydalanuvchi nomi',
+        invitePasswordLabel: 'Parol',
+        invitePasswordPlaceholder: 'Parol',
+        invitePasswordConfirmLabel: 'Parolni tasdiqlang',
+        invitePasswordConfirmPlaceholder: 'Parolni tasdiqlang',
+        inviteSetupSubmitBtn: 'Kirishni yaratish',
+        invalidEmail: 'To‘g‘ri email manzil kiriting',
+        emailExists: 'Bunday email allaqachon mavjud',
+        invitePrepared: 'Taklif havolasi tayyorlandi',
+        inviteInvalid: 'Taklif havolasi yaroqsiz yoki muddati tugagan',
+        inviteSetupSuccess: 'Login muvaffaqiyatli yaratildi. Endi tizimga kiring.',
+        passwordMismatch: 'Parollar mos kelmadi'
     },
     ru: {
         loginTitle: 'Система классификации гостиниц',
@@ -909,6 +964,8 @@ const UI_TEXT = {
         reportCardMandatoryDesc: 'Обязательные критерии для выбранной звезды',
         reportCardExportTitle: 'Экспорт данных',
         reportCardExportDesc: 'Скачать оценку в JSON',
+        reportCardExportPdfTitle: 'Экспорт PDF',
+        reportCardExportPdfDesc: 'Скачать данные оценки в PDF',
         gapReportTitle: 'Анализ разрывов',
         mandatoryReportTitle: 'Обязательный список',
         exportFileName: 'hotel-otsenka',
@@ -920,6 +977,8 @@ const UI_TEXT = {
         reportInspector: 'Инспектор',
         reportTarget: 'Целевая классификация',
         roleMaster: 'Мастер',
+        roleAdmin: 'Администратор',
+        roleUser: 'Пользователь',
         roleInspector: 'Инспектор',
         reportCompliant: 'СООТВЕТСТВУЕТ',
         reportNotCompliant: 'НЕ СООТВЕТСТВУЕТ',
@@ -1000,16 +1059,39 @@ const UI_TEXT = {
         documentLabel: 'Документ',
         adminUsersTitle: 'Управление пользователями',
         addUserTitle: 'Добавить пользователя',
-        addUserSubtitle: 'Создать доступ инспектора',
+        addUserSubtitle: 'Создать приглашение для аккаунта',
         addUserOpen: '+ Добавить пользователя',
         addUserCancel: 'Отмена',
-        addUserSubmit: 'Добавить',
-        userTableUsername: 'Имя пользователя',
+        addUserSubmit: 'Отправить приглашение',
+        userTableUsername: 'Логин / Email',
         userTableName: 'Полное имя',
         userTableRole: 'Роль',
         userTableStatus: 'Статус',
         userTableActions: 'Действия',
-        statusActive: 'Активен'
+        statusActive: 'Активен',
+        statusInvited: 'Приглашён',
+        newFirstNameLabel: 'Имя',
+        newFirstNamePlaceholder: 'Имя',
+        newLastNameLabel: 'Фамилия',
+        newLastNamePlaceholder: 'Фамилия',
+        newEmailLabel: 'Email',
+        newEmailPlaceholder: 'email@example.com',
+        newRoleLabel: 'Роль',
+        inviteSetupTitle: 'Создание входа',
+        inviteSetupSubtitle: 'Установите логин и пароль для вашей учётной записи',
+        inviteUsernameLabel: 'Имя пользователя',
+        inviteUsernamePlaceholder: 'Имя пользователя',
+        invitePasswordLabel: 'Пароль',
+        invitePasswordPlaceholder: 'Пароль',
+        invitePasswordConfirmLabel: 'Подтверждение пароля',
+        invitePasswordConfirmPlaceholder: 'Подтвердите пароль',
+        inviteSetupSubmitBtn: 'Создать доступ',
+        invalidEmail: 'Введите корректный email',
+        emailExists: 'Email уже существует',
+        invitePrepared: 'Ссылка-приглашение подготовлена',
+        inviteInvalid: 'Недействительная или просроченная ссылка приглашения',
+        inviteSetupSuccess: 'Доступ создан. Теперь можно войти.',
+        passwordMismatch: 'Пароли не совпадают'
     }
 };
 
@@ -1040,6 +1122,7 @@ let evidenceData = {};
 let notifications = [];
 let resolutions = [];
 let currentUpload = null;
+let pendingInviteToken = null;
 const WORKING_STATE_KEY = 'hcs_working_state';
 let toastTimerId = null;
 
@@ -1071,12 +1154,69 @@ function setStoredArray(key, value) {
     localStorage.setItem(key, JSON.stringify(Array.isArray(value) ? value : []));
 }
 
+function normalizeUserRole(rawRole) {
+    const role = String(rawRole || '').trim().toLowerCase();
+    if (role === 'master') return 'master';
+    if (role === 'admin') return 'admin';
+    if (role === 'inspector') return 'user';
+    return 'user';
+}
+
+function getUserFullName(user) {
+    if (!user || typeof user !== 'object') return '';
+    const firstName = String(user.firstName || '').trim();
+    const lastName = String(user.lastName || '').trim();
+    const composed = `${firstName} ${lastName}`.trim();
+    if (composed) return composed;
+    if (String(user.fullName || '').trim()) return String(user.fullName).trim();
+    if (String(user.username || '').trim()) return String(user.username).trim();
+    if (String(user.email || '').trim()) return String(user.email).trim();
+    return '';
+}
+
+function normalizeStoredUser(rawUser) {
+    if (!rawUser || typeof rawUser !== 'object') return null;
+    const explicitStatus = String(rawUser.status || '').trim().toLowerCase();
+    const normalized = {
+        id: rawUser.id || createId('user'),
+        firstName: String(rawUser.firstName || '').trim(),
+        lastName: String(rawUser.lastName || '').trim(),
+        email: String(rawUser.email || '').trim().toLowerCase(),
+        username: String(rawUser.username || '').trim(),
+        password: String(rawUser.password || '').trim(),
+        role: normalizeUserRole(rawUser.role),
+        status: 'invited',
+        inviteToken: String(rawUser.inviteToken || '').trim(),
+        invitedAt: rawUser.invitedAt || '',
+        activatedAt: rawUser.activatedAt || ''
+    };
+    const inferredFullName = getUserFullName({ ...rawUser, ...normalized });
+    normalized.fullName = inferredFullName || '';
+    if (explicitStatus === 'active') {
+        normalized.status = 'active';
+    } else if (explicitStatus === 'invited') {
+        normalized.status = 'invited';
+    } else {
+        normalized.status = normalized.username && normalized.password ? 'active' : 'invited';
+    }
+    return normalized;
+}
+
+function getUserRoleLabel(role) {
+    const normalizedRole = normalizeUserRole(role);
+    if (normalizedRole === 'master') return t('roleMaster');
+    if (normalizedRole === 'admin') return t('roleAdmin');
+    return t('roleUser');
+}
+
 function getStoredUsers() {
-    return getStoredArray(STORAGE_KEYS.users);
+    return getStoredArray(STORAGE_KEYS.users)
+        .map(normalizeStoredUser)
+        .filter(Boolean);
 }
 
 function setStoredUsers(users) {
-    setStoredArray(STORAGE_KEYS.users, users);
+    setStoredArray(STORAGE_KEYS.users, (users || []).map(normalizeStoredUser).filter(Boolean));
 }
 
 function loadStoredData() {
@@ -1166,6 +1306,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     initEventListeners();
     applyLanguage();
+    processInviteLinkFromUrl();
     if (loginButton) loginButton.disabled = false;
     if (loginHint) loginHint.textContent = t('loginHint');
 });
@@ -1276,19 +1417,20 @@ function initEventListeners() {
             currentUser = { ...MASTER_ACCOUNT };
         } else {
             const users = getStoredUsers();
-            const match = users.find(u => u.username === username && u.password === password);
+            const match = users.find(u => u.status === 'active' && u.username === username && u.password === password);
             if (!match) {
                 showToast(t('invalidCredentials'), 'error');
                 return;
             }
-            currentUser = { ...match, role: 'inspector' };
+            currentUser = { ...match, role: normalizeUserRole(match.role) };
         }
 
         document.getElementById('loginPage').style.display = 'none';
         document.getElementById('appContainer').style.display = 'block';
-        document.getElementById('displayUserName').textContent = currentUser.fullName;
-        document.getElementById('displayUserRole').textContent = currentUser.role === 'master' ? t('roleMaster') : t('roleInspector');
-        document.getElementById('userAvatar').textContent = currentUser.fullName.charAt(0);
+        const fullName = getUserFullName(currentUser) || 'User';
+        document.getElementById('displayUserName').textContent = fullName;
+        document.getElementById('displayUserRole').textContent = getUserRoleLabel(currentUser.role);
+        document.getElementById('userAvatar').textContent = fullName.charAt(0).toUpperCase();
 
         applyMasterVisibility();
         renderComplianceSections();
@@ -1418,6 +1560,8 @@ function initEventListeners() {
     if (reportCardMandatory) reportCardMandatory.addEventListener('click', showMandatoryChecklist);
     const reportCardExport = document.getElementById('reportCardExport');
     if (reportCardExport) reportCardExport.addEventListener('click', exportAssessmentData);
+    const reportCardExportPdf = document.getElementById('reportCardExportPdf');
+    if (reportCardExportPdf) reportCardExportPdf.addEventListener('click', exportAssessmentDataPdf);
 
     const notificationBtn = document.getElementById('notificationBtn');
     const notificationPanel = document.getElementById('notificationPanel');
@@ -1458,34 +1602,73 @@ function initEventListeners() {
         addUserForm.addEventListener('submit', (e) => {
             e.preventDefault();
             if (!isMasterUser()) return;
-            const usernameInput = document.getElementById('newUsername');
-            const passwordInput = document.getElementById('newPassword');
-            const fullNameInput = document.getElementById('newFullName');
-            const usernameVal = usernameInput ? usernameInput.value.trim() : '';
-            const passwordVal = passwordInput ? passwordInput.value.trim() : '';
-            const fullNameVal = fullNameInput ? fullNameInput.value.trim() : '';
+            const firstNameInput = document.getElementById('newFirstName');
+            const lastNameInput = document.getElementById('newLastName');
+            const emailInput = document.getElementById('newEmail');
+            const roleInput = document.getElementById('newRole');
 
-            if (!usernameVal || !passwordVal || !fullNameVal) {
+            const firstNameVal = firstNameInput ? firstNameInput.value.trim() : '';
+            const lastNameVal = lastNameInput ? lastNameInput.value.trim() : '';
+            const emailVal = emailInput ? emailInput.value.trim().toLowerCase() : '';
+            const roleVal = roleInput ? normalizeUserRole(roleInput.value) : 'user';
+            const fullNameVal = `${firstNameVal} ${lastNameVal}`.trim();
+
+            if (!firstNameVal || !lastNameVal || !emailVal || !roleVal) {
                 showToast(t('fillAllFields'), 'error');
                 return;
             }
-            if (usernameVal === MASTER_ACCOUNT.username) {
-                showToast(t('usernameReserved'), 'error');
+            if (!isValidEmail(emailVal)) {
+                showToast(t('invalidEmail'), 'error');
                 return;
             }
             const users = getStoredUsers();
-            if (users.some(u => u.username === usernameVal)) {
-                showToast(t('usernameExists'), 'error');
+            if (users.some(u => String(u.email || '').toLowerCase() === emailVal)) {
+                showToast(t('emailExists'), 'error');
                 return;
             }
-            users.push({ username: usernameVal, password: passwordVal, fullName: fullNameVal });
+            const inviteToken = createId('invite');
+            const newUser = {
+                id: createId('user'),
+                firstName: firstNameVal,
+                lastName: lastNameVal,
+                fullName: fullNameVal,
+                email: emailVal,
+                role: roleVal === 'admin' ? 'admin' : 'user',
+                username: '',
+                password: '',
+                status: 'invited',
+                inviteToken,
+                invitedAt: new Date().toISOString(),
+                activatedAt: ''
+            };
+            users.push(newUser);
             setStoredUsers(users);
-            if (usernameInput) usernameInput.value = '';
-            if (passwordInput) passwordInput.value = '';
-            if (fullNameInput) fullNameInput.value = '';
+            if (firstNameInput) firstNameInput.value = '';
+            if (lastNameInput) lastNameInput.value = '';
+            if (emailInput) emailInput.value = '';
+            if (roleInput) roleInput.value = 'user';
             closeModal('addUserModal');
-            showToast(t('userCreated'), 'success');
+            sendUserInvite(newUser);
+            showToast(t('invitePrepared'), 'success');
             renderManagementLists();
+        });
+    }
+
+    const inviteSetupModal = document.getElementById('inviteSetupModal');
+    if (inviteSetupModal) {
+        inviteSetupModal.addEventListener('click', (e) => {
+            if (e.target === inviteSetupModal) {
+                // Invitation modal should not be dismissed accidentally
+                e.preventDefault();
+            }
+        });
+    }
+
+    const inviteSetupForm = document.getElementById('inviteSetupForm');
+    if (inviteSetupForm) {
+        inviteSetupForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            completeInviteSetup();
         });
     }
 
@@ -2227,7 +2410,7 @@ function generateReport() {
             </div>
             <div class="info-item">
                 <label>${t('reportInspector')}</label>
-                <span>${currentUser ? currentUser.fullName : t('roleInspector')}</span>
+                <span>${currentUser ? getUserFullName(currentUser) : t('roleUser')}</span>
             </div>
             <div class="info-item">
                 <label>${t('reportTarget')}</label>
@@ -3024,7 +3207,9 @@ function closeModal(id) {
 }
 
 function isMasterUser() {
-    return Boolean(currentUser && currentUser.role === 'master');
+    if (!currentUser) return false;
+    const role = normalizeUserRole(currentUser.role);
+    return role === 'master' || role === 'admin';
 }
 
 function applyMasterVisibility() {
@@ -3057,6 +3242,116 @@ function getAssessmentData() {
 
 function createId(prefix) {
     return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function isValidEmail(email) {
+    const value = String(email || '').trim();
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function buildInviteLink(inviteToken) {
+    const url = new URL(window.location.href);
+    url.searchParams.set(INVITE_TOKEN_PARAM, inviteToken);
+    return `${url.origin}${url.pathname}?${url.searchParams.toString()}`;
+}
+
+function clearInviteTokenFromUrl() {
+    const url = new URL(window.location.href);
+    url.searchParams.delete(INVITE_TOKEN_PARAM);
+    const clean = `${url.pathname}${url.searchParams.toString() ? `?${url.searchParams.toString()}` : ''}${url.hash || ''}`;
+    window.history.replaceState({}, document.title, clean);
+}
+
+function sendUserInvite(user) {
+    if (!user || !user.inviteToken || !user.email) return;
+    const inviteLink = buildInviteLink(user.inviteToken);
+    const subject = encodeURIComponent('Star-UZ account invitation');
+    const body = encodeURIComponent(
+        `Hello ${getUserFullName(user)},\n\n` +
+        `Use this link to create your login and password:\n${inviteLink}\n\n` +
+        'This invitation link can be used once.'
+    );
+    window.location.href = `mailto:${encodeURIComponent(user.email)}?subject=${subject}&body=${body}`;
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        navigator.clipboard.writeText(inviteLink).catch(() => {});
+    }
+}
+
+function processInviteLinkFromUrl() {
+    const url = new URL(window.location.href);
+    const inviteToken = String(url.searchParams.get(INVITE_TOKEN_PARAM) || '').trim();
+    if (!inviteToken) return;
+
+    const users = getStoredUsers();
+    const inviteUser = users.find(user => user.status === 'invited' && user.inviteToken === inviteToken);
+    if (!inviteUser) {
+        showToast(t('inviteInvalid'), 'error');
+        clearInviteTokenFromUrl();
+        return;
+    }
+
+    pendingInviteToken = inviteToken;
+    openModal('inviteSetupModal');
+}
+
+function completeInviteSetup() {
+    if (!pendingInviteToken) return;
+    const usernameInput = document.getElementById('inviteUsername');
+    const passwordInput = document.getElementById('invitePassword');
+    const passwordConfirmInput = document.getElementById('invitePasswordConfirm');
+
+    const usernameVal = usernameInput ? usernameInput.value.trim() : '';
+    const passwordVal = passwordInput ? passwordInput.value.trim() : '';
+    const passwordConfirmVal = passwordConfirmInput ? passwordConfirmInput.value.trim() : '';
+
+    if (!usernameVal || !passwordVal || !passwordConfirmVal) {
+        showToast(t('fillAllFields'), 'error');
+        return;
+    }
+    if (passwordVal !== passwordConfirmVal) {
+        showToast(t('passwordMismatch'), 'error');
+        return;
+    }
+    if (usernameVal === MASTER_ACCOUNT.username) {
+        showToast(t('usernameReserved'), 'error');
+        return;
+    }
+
+    const users = getStoredUsers();
+    if (users.some(user => user.status === 'active' && user.username === usernameVal)) {
+        showToast(t('usernameExists'), 'error');
+        return;
+    }
+
+    const userIndex = users.findIndex(user => user.status === 'invited' && user.inviteToken === pendingInviteToken);
+    if (userIndex === -1) {
+        showToast(t('inviteInvalid'), 'error');
+        pendingInviteToken = null;
+        clearInviteTokenFromUrl();
+        closeModal('inviteSetupModal');
+        return;
+    }
+
+    users[userIndex] = normalizeStoredUser({
+        ...users[userIndex],
+        username: usernameVal,
+        password: passwordVal,
+        status: 'active',
+        inviteToken: '',
+        activatedAt: new Date().toISOString()
+    });
+    setStoredUsers(users);
+
+    if (usernameInput) usernameInput.value = '';
+    if (passwordInput) passwordInput.value = '';
+    if (passwordConfirmInput) passwordConfirmInput.value = '';
+    pendingInviteToken = null;
+    closeModal('inviteSetupModal');
+    clearInviteTokenFromUrl();
+
+    const loginUsernameInput = document.getElementById('username');
+    if (loginUsernameInput) loginUsernameInput.value = usernameVal;
+    showToast(t('inviteSetupSuccess'), 'success');
 }
 
 function createAssessmentRecord() {
@@ -3146,9 +3441,9 @@ function deleteReportRecord(id) {
     renderManagementLists();
 }
 
-function deleteUser(username) {
+function deleteUser(userId) {
     if (!isMasterUser()) return;
-    const users = getStoredUsers().filter(user => user.username !== username);
+    const users = getStoredUsers().filter(user => String(user.id) !== String(userId));
     setStoredUsers(users);
     renderManagementLists();
 }
@@ -3257,15 +3552,19 @@ function renderUsersTable() {
         const row = document.createElement('tr');
         const actionCell = document.createElement('td');
         if (isMasterUser()) {
-            actionCell.appendChild(makeActionButton(t('deleteAction'), 'btn btn-danger btn-sm', () => deleteUser(user.username)));
+            actionCell.appendChild(makeActionButton(t('deleteAction'), 'btn btn-danger btn-sm', () => deleteUser(user.id)));
         } else {
             actionCell.textContent = '—';
         }
+        const userName = getUserFullName(user) || '—';
+        const loginOrEmail = user.username || user.email || '—';
+        const roleLabel = getUserRoleLabel(user.role);
+        const statusLabel = user.status === 'invited' ? t('statusInvited') : t('statusActive');
         row.innerHTML = `
-            <td>${escapeHtml(user.username)}</td>
-            <td>${escapeHtml(user.fullName)}</td>
-            <td><span class="role-badge">${t('roleInspector')}</span></td>
-            <td>${t('statusActive')}</td>
+            <td>${escapeHtml(loginOrEmail)}</td>
+            <td>${escapeHtml(userName)}</td>
+            <td><span class="role-badge">${escapeHtml(roleLabel)}</span></td>
+            <td>${escapeHtml(statusLabel)}</td>
         `;
         row.appendChild(actionCell);
         tbody.appendChild(row);
@@ -3718,10 +4017,10 @@ function showMandatoryChecklist() {
     openHtmlWindow(`${t('mandatoryReportTitle')} (${selectedStar}★)`, body);
 }
 
-function exportAssessmentData() {
-    const payload = {
+function getAssessmentExportPayload() {
+    return {
         exportedAt: new Date().toISOString(),
-        user: currentUser ? currentUser.username : 'unknown',
+        user: currentUser ? (currentUser.username || getUserFullName(currentUser) || 'unknown') : 'unknown',
         selectedStar,
         selectedAccommodationType,
         selectedComplianceFacilityType,
@@ -3735,6 +4034,10 @@ function exportAssessmentData() {
             classification: evaluate3296()
         }
     };
+}
+
+function exportAssessmentData() {
+    const payload = getAssessmentExportPayload();
 
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -3746,6 +4049,49 @@ function exportAssessmentData() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
     showToast(t('reportCardExportTitle'), 'success');
+}
+
+function exportAssessmentDataPdf() {
+    const payload = getAssessmentExportPayload();
+    const win = window.open('', '_blank', 'width=980,height=760');
+    if (!win) {
+        showToast(t('popupBlocked'), 'error');
+        return;
+    }
+
+    win.document.write(`<!DOCTYPE html>
+<html lang="${currentLang}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${escapeHtml(t('reportCardExportPdfTitle'))}</title>
+<style>
+    body { margin: 0; font-family: "Segoe UI", Tahoma, sans-serif; background: #f8fafc; color: #111827; }
+    .wrap { max-width: 980px; margin: 22px auto; padding: 0 16px; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 12px; }
+    h1 { margin: 0 0 10px; font-size: 22px; }
+    .meta { font-size: 12px; color: #475569; margin-bottom: 6px; }
+    pre { white-space: pre-wrap; word-break: break-word; font-size: 11px; line-height: 1.45; color: #1f2937; margin: 0; }
+    .actions { display: flex; gap: 8px; margin-bottom: 12px; }
+    button { border: 1px solid #cbd5e1; background: #fff; padding: 8px 10px; border-radius: 6px; cursor: pointer; }
+</style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="actions">
+            <button onclick="window.print()">${escapeHtml(t('savePdfAction'))}</button>
+            <button onclick="window.close()">${escapeHtml(t('closeAction'))}</button>
+        </div>
+        <div class="card">
+            <h1>${escapeHtml(t('reportCardExportPdfTitle'))}</h1>
+            <div class="meta">${escapeHtml(payload.exportedAt)}</div>
+            <pre>${escapeHtml(JSON.stringify(payload, null, 2))}</pre>
+        </div>
+    </div>
+</body>
+</html>`);
+    win.document.close();
+    showToast(t('reportCardExportPdfTitle'), 'success');
 }
 
 function applyLanguage() {
@@ -3792,6 +4138,8 @@ function applyLanguage() {
         reportCardMandatoryDesc: 'reportCardMandatoryDesc',
         reportCardExportTitle: 'reportCardExportTitle',
         reportCardExportDesc: 'reportCardExportDesc',
+        reportCardExportPdfTitle: 'reportCardExportPdfTitle',
+        reportCardExportPdfDesc: 'reportCardExportPdfDesc',
         assessmentsTitle: 'assessmentsTitle',
         reportsTitle: 'reportsTitle',
         usersTitle: 'usersTitle',
@@ -3829,11 +4177,20 @@ function applyLanguage() {
         userTableActions: 'userTableActions',
         addUserTitle: 'addUserTitle',
         addUserSubtitle: 'addUserSubtitle',
-        newFullNameLabel: 'fullNameLabel',
-        newUsernameLabel: 'newUsernameLabel',
-        newPasswordLabel: 'newPasswordLabel',
+        newFirstNameLabel: 'newFirstNameLabel',
+        newLastNameLabel: 'newLastNameLabel',
+        newEmailLabel: 'newEmailLabel',
+        newRoleLabel: 'newRoleLabel',
         addUserCancelBtn: 'addUserCancel',
         addUserSubmitBtn: 'addUserSubmit',
+        roleOptionUser: 'roleUser',
+        roleOptionAdmin: 'roleAdmin',
+        inviteSetupTitle: 'inviteSetupTitle',
+        inviteSetupSubtitle: 'inviteSetupSubtitle',
+        inviteUsernameLabel: 'inviteUsernameLabel',
+        invitePasswordLabel: 'invitePasswordLabel',
+        invitePasswordConfirmLabel: 'invitePasswordConfirmLabel',
+        inviteSetupSubmitBtn: 'inviteSetupSubmitBtn',
         starModalMandatoryBtn: 'mandatory',
         starModalOptionalBtn: 'optional',
         starModalCloseBtn: 'closeAction'
@@ -3848,9 +4205,12 @@ function applyLanguage() {
         ['username', 'usernamePlaceholder'],
         ['password', 'passwordPlaceholder'],
         ['classificationSearch', 'classificationSearchPlaceholder'],
-        ['newFullName', 'fullNamePlaceholder'],
-        ['newUsername', 'newUsernamePlaceholder'],
-        ['newPassword', 'newPasswordPlaceholder']
+        ['newFirstName', 'newFirstNamePlaceholder'],
+        ['newLastName', 'newLastNamePlaceholder'],
+        ['newEmail', 'newEmailPlaceholder'],
+        ['inviteUsername', 'inviteUsernamePlaceholder'],
+        ['invitePassword', 'invitePasswordPlaceholder'],
+        ['invitePasswordConfirm', 'invitePasswordConfirmPlaceholder']
     ];
     placeholders.forEach(([id, key]) => {
         const input = document.getElementById(id);
@@ -3865,7 +4225,7 @@ function applyLanguage() {
     if (currentUser) {
         const roleNode = document.getElementById('displayUserRole');
         if (roleNode) {
-            roleNode.textContent = isMasterUser() ? t('roleMaster') : t('roleInspector');
+            roleNode.textContent = getUserRoleLabel(currentUser.role);
         }
     }
 
