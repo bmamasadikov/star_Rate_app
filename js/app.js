@@ -375,6 +375,13 @@ const STAR_MANDATORY_TARGETS = Object.freeze({
     4: 86,
     5: 98
 });
+const STAR_MIN_POINTS_TARGETS = Object.freeze({
+    1: 135,
+    2: 193,
+    3: 274,
+    4: 338,
+    5: 399
+});
 const MASTER_ACCOUNT = { username: 'master', password: 'master', fullName: 'Master Account', role: 'master' };
 
 const STORAGE_KEYS = {
@@ -1767,6 +1774,7 @@ function updateStats() {
     if (missingCountEl) missingCountEl.textContent = missing;
 
     const totalCriteriaCount = getTotalClassificationCriteriaCount();
+    const maxPointsForSelectedStar = getMaxPointsForStar(selectedStar);
     const assessedCountEl = document.getElementById('assessedCount');
     const totalCriteriaEl = document.getElementById('totalCriteria');
     const currentPointsEl = document.getElementById('currentPoints');
@@ -1775,7 +1783,7 @@ function updateStats() {
     if (assessedCountEl) assessedCountEl.textContent = assessed;
     if (totalCriteriaEl) totalCriteriaEl.textContent = totalCriteriaCount;
     if (currentPointsEl) currentPointsEl.textContent = totalPoints;
-    if (maxPointsEl) maxPointsEl.textContent = CLASSIFICATION_DATA_3296.maxPoints;
+    if (maxPointsEl) maxPointsEl.textContent = maxPointsForSelectedStar;
     if (progressFillEl) {
         const pct = totalCriteriaCount ? (assessed / totalCriteriaCount) * 100 : 0;
         progressFillEl.style.width = `${pct.toFixed(1)}%`;
@@ -1986,6 +1994,7 @@ function generateReport() {
     const complianceResult = evaluate3220();
     const classificationResult = evaluate3296();
     const pointsBreakdown = getClassificationPointsBreakdown();
+    const classificationMaxPoints = getMaxPointsForStar(selectedStar);
     const mailTo = contactEmail ? `mailto:${contactEmail}` : 'mailto:';
     const assessmentRecord = createAssessmentRecord();
     const reportId = createId('report');
@@ -2058,7 +2067,7 @@ function generateReport() {
         <div class="report-result">
             <div class="stars">${classificationResult.achieved ? '★'.repeat(classificationResult.star) : '—'}</div>
             <h2>${classificationTitle}</h2>
-            <p class="score">${classificationResult.points} / ${CLASSIFICATION_DATA_3296.maxPoints} ${t('pointsLabel')}</p>
+            <p class="score">${classificationResult.points} / ${classificationMaxPoints} ${t('pointsLabel')}</p>
         </div>
 
         <div class="report-summary">
@@ -2526,14 +2535,7 @@ function isComplianceRequirementMandatory(req) {
 }
 
 function getMinPointsForStar(star) {
-    ensureAccommodationTypeSelection();
-    const types = getAccommodationTypes();
-    const selectedType = types[selectedAccommodationType];
-    const selectedTypeMin = selectedType?.minScores ? Number(selectedType.minScores[Number(star)]) : NaN;
-    if (Number.isFinite(selectedTypeMin)) return selectedTypeMin;
-
-    const starLevel = getStarLevel(star);
-    return starLevel ? Number(starLevel.minTotalPoints) || 0 : 0;
+    return STAR_MIN_POINTS_TARGETS[Number(star)] || 0;
 }
 
 function populateAccommodationTypeOptions() {
@@ -2630,6 +2632,12 @@ function getMandatoryIdsForLevel(level) {
 
 function getTotalClassificationCriteriaCount() {
     return TOTAL_CRITERIA_3296;
+}
+
+function getMaxPointsForStar(star = selectedStar) {
+    return getStarCriteriaBuckets(star).all.reduce((sum, criterion) => {
+        return sum + (Number(criterion.points) || 0);
+    }, 0);
 }
 
 function getAllClassificationCriteria() {
@@ -3281,7 +3289,7 @@ function updateAssessmentPanel() {
 function updateDashboardStats() {
     const totalCriteria = getTotalClassificationCriteriaCount();
     const categories = (CLASSIFICATION_DATA_3296.sections || []).length;
-    const maxPoints = CLASSIFICATION_DATA_3296.maxPoints || 0;
+    const maxPoints = getMaxPointsForStar(selectedStar);
     const mandatory5 = getMandatoryIdsForLevel(getStarLevel(5)).length;
 
     const statTotalCriteria = document.getElementById('statTotalCriteria');
@@ -3385,12 +3393,13 @@ function openHtmlWindow(title, bodyHtml) {
 }
 
 function showGapReport() {
-    const totalPoints = calculateTotalYesPoints();
     let body = '';
 
     [1, 2, 3, 4, 5].forEach(star => {
         const level = getStarLevel(star);
         if (!level) return;
+        const totalPoints = calculateTotalYesPoints(star);
+        const maxPoints = getMaxPointsForStar(star);
         const failedMandatory = getMandatoryIdsForLevel(level).filter(id => {
             const status = classificationAnswers[id];
             return status !== 'yes' && status !== 'na';
@@ -3401,7 +3410,7 @@ function showGapReport() {
             <div class="card">
                 <h3>${'★'.repeat(star)} (${star}★)</h3>
                 <div class="item">${t('reportRequired')} <strong>${minPoints}</strong> ${t('pointsLabel')}</div>
-                <div class="item">${t('reportTotalPoints')} <strong>${totalPoints}</strong></div>
+                <div class="item">${t('reportTotalPoints')} <strong>${totalPoints}</strong> / <strong>${maxPoints}</strong></div>
                 <div class="item">${t('reportShortfall')} <strong>${pointsGap}</strong></div>
                 <div class="item">${t('mandatory')}: <strong>${failedMandatory.length}</strong> missing</div>
             </div>
