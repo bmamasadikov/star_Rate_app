@@ -1,6 +1,42 @@
 let COMPLIANCE_DATA_3220 = null;
 let CLASSIFICATION_DATA_3296 = null;
 
+function normalizeMandatoryValue(value) {
+    if (value === true) return true;
+    if (value === false) return false;
+    if (typeof value === 'string') {
+        const normalized = value.trim().toLowerCase();
+        if (normalized === 'true') return true;
+        if (normalized === 'false') return false;
+    }
+    return false;
+}
+
+function normalizeMandatoryKey(rawKey) {
+    const key = String(rawKey || '').trim().toLowerCase();
+    const starKeyMatch = key.match(/^([1-5])(?:_star)?$/);
+    if (starKeyMatch) return starKeyMatch[1];
+    if (/^\*{1,5}$/.test(key)) return String(key.length);
+    return null;
+}
+
+function createEmptyMandatoryMap() {
+    return { '1': false, '2': false, '3': false, '4': false, '5': false };
+}
+
+function normalizeMandatoryObject(rawMandatory) {
+    const normalized = createEmptyMandatoryMap();
+    if (!rawMandatory || typeof rawMandatory !== 'object') return normalized;
+
+    Object.entries(rawMandatory).forEach(([rawKey, rawValue]) => {
+        const starKey = normalizeMandatoryKey(rawKey);
+        if (!starKey) return;
+        normalized[starKey] = normalizeMandatoryValue(rawValue);
+    });
+
+    return normalized;
+}
+
 function normalizeComplianceData(rawData) {
     if (!rawData || typeof rawData !== 'object') {
         throw new Error('Invalid compliance dataset');
@@ -105,30 +141,86 @@ function normalizeClassificationData(rawData) {
 
     // Current app-native shape
     if (Array.isArray(rawData.sections) && Array.isArray(rawData.starLevels)) {
-        if (rawData.accommodationTypes && typeof rawData.accommodationTypes === 'object') {
-            return rawData;
-        }
-
-        const defaultTypeKey = 'hotels_and_similar';
-        const defaultType = {
-            key: defaultTypeKey,
-            name: {
-                uz: "Mehmonxonalar va o'xshash joylashtirish vositalari",
-                ru: 'Гостиницы и аналогичные средства размещения',
-                en: 'Hotels and similar accommodation facilities'
-            },
-            minScores: {}
-        };
+        const mandatoryById = new Map();
         (rawData.starLevels || []).forEach(level => {
-            defaultType.minScores[Number(level.star)] = Number(level.minTotalPoints) || 0;
+            const star = String(Number(level.star));
+            if (!/^[1-5]$/.test(star)) return;
+            (level.mandatoryIds || []).forEach(rawId => {
+                const id = String(rawId);
+                if (!mandatoryById.has(id)) mandatoryById.set(id, createEmptyMandatoryMap());
+                mandatoryById.get(id)[star] = true;
+            });
         });
+
+        const sections = (rawData.sections || []).map(section => ({
+            ...section,
+            criteria: (section.criteria || []).map(item => {
+                const id = String(item.id);
+                const derivedMandatory = mandatoryById.get(id);
+                const mergedMandatory = normalizeMandatoryObject(item.mandatory || derivedMandatory || {});
+                const isGroupHeader = Boolean(item.isGroupHeader || item.is_group_header);
+                return {
+                    ...item,
+                    id,
+                    points: Number(item.points) || 0,
+                    mandatory: mergedMandatory,
+                    assessable: typeof item.assessable === 'boolean' ? item.assessable : !isGroupHeader,
+                    isGroupHeader
+                };
+            })
+        }));
+
+        const starLevels = (rawData.starLevels || []).map(level => {
+            const star = Number(level.star);
+            const starKey = String(star);
+            const mandatoryIds = [];
+            sections.forEach(section => {
+                (section.criteria || []).forEach(criterion => {
+                    if (!criterion.assessable) return;
+                    if (criterion.mandatory && criterion.mandatory[starKey] === true) {
+                        mandatoryIds.push(String(criterion.id));
+                    }
+                });
+            });
+
+            return {
+                ...level,
+                star,
+                label: level.label || '★'.repeat(star),
+                minTotalPoints: Number(level.minTotalPoints) || 0,
+                mandatoryIds: Array.from(new Set(mandatoryIds))
+            };
+        });
+
+        let accommodationTypes = rawData.accommodationTypes && typeof rawData.accommodationTypes === 'object'
+            ? rawData.accommodationTypes
+            : null;
+        let defaultAccommodationType = rawData.defaultAccommodationType || null;
+
+        if (!accommodationTypes) {
+            const defaultTypeKey = 'hotels_and_similar';
+            const defaultType = {
+                key: defaultTypeKey,
+                name: {
+                    uz: "Mehmonxonalar va o'xshash joylashtirish vositalari",
+                    ru: 'Гостиницы и аналогичные средства размещения',
+                    en: 'Hotels and similar accommodation facilities'
+                },
+                minScores: {}
+            };
+            starLevels.forEach(level => {
+                defaultType.minScores[Number(level.star)] = Number(level.minTotalPoints) || 0;
+            });
+            accommodationTypes = { [defaultTypeKey]: defaultType };
+            defaultAccommodationType = defaultTypeKey;
+        }
 
         return {
             ...rawData,
-            accommodationTypes: {
-                [defaultTypeKey]: defaultType
-            },
-            defaultAccommodationType: defaultTypeKey
+            sections,
+            starLevels,
+            accommodationTypes,
+            defaultAccommodationType: defaultAccommodationType || Object.keys(accommodationTypes)[0]
         };
     }
 
@@ -182,37 +274,31 @@ function normalizeClassificationData(rawData) {
             },
             points: Number(item.points) || 0,
             reference: item.reference || '',
+            mandatory: normalizeMandatoryObject(item.mandatory || {}),
             assessable: !Boolean(item.is_group_header),
             isGroupHeader: Boolean(item.is_group_header)
         }))
     }));
 
-    const mandatoryByStar = new Map([
-        [1, []],
-        [2, []],
-        [3, []],
-        [4, []],
-        [5, []]
-    ]);
-
-    categories.forEach(category => {
-        (category.items || []).forEach(item => {
-            if (item.is_group_header) return;
-            const mandatory = item.mandatory || {};
-            [1, 2, 3, 4, 5].forEach(star => {
-                if (mandatory[`${star}_star`]) {
-                    mandatoryByStar.get(star).push(String(item.id));
+    const starLevels = [1, 2, 3, 4, 5].map(star => {
+        const starKey = String(star);
+        const mandatoryIds = [];
+        sections.forEach(section => {
+            (section.criteria || []).forEach(criterion => {
+                if (!criterion.assessable) return;
+                if (criterion.mandatory && criterion.mandatory[starKey] === true) {
+                    mandatoryIds.push(String(criterion.id));
                 }
             });
         });
-    });
 
-    const starLevels = [1, 2, 3, 4, 5].map(star => ({
-        star,
-        label: '★'.repeat(star),
-        minTotalPoints: Number(defaultMinimumScores[star]) || 0,
-        mandatoryIds: Array.from(new Set(mandatoryByStar.get(star)))
-    }));
+        return {
+            star,
+            label: '★'.repeat(star),
+            minTotalPoints: Number(defaultMinimumScores[star]) || 0,
+            mandatoryIds: Array.from(new Set(mandatoryIds))
+        };
+    });
 
     const totalPoints = sections.reduce((sum, section) => {
         return sum + section.criteria.reduce((inner, criterion) => inner + (Number(criterion.points) || 0), 0);
@@ -253,13 +339,6 @@ async function loadData() {
 // =====================================================
 
 const TOTAL_CRITERIA_3296 = 170;
-const STAR_TARGET_METRICS = {
-    1: { minPoints: 320, mandatory: 40, total: 170 },
-    2: { minPoints: 378, mandatory: 43, total: 170 },
-    3: { minPoints: 407, mandatory: 54, total: 170 },
-    4: { minPoints: 465, mandatory: 86, total: 170 },
-    5: { minPoints: 494, mandatory: 98, total: 170 }
-};
 const MASTER_ACCOUNT = { username: 'master', password: 'master', fullName: 'Master Account', role: 'master' };
 
 const STORAGE_KEYS = {
@@ -962,19 +1041,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function initStarCards() {
     const container = document.getElementById('starCards');
+    const totalCriteriaCount = getTotalClassificationCriteriaCount();
     container.innerHTML = '';
     ensureAccommodationTypeSelection();
 
     CLASSIFICATION_DATA_3296.starLevels.forEach(level => {
-        const metrics = getStarTargetMetrics(level.star);
+        const mandatoryCount = getMandatoryIdsForLevel(level).length;
+        const optionalCount = Math.max(0, totalCriteriaCount - mandatoryCount);
+        const minPoints = getMinPointsForStar(level.star);
         const card = document.createElement('div');
         card.className = 'star-card' + (level.star === selectedStar ? ' selected' : '');
         card.innerHTML = `
             <div class="stars">${level.label}</div>
             <div class="label">${level.star} ${t('starLabel')}</div>
-            <div class="points">${t('minPts')}: ${metrics.minPoints} ${t('pointsLabel')}</div>
-            <div class="points">${t('mandatory')}: ${metrics.mandatoryCount}</div>
-            <div class="points">${t('optional')}: ${metrics.optionalCount}</div>
+            <div class="points">${t('minPts')}: ${minPoints} ${t('pointsLabel')}</div>
+            <div class="points">${t('mandatory')}: ${mandatoryCount}</div>
+            <div class="points">${t('optional')}: ${optionalCount}</div>
         `;
         card.onclick = () => openStarModal(level.star);
         container.appendChild(card);
@@ -995,10 +1077,13 @@ function openStarModal(star) {
     const modal = document.getElementById('starModal');
     const title = document.getElementById('starModalTitle');
     const subtitle = document.getElementById('starModalSubtitle');
-    const metrics = getStarTargetMetrics(star);
+    const totalCriteriaCount = getTotalClassificationCriteriaCount();
+    const starLevel = CLASSIFICATION_DATA_3296.starLevels.find(l => l.star === star);
+    const mandatoryCount = starLevel ? getMandatoryIdsForLevel(starLevel).length : 0;
+    const optionalCount = Math.max(0, totalCriteriaCount - mandatoryCount);
 
     if (title) title.textContent = `${star} ${t('starLabel')}`;
-    if (subtitle) subtitle.textContent = `${t('mandatory')}: ${metrics.mandatoryCount} | ${t('optional')}: ${metrics.optionalCount}`;
+    if (subtitle) subtitle.textContent = `${t('mandatory')}: ${mandatoryCount} | ${t('optional')}: ${optionalCount}`;
     if (modal) {
         modal.dataset.star = String(star);
         modal.classList.add('active');
@@ -1659,12 +1744,11 @@ function updateStats() {
     const mandatoryStatusEl = document.getElementById('mandatoryStatus');
     if (currentStarLevel && mandatoryStatusEl) {
         const mandatoryIds = getMandatoryIdsForLevel(currentStarLevel);
-        const targetMandatory = STAR_TARGET_METRICS[selectedStar]?.mandatory || mandatoryIds.length;
         const fulfilledMandatory = mandatoryIds.filter(id => {
             const status = classificationAnswers[id];
             return status === 'yes' || status === 'na';
         }).length;
-        mandatoryStatusEl.textContent = `${Math.min(fulfilledMandatory, targetMandatory)}/${targetMandatory}`;
+        mandatoryStatusEl.textContent = `${fulfilledMandatory}/${mandatoryIds.length}`;
     }
 
     const evidenceCountEl = document.getElementById('evidenceCount');
@@ -2450,43 +2534,18 @@ function getAssessableCriterionIdSet() {
     return ids;
 }
 
-function getMandatoryIdsForLevel(level) {
-    if (!level) return [];
-    const assessableIds = getAssessableCriterionIdSet();
-    return Array.from(new Set((level.mandatoryIds || [])
-        .map(id => String(id))
-        .filter(id => assessableIds.has(id))));
+function getMandatoryCriteriaForStar(star) {
+    const normalizedStar = String(Number(star));
+    if (!/^[1-5]$/.test(normalizedStar)) return [];
+    return getAllClassificationCriteria().filter(criterion => {
+        const mandatory = criterion && criterion.mandatory;
+        return Boolean(mandatory && mandatory[normalizedStar] === true);
+    });
 }
 
-function getStarTargetMetrics(star) {
-    const normalizedStar = Number(star);
-    const target = STAR_TARGET_METRICS[normalizedStar];
-    const level = getStarLevel(normalizedStar);
-    const mandatoryCount = getMandatoryIdsForLevel(level).length;
-    const minPoints = getMinPointsForStar(normalizedStar);
-    const total = getTotalClassificationCriteriaCount();
-
-    if (!target) {
-        return {
-            minPoints,
-            mandatoryCount,
-            total,
-            optionalCount: Math.max(0, total - mandatoryCount)
-        };
-    }
-
-    const configuredTotal = Number(target.total) || total;
-    const configuredMandatory = Number(target.mandatory);
-    const configuredMin = Number(target.minPoints);
-    const finalMandatory = Number.isFinite(configuredMandatory) ? configuredMandatory : mandatoryCount;
-    const finalMin = Number.isFinite(configuredMin) ? configuredMin : minPoints;
-
-    return {
-        minPoints: finalMin,
-        mandatoryCount: finalMandatory,
-        total: configuredTotal,
-        optionalCount: Math.max(0, configuredTotal - finalMandatory)
-    };
+function getMandatoryIdsForLevel(level) {
+    if (!level) return [];
+    return Array.from(new Set(getMandatoryCriteriaForStar(level.star).map(criterion => String(criterion.id))));
 }
 
 function getTotalClassificationCriteriaCount() {
@@ -2530,13 +2589,13 @@ function getCriterionById(id) {
 
 function buildMandatoryStarMap() {
     const map = new Map();
-    const assessableIds = getAssessableCriterionIdSet();
-    (CLASSIFICATION_DATA_3296.starLevels || []).forEach(level => {
-        getMandatoryIdsForLevel(level).forEach(id => {
-            const key = String(id);
-            if (!assessableIds.has(key)) return;
-            if (!map.has(key)) map.set(key, new Set());
-            map.get(key).add(Number(level.star));
+    getAllClassificationCriteria().forEach(criterion => {
+        const key = String(criterion.id);
+        if (!map.has(key)) map.set(key, new Set());
+        ['1', '2', '3', '4', '5'].forEach(starKey => {
+            if (criterion.mandatory && criterion.mandatory[starKey] === true) {
+                map.get(key).add(Number(starKey));
+            }
         });
     });
     return map;
@@ -3119,13 +3178,12 @@ function updateAssessmentPanel() {
         .length;
     const mandatoryFiveStar = getStarLevel(5) || { mandatoryIds: [] };
     const mandatoryIds = getMandatoryIdsForLevel(mandatoryFiveStar);
-    const targetMandatory = STAR_TARGET_METRICS[5]?.mandatory || mandatoryIds.length;
     const fulfilledMandatory = mandatoryIds.filter(id => {
         const status = classificationAnswers[id];
         return status === 'yes' || status === 'na';
     }).length;
-    const mandatoryPct = targetMandatory
-        ? Math.round((Math.min(fulfilledMandatory, targetMandatory) / targetMandatory) * 100)
+    const mandatoryPct = mandatoryIds.length
+        ? Math.round((fulfilledMandatory / mandatoryIds.length) * 100)
         : 0;
     const eligibleStar = getEligibleStar(points);
     const starsString = eligibleStar > 0
@@ -3144,10 +3202,10 @@ function updateAssessmentPanel() {
 }
 
 function updateDashboardStats() {
-    const totalCriteria = STAR_TARGET_METRICS[5]?.total || getTotalClassificationCriteriaCount();
+    const totalCriteria = getTotalClassificationCriteriaCount();
     const categories = (CLASSIFICATION_DATA_3296.sections || []).length;
     const maxPoints = CLASSIFICATION_DATA_3296.maxPoints || 0;
-    const mandatory5 = STAR_TARGET_METRICS[5]?.mandatory || getMandatoryIdsForLevel(getStarLevel(5)).length;
+    const mandatory5 = getMandatoryIdsForLevel(getStarLevel(5)).length;
 
     const statTotalCriteria = document.getElementById('statTotalCriteria');
     const statCategories = document.getElementById('statCategories');
@@ -3168,8 +3226,6 @@ function buildStarListingHtml(starLevel, type) {
             return type === 'mandatory' ? isMandatory : !isMandatory;
         })
         .sort((a, b) => compareCriterionIds(a.id, b.id));
-    const metrics = getStarTargetMetrics(starLevel.star);
-    const displayedCount = type === 'mandatory' ? metrics.mandatoryCount : metrics.optionalCount;
 
     return `<!DOCTYPE html>
 <html lang="${currentLang}">
@@ -3192,7 +3248,7 @@ function buildStarListingHtml(starLevel, type) {
 <body>
     <div class="wrap">
         <h1>${starLevel.label} ${t('starLabel')} - ${type === 'mandatory' ? t('mandatory') : t('optional')}</h1>
-        <p>${t('criterionLabel')}: ${displayedCount}</p>
+        <p>${t('criterionLabel')}: ${criteria.length}</p>
         <table>
             <thead>
                 <tr>
