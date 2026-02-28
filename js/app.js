@@ -52,6 +52,63 @@ function buildOptionalObject(mandatory) {
     return optional;
 }
 
+function normalizeReferenceCodes(rawReference) {
+    if (!rawReference) return [];
+    const normalized = String(rawReference)
+        .replaceAll('А', 'A')
+        .replaceAll('а', 'a');
+
+    const parts = normalized
+        .split(/[,\s;]+/)
+        .map(part => part.trim())
+        .filter(Boolean);
+
+    const codes = parts
+        .map(part => part.toUpperCase().replace(/[^A-Z0-9]/g, ''))
+        .filter(part => /^A\d+$/.test(part));
+
+    return Array.from(new Set(codes));
+}
+
+function normalizeQuantityValue(value) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric) || numeric <= 0) return 0;
+    return Math.floor(numeric);
+}
+
+function normalizeQuantityMap(rawMap) {
+    const normalized = {};
+    if (!rawMap || typeof rawMap !== 'object') return normalized;
+    Object.entries(rawMap).forEach(([id, value]) => {
+        const quantity = normalizeQuantityValue(value);
+        if (quantity > 0) {
+            normalized[String(id)] = quantity;
+        }
+    });
+    return normalized;
+}
+
+function normalizeScoringRule(rawRule, fallbackMaxPoints) {
+    if (!rawRule || typeof rawRule !== 'object') return null;
+    if (rawRule.type !== 'per_unit') return null;
+
+    const pointsPerUnit = Number(rawRule.points_per_unit);
+    const maxPoints = Number(rawRule.max_points ?? fallbackMaxPoints);
+    if (!Number.isFinite(pointsPerUnit) || pointsPerUnit <= 0) return null;
+    if (!Number.isFinite(maxPoints) || maxPoints < 0) return null;
+
+    return {
+        type: 'per_unit',
+        pointsPerUnit,
+        maxPoints,
+        unit: {
+            uz: rawRule.unit_uz || '',
+            ru: rawRule.unit_ru || '',
+            en: rawRule.unit_en || ''
+        }
+    };
+}
+
 function normalizeComplianceData(rawData) {
     if (!rawData || typeof rawData !== 'object') {
         throw new Error('Invalid compliance dataset');
@@ -167,33 +224,48 @@ function normalizeClassificationData(rawData) {
             });
         });
 
-        const sections = (rawData.sections || []).map(section => ({
-            ...section,
-            criteria: (section.criteria || []).map(item => {
-                const id = String(item.id);
-                const derivedMandatory = mandatoryById.get(id);
-                const mergedMandatory = normalizeMandatoryObject(item.mandatory || derivedMandatory || {});
-                const strictOptional = normalizeOptionalObject(item.optional || {});
-                const mergedOptional = buildOptionalObject(mergedMandatory);
-                STAR_KEYS.forEach(starKey => {
-                    if (mergedMandatory[starKey] === true) {
-                        mergedOptional[starKey] = false;
-                    } else if (strictOptional[starKey] === true) {
-                        mergedOptional[starKey] = true;
-                    }
-                });
-                const isGroupHeader = Boolean(item.isGroupHeader || item.is_group_header);
-                return {
-                    ...item,
-                    id,
-                    points: Number(item.points) || 0,
-                    mandatory: mergedMandatory,
-                    optional: mergedOptional,
-                    assessable: typeof item.assessable === 'boolean' ? item.assessable : !isGroupHeader,
-                    isGroupHeader
-                };
-            })
-        }));
+        const sections = (rawData.sections || []).map(section => {
+            const sectionReferenceCodes = normalizeReferenceCodes(section.reference || section.references || '');
+            return {
+                ...section,
+                criteria: (section.criteria || []).map(item => {
+                    const id = String(item.id);
+                    const derivedMandatory = mandatoryById.get(id);
+                    const mergedMandatory = normalizeMandatoryObject(item.mandatory || derivedMandatory || {});
+                    const strictOptional = normalizeOptionalObject(item.optional || {});
+                    const mergedOptional = buildOptionalObject(mergedMandatory);
+                    STAR_KEYS.forEach(starKey => {
+                        if (mergedMandatory[starKey] === true) {
+                            mergedOptional[starKey] = false;
+                        } else if (strictOptional[starKey] === true) {
+                            mergedOptional[starKey] = true;
+                        }
+                    });
+                    const isGroupHeader = Boolean(item.isGroupHeader || item.is_group_header);
+                    const referenceCodes = Array.from(new Set([
+                        ...sectionReferenceCodes,
+                        ...normalizeReferenceCodes(item.reference || item.references || '')
+                    ]));
+                    const rawMaxPoints = Number(item.max_points);
+                    const scoringRule = normalizeScoringRule(item.scoring_rule || item.scoringRule, rawMaxPoints);
+                    const maxPoints = Number.isFinite(rawMaxPoints) && rawMaxPoints >= 0
+                        ? rawMaxPoints
+                        : (scoringRule ? scoringRule.maxPoints : (Number(item.points) || 0));
+                    return {
+                        ...item,
+                        id,
+                        points: Number(item.points) || 0,
+                        maxPoints,
+                        scoringRule,
+                        mandatory: mergedMandatory,
+                        optional: mergedOptional,
+                        referenceCodes,
+                        assessable: typeof item.assessable === 'boolean' ? item.assessable : !isGroupHeader,
+                        isGroupHeader
+                    };
+                })
+            };
+        });
 
         const starLevels = (rawData.starLevels || []).map(level => {
             const star = Number(level.star);
@@ -283,31 +355,46 @@ function normalizeClassificationData(rawData) {
         : (Object.keys(accommodationTypes)[0] || 'hotels_and_similar');
     const defaultMinimumScores = accommodationTypes[defaultAccommodationType]?.minScores || {};
 
-    const sections = categories.map(category => ({
-        id: category.id,
-        name: {
-            uz: category.name_uz || '',
-            ru: category.name_ru || '',
-            en: category.name_en || ''
-        },
-        criteria: (category.items || []).map(item => {
-            const mandatory = normalizeMandatoryObject(item.mandatory || {});
-            return {
-                id: String(item.id),
-                title: {
-                    uz: item.criterion_uz || '',
-                    ru: item.criterion_ru || '',
-                    en: item.criterion_en || ''
-                },
-                points: Number(item.points) || 0,
-                reference: item.reference || '',
-                mandatory,
-                optional: buildOptionalObject(mandatory),
-                assessable: !Boolean(item.is_group_header),
-                isGroupHeader: Boolean(item.is_group_header)
-            };
-        })
-    }));
+    const sections = categories.map(category => {
+        const sectionReferenceCodes = normalizeReferenceCodes(category.reference || '');
+        return {
+            id: category.id,
+            name: {
+                uz: category.name_uz || '',
+                ru: category.name_ru || '',
+                en: category.name_en || ''
+            },
+            criteria: (category.items || []).map(item => {
+                const mandatory = normalizeMandatoryObject(item.mandatory || {});
+                const referenceCodes = Array.from(new Set([
+                    ...sectionReferenceCodes,
+                    ...normalizeReferenceCodes(item.reference || '')
+                ]));
+                const rawMaxPoints = Number(item.max_points);
+                const scoringRule = normalizeScoringRule(item.scoring_rule, rawMaxPoints);
+                const maxPoints = Number.isFinite(rawMaxPoints) && rawMaxPoints >= 0
+                    ? rawMaxPoints
+                    : (scoringRule ? scoringRule.maxPoints : (Number(item.points) || 0));
+                return {
+                    id: String(item.id),
+                    title: {
+                        uz: item.criterion_uz || '',
+                        ru: item.criterion_ru || '',
+                        en: item.criterion_en || ''
+                    },
+                    points: Number(item.points) || 0,
+                    maxPoints,
+                    scoringRule,
+                    reference: item.reference || '',
+                    referenceCodes,
+                    mandatory,
+                    optional: buildOptionalObject(mandatory),
+                    assessable: !Boolean(item.is_group_header),
+                    isGroupHeader: Boolean(item.is_group_header)
+                };
+            })
+        };
+    });
 
     const starLevels = [1, 2, 3, 4, 5].map(star => {
         const starKey = String(star);
@@ -330,7 +417,10 @@ function normalizeClassificationData(rawData) {
     });
 
     const totalPoints = sections.reduce((sum, section) => {
-        return sum + section.criteria.reduce((inner, criterion) => inner + (Number(criterion.points) || 0), 0);
+        return sum + section.criteria.reduce((inner, criterion) => {
+            if (!isAssessableClassificationCriterion(criterion)) return inner;
+            return inner + (Number(criterion.maxPoints) || Number(criterion.points) || 0);
+        }, 0);
     }, 0);
 
     return {
@@ -483,6 +573,10 @@ const UI_TEXT = {
         reportRequired: 'Required:',
         reportShortfall: 'Shortfall:',
         pointsLabel: 'points',
+        quantityLabel: 'Quantity',
+        scoreLabel: 'Score',
+        maxLabel: 'Max',
+        unitLabel: 'unit',
         mandatoryPointsAchieved: 'Mandatory Points Achieved',
         optionalPointsAchieved: 'Optional Points Achieved',
         mandatoryPointsRequired: 'Required Mandatory Points',
@@ -661,6 +755,10 @@ const UI_TEXT = {
         reportRequired: 'Kerakli:',
         reportShortfall: 'Kamchilik:',
         pointsLabel: 'ball',
+        quantityLabel: 'Miqdor',
+        scoreLabel: 'Ball',
+        maxLabel: 'Maks',
+        unitLabel: 'birlik',
         mandatoryPointsAchieved: 'Majburiy ballar (olingan)',
         optionalPointsAchieved: 'Ixtiyoriy ballar (olingan)',
         mandatoryPointsRequired: 'Majburiy ballar (kerakli)',
@@ -839,6 +937,10 @@ const UI_TEXT = {
         reportRequired: 'Требуется:',
         reportShortfall: 'Недобор:',
         pointsLabel: 'баллов',
+        quantityLabel: 'Количество',
+        scoreLabel: 'Баллы',
+        maxLabel: 'Макс',
+        unitLabel: 'единица',
         mandatoryPointsAchieved: 'Обязательные баллы (получено)',
         optionalPointsAchieved: 'Доп. баллы (получено)',
         mandatoryPointsRequired: 'Обязательные баллы (нужно)',
@@ -922,6 +1024,7 @@ let selectedAccommodationType = 'hotels_and_similar';
 let selectedComplianceFacilityType = 'hotels_and_similar';
 let complianceAnswers = {};
 let classificationAnswers = {};
+let classificationQuantities = {};
 let assessmentData = {
     hotelName: '',
     hotelAddress: '',
@@ -1001,6 +1104,9 @@ function loadStoredData() {
         if (workingState.classificationAnswers && typeof workingState.classificationAnswers === 'object') {
             classificationAnswers = { ...workingState.classificationAnswers };
         }
+        if (workingState.classificationQuantities && typeof workingState.classificationQuantities === 'object') {
+            classificationQuantities = normalizeQuantityMap(workingState.classificationQuantities);
+        }
         if (workingState.assessmentData && typeof workingState.assessmentData === 'object') {
             assessmentData = { ...assessmentData, ...workingState.assessmentData };
         }
@@ -1028,6 +1134,7 @@ function persistWorkingState() {
         selectedComplianceFacilityType,
         complianceAnswers,
         classificationAnswers,
+        classificationQuantities,
         assessmentData,
         evidenceData,
         notifications,
@@ -1560,30 +1667,52 @@ function renderClassificationCriteria() {
             sectionHeader.querySelector('.toggle').classList.add('open');
         }
 
-        let criteria = section.criteria
-            .filter(isAssessableClassificationCriterion)
-            .filter(criterion => activeCriteriaIds.has(String(criterion.id)));
-        if (searchTerm) {
-            criteria = criteria.filter(criterion => {
-                const titleText = (criterion.title && (criterion.title[currentLang] || criterion.title.en)) || '';
-                return titleText.toLowerCase().includes(searchTerm) || String(criterion.id).toLowerCase().includes(searchTerm);
-            });
-        }
-        if (hideChecked) {
-            criteria = criteria.filter(criterion => !classificationAnswers[criterion.id]);
-        }
-        if (showMandatoryOnly) {
-            criteria = criteria.filter(criterion => mandatorySet.has(String(criterion.id)));
-        }
-        if (showMissingOnly) {
-            criteria = criteria.filter(criterion => {
+        const rows = [];
+        let currentGroupHeader = null;
+        (section.criteria || []).forEach(criterion => {
+            if (!isAssessableClassificationCriterion(criterion)) {
+                if (criterion.isGroupHeader) {
+                    currentGroupHeader = criterion;
+                }
+                return;
+            }
+            if (!activeCriteriaIds.has(String(criterion.id))) return;
+            const title = (criterion.title && (criterion.title[currentLang] || criterion.title.en)) || '';
+            if (searchTerm && !title.toLowerCase().includes(searchTerm) && !String(criterion.id).toLowerCase().includes(searchTerm)) {
+                return;
+            }
+            if (hideChecked && classificationAnswers[criterion.id]) return;
+            if (showMandatoryOnly && !mandatorySet.has(String(criterion.id))) return;
+            if (showMissingOnly) {
                 const status = classificationAnswers[criterion.id];
-                return status === 'no' || !status;
+                if (status !== 'no' && status) return;
+            }
+            rows.push({
+                criterion,
+                groupHeader: currentGroupHeader
             });
-        }
-        if (!criteria.length) return;
+        });
+        if (!rows.length) return;
 
-        criteria.forEach(criterion => {
+        let lastHeaderId = null;
+        rows.forEach(row => {
+            const criterion = row.criterion;
+            const header = row.groupHeader;
+            const headerId = header ? String(header.id) : null;
+
+            if (header && headerId !== lastHeaderId) {
+                const headerTitle = (header.title && (header.title[currentLang] || header.title.en)) || '';
+                const headerNode = document.createElement('div');
+                headerNode.className = 'criterion-group-header';
+                headerNode.innerHTML = `
+                    <div style="font-size:11px;color:var(--gray-600);font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:8px 2px 4px;border-bottom:1px solid var(--gray-200);margin:4px 0 8px">
+                        #${escapeHtml(header.id)} ${escapeHtml(headerTitle)}
+                    </div>
+                `;
+                sectionContent.appendChild(headerNode);
+                lastHeaderId = headerId;
+            }
+
             const isMandatory = mandatorySet.has(String(criterion.id));
             const item = renderClassificationCriterion(criterion, isMandatory);
             sectionContent.appendChild(item);
@@ -1606,6 +1735,54 @@ function renderClassificationCriterion(criterion, isMandatory) {
     const status = classificationAnswers[criterion.id] || '';
     const evidence = evidenceData[criterion.id] || [];
     const titleText = (criterion.title && (criterion.title[currentLang] || criterion.title.en)) || '';
+    const isPerUnit = isPerUnitCriterion(criterion);
+    const quantity = getCriterionQuantity(criterion.id);
+    const maxPoints = getCriterionMaxPoints(criterion);
+    const earnedPoints = getCriterionEarnedPoints(criterion);
+    const pointsBadgeText = isPerUnit
+        ? `${earnedPoints}/${maxPoints} ${t('pointsLabel')}`
+        : `${criterion.points} ${t('pointsLabel')}`;
+    const referenceCodes = Array.isArray(criterion.referenceCodes)
+        ? criterion.referenceCodes
+        : normalizeReferenceCodes(criterion.reference || '');
+    const referencesHtml = referenceCodes.length
+        ? `
+            <div class="criterion-reference" style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+                ${referenceCodes.map(code => {
+                    const annotationText = getAnnotationText(code);
+                    const tooltip = annotationText ? escapeHtml(`${code}: ${annotationText}`) : escapeHtml(code);
+                    return `<span title="${tooltip}" style="font-size:10px;padding:2px 6px;border:1px solid var(--gray-300);border-radius:999px;background:var(--gray-50);color:var(--gray-600);cursor:help">${escapeHtml(code)}</span>`;
+                }).join('')}
+            </div>
+        `
+        : '';
+    const perUnitDetails = isPerUnit
+        ? `
+            <div class="per-unit-box" style="margin-top:10px;padding:8px 10px;border:1px solid var(--gray-200);border-radius:8px;background:var(--gray-50)">
+                <div style="font-size:11px;color:var(--gray-600);margin-bottom:6px">
+                    ${criterion.scoringRule.pointsPerUnit} × ${escapeHtml(criterion.scoringRule.unit?.[currentLang] || criterion.scoringRule.unit?.en || t('unitLabel'))}
+                    (${t('maxLabel')}: ${maxPoints} ${t('pointsLabel')})
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                    <label for="qty-${criterion.id}" style="font-size:12px;color:var(--gray-700)">${t('quantityLabel')}</label>
+                    <input
+                        id="qty-${criterion.id}"
+                        class="quantity-input"
+                        data-crit-id="${criterion.id}"
+                        type="number"
+                        min="0"
+                        step="1"
+                        value="${quantity}"
+                        ${status === 'yes' ? '' : 'disabled'}
+                        style="width:90px;padding:6px 8px;border:1px solid var(--gray-300);border-radius:6px;font-size:12px;background:#fff"
+                    />
+                    <span style="font-size:12px;color:var(--gray-700)">
+                        ${t('scoreLabel')}: <strong>${earnedPoints}</strong> / ${maxPoints}
+                    </span>
+                </div>
+            </div>
+        `
+        : '';
 
     let itemClass = 'criterion-item';
     if (isMandatory) itemClass += ' mandatory';
@@ -1623,9 +1800,10 @@ function renderClassificationCriterion(criterion, isMandatory) {
                 <span class="criterion-id">#${criterion.id}</span>
                 ${isMandatory ? `<span class="mandatory-badge">${t('mandatory').toUpperCase()}</span>` : ''}
                 <div class="criterion-title">${titleText}</div>
+                ${referencesHtml}
             </div>
             <div class="criterion-badges">
-                <span class="points-badge">${criterion.points} pts</span>
+                <span class="points-badge">${pointsBadgeText}</span>
             </div>
         </div>
         <div class="assessment-controls">
@@ -1633,6 +1811,7 @@ function renderClassificationCriterion(criterion, isMandatory) {
             <button class="status-btn no ${status === 'no' ? 'active' : ''}" data-crit-id="${criterion.id}" data-status="no">✗ ${t('no')}</button>
             <button class="status-btn na ${status === 'na' ? 'active' : ''}" data-crit-id="${criterion.id}" data-status="na">${t('na')}</button>
         </div>
+        ${perUnitDetails}
         <div class="evidence-section">
             <div class="evidence-title">📎 ${t('evidenceTitle')}</div>
             <div class="evidence-buttons">
@@ -1684,14 +1863,34 @@ function renderClassificationCriterion(criterion, isMandatory) {
         });
     });
 
+    const quantityInput = div.querySelector('.quantity-input');
+    if (quantityInput) {
+        quantityInput.addEventListener('input', (e) => {
+            e.stopPropagation();
+            const critId = quantityInput.getAttribute('data-crit-id');
+            setClassificationQuantity(critId, quantityInput.value);
+        });
+    }
+
     return div;
 }
 
 function setClassificationStatus(id, status) {
-    if (classificationAnswers[id] === status) {
-        delete classificationAnswers[id];
+    const criterionId = String(id);
+    const criterion = getCriterionById(criterionId);
+    if (classificationAnswers[criterionId] === status) {
+        delete classificationAnswers[criterionId];
     } else {
-        classificationAnswers[id] = status;
+        classificationAnswers[criterionId] = status;
+    }
+
+    if (criterion && isPerUnitCriterion(criterion)) {
+        const currentQuantity = getCriterionQuantity(criterionId);
+        if (classificationAnswers[criterionId] === 'yes' && currentQuantity <= 0) {
+            classificationQuantities[criterionId] = 1;
+        } else if (classificationAnswers[criterionId] !== 'yes' && currentQuantity <= 0) {
+            delete classificationQuantities[criterionId];
+        }
     }
     renderClassificationCriteria();
     updateStats();
@@ -1739,7 +1938,7 @@ function updateStats() {
             if (!activeCriteriaIds.has(String(criterion.id))) return;
             const status = classificationAnswers[criterion.id];
             if (status === 'yes') {
-                totalPoints += criterion.points;
+                totalPoints += getCriterionEarnedPoints(criterion);
                 fulfilled++;
                 assessed++;
             } else if (status === 'no') {
@@ -1779,8 +1978,7 @@ function updateStats() {
     if (currentStarLevel && mandatoryStatusEl) {
         const mandatoryIds = getMandatoryIdsForLevel(currentStarLevel);
         const fulfilledMandatory = mandatoryIds.filter(id => {
-            const status = classificationAnswers[id];
-            return status === 'yes' || status === 'na';
+            return isMandatoryCriterionIdSatisfied(id);
         }).length;
         mandatoryStatusEl.textContent = `${fulfilledMandatory}/${mandatoryIds.length}`;
     }
@@ -1867,16 +2065,14 @@ function evaluate3296() {
         section.criteria.forEach(criterion => {
             if (!isAssessableClassificationCriterion(criterion)) return;
             if (!activeCriteriaIds.has(String(criterion.id))) return;
-            if (classificationAnswers[criterion.id] === 'yes') {
-                totalPoints += criterion.points;
-            }
+            totalPoints += getCriterionEarnedPoints(criterion);
         });
     });
 
     // Step 2: Check all mandatory criteria
     const failedMandatory = [];
     for (const mandatoryId of getMandatoryIdsForLevel(currentStarLevel)) {
-        if (classificationAnswers[mandatoryId] !== 'yes' && classificationAnswers[mandatoryId] !== 'na') {
+        if (!isMandatoryCriterionIdSatisfied(mandatoryId)) {
             failedMandatory.push(mandatoryId);
         }
     }
@@ -1929,13 +2125,12 @@ function getClassificationPointsBreakdown() {
         section.criteria.forEach(criterion => {
             if (!isAssessableClassificationCriterion(criterion)) return;
             if (!activeCriteriaIds.has(String(criterion.id))) return;
+            const earnedPoints = getCriterionEarnedPoints(criterion);
             if (mandatorySet.has(criterion.id)) {
-                mandatoryPointsRequired += criterion.points;
-                if (classificationAnswers[criterion.id] === 'yes') {
-                    mandatoryPointsAchieved += criterion.points;
-                }
-            } else if (classificationAnswers[criterion.id] === 'yes') {
-                optionalPointsAchieved += criterion.points;
+                mandatoryPointsRequired += getCriterionMaxPoints(criterion);
+                mandatoryPointsAchieved += earnedPoints;
+            } else {
+                optionalPointsAchieved += earnedPoints;
             }
         });
     });
@@ -2092,7 +2287,7 @@ function generateReport() {
                     return criterion ? `
                         <div class="missing-item">
                             <span class="name">#${criterion.id} - ${criterion.title[currentLang]}</span>
-                            <span class="pts">${criterion.points} pts</span>
+                            <span class="pts">${getCriterionMaxPoints(criterion)} pts</span>
                         </div>
                     ` : '';
                 }).join('')}
@@ -2565,24 +2760,117 @@ function getStrictStarKey(star) {
     return STAR_KEYS.includes(key) ? key : null;
 }
 
-function getStarCriteriaBuckets(star) {
+function isPerUnitCriterion(criterion) {
+    return Boolean(criterion && criterion.scoringRule && criterion.scoringRule.type === 'per_unit');
+}
+
+function getCriterionMaxPoints(criterion) {
+    if (!criterion) return 0;
+    const explicitMax = Number(criterion.maxPoints);
+    if (Number.isFinite(explicitMax) && explicitMax >= 0) return explicitMax;
+    if (isPerUnitCriterion(criterion)) {
+        const ruleMax = Number(criterion.scoringRule.maxPoints);
+        if (Number.isFinite(ruleMax) && ruleMax >= 0) return ruleMax;
+    }
+    return Number(criterion.points) || 0;
+}
+
+function getCriterionQuantity(criterionId) {
+    return normalizeQuantityValue(classificationQuantities[String(criterionId)]);
+}
+
+function getCriterionEarnedPoints(criterion) {
+    if (!criterion) return 0;
+    if (classificationAnswers[criterion.id] !== 'yes') return 0;
+    if (isPerUnitCriterion(criterion)) {
+        const quantity = getCriterionQuantity(criterion.id);
+        const pointsPerUnit = Number(criterion.scoringRule.pointsPerUnit) || 0;
+        const maxPoints = getCriterionMaxPoints(criterion);
+        return Math.min(quantity * pointsPerUnit, maxPoints);
+    }
+    return Number(criterion.points) || 0;
+}
+
+function isMandatoryCriterionSatisfied(criterion) {
+    if (!criterion) return false;
+    const status = classificationAnswers[criterion.id];
+    if (status === 'na') return true;
+    if (status !== 'yes') return false;
+    if (isPerUnitCriterion(criterion)) {
+        return getCriterionQuantity(criterion.id) > 0;
+    }
+    return true;
+}
+
+function isMandatoryCriterionIdSatisfied(criterionId) {
+    const criterion = getCriterionById(criterionId);
+    return isMandatoryCriterionSatisfied(criterion);
+}
+
+function setClassificationQuantity(criterionId, rawValue) {
+    const id = String(criterionId);
+    const quantity = normalizeQuantityValue(rawValue);
+    if (quantity > 0) {
+        classificationQuantities[id] = quantity;
+    } else {
+        delete classificationQuantities[id];
+    }
+    renderClassificationCriteria();
+    updateStats();
+}
+
+function getAnnotationText(code) {
+    if (!CLASSIFICATION_DATA_3296 || !Array.isArray(CLASSIFICATION_DATA_3296.annotations)) return '';
+    const target = String(code || '').toUpperCase();
+    if (!target) return '';
+    const annotation = CLASSIFICATION_DATA_3296.annotations.find(item => String(item.code || '').toUpperCase() === target);
+    if (!annotation) return '';
+    return annotation[`text_${currentLang}`] || annotation.text_en || annotation.text_uz || annotation.text_ru || '';
+}
+
+function isCriterionMandatoryForAccommodationType(criterion, starKey, accommodationType = selectedAccommodationType) {
+    if (!criterion || !starKey) return false;
+    let isMandatory = criterion?.mandatory?.[starKey] === true;
+    const referenceCodes = Array.isArray(criterion.referenceCodes)
+        ? criterion.referenceCodes
+        : normalizeReferenceCodes(criterion.reference || '');
+    const hasCode = code => referenceCodes.includes(code);
+    const typeKey = String(accommodationType || '').trim();
+    const isAparthotel = typeKey === 'aparthotels';
+    const isSpecialized = typeKey === 'specialized';
+
+    // Exemption annotations
+    if (isAparthotel && hasCode('A8')) isMandatory = false;
+    if (isSpecialized && hasCode('A11')) isMandatory = false;
+
+    // Inclusion annotations
+    if (isAparthotel && hasCode('A9')) isMandatory = true;
+    if (isSpecialized && hasCode('A12')) isMandatory = true;
+
+    return isMandatory === true;
+}
+
+function getStarCriteriaBuckets(star, accommodationType = selectedAccommodationType) {
     const starKey = getStrictStarKey(star);
     if (!starKey) {
         return { mandatory: [], optional: [], all: [], ids: new Set() };
     }
+    ensureAccommodationTypeSelection();
+    const types = getAccommodationTypes();
+    const effectiveAccommodationType = Object.prototype.hasOwnProperty.call(types, accommodationType)
+        ? accommodationType
+        : selectedAccommodationType;
 
     const allCriteria = getAllClassificationCriteria()
         .slice()
         .sort((a, b) => compareCriterionIds(a.id, b.id));
 
-    const mandatoryStrict = allCriteria.filter(criterion => criterion?.mandatory?.[starKey] === true);
-    const optionalStrict = allCriteria.filter(criterion => {
-        const isMandatory = criterion?.mandatory?.[starKey] === true;
-        const isOptional = criterion?.optional?.[starKey] === true;
-        return !isMandatory && isOptional;
+    const mandatory = allCriteria.filter(criterion => {
+        return isCriterionMandatoryForAccommodationType(criterion, starKey, effectiveAccommodationType);
     });
-    const mandatory = mandatoryStrict;
-    const optional = optionalStrict;
+    const optional = allCriteria.filter(criterion => {
+        return !isCriterionMandatoryForAccommodationType(criterion, starKey, effectiveAccommodationType);
+    });
     const all = allCriteria;
     return {
         mandatory,
@@ -2623,7 +2911,7 @@ function getMaxPointsForStar(star = selectedStar) {
         return configuredMaxPoints;
     }
     return getStarCriteriaBuckets(star).all.reduce((sum, criterion) => {
-        return sum + (Number(criterion.points) || 0);
+        return sum + getCriterionMaxPoints(criterion);
     }, 0);
 }
 
@@ -2781,6 +3069,7 @@ function createAssessmentRecord() {
         assessmentData: { ...assessmentData },
         complianceAnswers: { ...complianceAnswers },
         classificationAnswers: { ...classificationAnswers },
+        classificationQuantities: { ...classificationQuantities },
         evidenceData: JSON.parse(JSON.stringify(evidenceData)),
         summary: {
             points: evaluation.points || 0,
@@ -2819,6 +3108,7 @@ function loadAssessmentRecordById(id) {
     assessmentData = { ...assessmentData, ...(record.assessmentData || {}) };
     complianceAnswers = { ...(record.complianceAnswers || {}) };
     classificationAnswers = { ...(record.classificationAnswers || {}) };
+    classificationQuantities = normalizeQuantityMap(record.classificationQuantities || {});
     evidenceData = { ...(record.evidenceData || {}) };
     populateAccommodationTypeOptions();
     populateComplianceFacilityTypeOptions();
@@ -3108,8 +3398,7 @@ function sendToResolution() {
     if (!currentStarLevel) return;
 
     const missingIds = getMandatoryIdsForLevel(currentStarLevel).filter(id => {
-        const status = classificationAnswers[id];
-        return status !== 'yes' && status !== 'na';
+        return !isMandatoryCriterionIdSatisfied(id);
     });
 
     if (!missingIds.length) {
@@ -3147,6 +3436,7 @@ function sendToResolution() {
 function resetClassification() {
     if (!window.confirm(t('resetConfirm'))) return;
     classificationAnswers = {};
+    classificationQuantities = {};
     evidenceData = {};
     renderClassificationCriteria();
     updateStats();
@@ -3166,7 +3456,6 @@ function renderCompareTable() {
     sections.forEach(section => {
         const sectionRows = section.criteria
             .filter(isAssessableClassificationCriterion)
-            .filter(criterion => (mandatoryMap.get(String(criterion.id)) || new Set()).size > 0)
             .sort((a, b) => compareCriterionIds(a.id, b.id));
         if (!sectionRows.length) return;
 
@@ -3218,7 +3507,7 @@ function calculateTotalYesPoints(star = selectedStar) {
         section.criteria.forEach(criterion => {
             if (!isAssessableClassificationCriterion(criterion)) return;
             if (!activeCriteriaIds.has(String(criterion.id))) return;
-            if (classificationAnswers[criterion.id] === 'yes') points += criterion.points;
+            points += getCriterionEarnedPoints(criterion);
         });
     });
     return points;
@@ -3229,8 +3518,7 @@ function isStarAchievable(star) {
     if (!starLevel) return false;
     const totalPoints = calculateTotalYesPoints(star);
     const mandatoryOk = getMandatoryIdsForLevel(starLevel).every(id => {
-        const status = classificationAnswers[id];
-        return status === 'yes' || status === 'na';
+        return isMandatoryCriterionIdSatisfied(id);
     });
     return mandatoryOk && totalPoints >= getMinPointsForStar(star);
 }
@@ -3251,8 +3539,7 @@ function updateAssessmentPanel() {
     const mandatoryFiveStar = getStarLevel(5) || { mandatoryIds: [] };
     const mandatoryIds = getMandatoryIdsForLevel(mandatoryFiveStar);
     const fulfilledMandatory = mandatoryIds.filter(id => {
-        const status = classificationAnswers[id];
-        return status === 'yes' || status === 'na';
+        return isMandatoryCriterionIdSatisfied(id);
     }).length;
     const mandatoryPct = mandatoryIds.length
         ? Math.round((fulfilledMandatory / mandatoryIds.length) * 100)
@@ -3330,6 +3617,9 @@ function buildStarListingHtml(starLevel, type) {
             <tbody>
                 ${criteria.map(criterion => {
                     const title = criterion.title[currentLang] || criterion.title.en || '';
+                    const pointsText = isPerUnitCriterion(criterion)
+                        ? `${criterion.scoringRule.pointsPerUnit}×${t('unitLabel')} (max ${getCriterionMaxPoints(criterion)})`
+                        : String(criterion.points);
                     return `
                         <tr>
                             <td class="id">#${escapeHtml(criterion.id)}</td>
@@ -3337,7 +3627,7 @@ function buildStarListingHtml(starLevel, type) {
                                 <div>${escapeHtml(title)}</div>
                                 <div class="sec">${escapeHtml(criterion.sectionTitle)}</div>
                             </td>
-                            <td>${criterion.points}</td>
+                            <td>${escapeHtml(pointsText)}</td>
                         </tr>
                     `;
                 }).join('')}
@@ -3388,8 +3678,7 @@ function showGapReport() {
         const totalPoints = calculateTotalYesPoints(star);
         const maxPoints = getMaxPointsForStar(star);
         const failedMandatory = getMandatoryIdsForLevel(level).filter(id => {
-            const status = classificationAnswers[id];
-            return status !== 'yes' && status !== 'na';
+            return !isMandatoryCriterionIdSatisfied(id);
         });
         const minPoints = getMinPointsForStar(star);
         const pointsGap = Math.max(0, minPoints - totalPoints);
@@ -3418,8 +3707,7 @@ function showMandatoryChecklist() {
     const body = `
         <div class="card">
             ${items.map(item => {
-                const status = classificationAnswers[item.id] || '';
-                const mark = status === 'yes' || status === 'na' ? '✅' : '❌';
+                const mark = isMandatoryCriterionIdSatisfied(item.id) ? '✅' : '❌';
                 const title = item.title[currentLang] || item.title.en || item.id;
                 return `<div class="item">${mark} #${escapeHtml(item.id)} - ${escapeHtml(title)}</div>`;
             }).join('')}
@@ -3439,6 +3727,7 @@ function exportAssessmentData() {
         assessmentData,
         complianceAnswers,
         classificationAnswers,
+        classificationQuantities,
         evidenceData,
         summary: {
             compliance: evaluate3220(),

@@ -1,9 +1,9 @@
 {
-  "standard": "MST 125",
+  "standard": "MST125",
   "title_uz": "Mehmonxonalar va o'xshash joylashtirish vositalarini toifalarga ajratish mezonlari",
   "title_ru": "Критерии классификации гостиниц и аналогичных средств размещения",
   "title_en": "Classification Criteria for Hotels and Similar Accommodation Facilities",
-  "max_points": 1023,
+  "max_points": 1048,
   "minimum_scores": {
     "hotels_and_similar": {
       "name_uz": "Mehmonxonalar va o'xshash joylashtirish vositalari",
@@ -541,8 +541,8 @@
             "1_star": false,
             "2_star": false,
             "3_star": false,
-            "4_star": true,
-            "5_star": false
+            "4_star": false,
+            "5_star": true
           }
         },
         {
@@ -1049,7 +1049,7 @@
           "reference": "А14",
           "points": 10,
           "mandatory": {
-            "1_star": true,
+            "1_star": false,
             "2_star": false,
             "3_star": false,
             "4_star": false,
@@ -1065,7 +1065,7 @@
           "points": 15,
           "mandatory": {
             "1_star": false,
-            "2_star": true,
+            "2_star": false,
             "3_star": false,
             "4_star": false,
             "5_star": false
@@ -1081,7 +1081,7 @@
           "mandatory": {
             "1_star": false,
             "2_star": false,
-            "3_star": true,
+            "3_star": false,
             "4_star": false,
             "5_star": false
           }
@@ -1097,7 +1097,7 @@
             "1_star": false,
             "2_star": false,
             "3_star": false,
-            "4_star": true,
+            "4_star": false,
             "5_star": false
           }
         },
@@ -1163,7 +1163,7 @@
           "criterion_ru": "Количество номеров люкс.",
           "criterion_en": "Number of suites.",
           "reference": "А8, А11",
-          "points": 0,
+          "points": 2,
           "points_note_uz": "har bir nomerga 2 balldan, maksimum 10 ball",
           "points_note_ru": "по 2 балла за каждый номер, максимум 10 баллов",
           "points_note_en": "2 points per suite, maximum 10 points",
@@ -1173,6 +1173,15 @@
             "3_star": false,
             "4_star": true,
             "5_star": true
+          },
+          "max_points": 10,
+          "scoring_rule": {
+            "type": "per_unit",
+            "points_per_unit": 2,
+            "max_points": 10,
+            "unit_uz": "har bir lyuks nomer",
+            "unit_en": "each suite room",
+            "unit_ru": "за каждый номер люкс"
           }
         },
         {
@@ -2753,6 +2762,15 @@
             "3_star": true,
             "4_star": true,
             "5_star": true
+          },
+          "max_points": 10,
+          "scoring_rule": {
+            "type": "per_unit",
+            "points_per_unit": 5,
+            "max_points": 10,
+            "unit_uz": "har bir restoran",
+            "unit_en": "each restaurant",
+            "unit_ru": "за каждый ресторан"
           }
         }
       ]
@@ -3039,6 +3057,15 @@
             "3_star": false,
             "4_star": false,
             "5_star": true
+          },
+          "max_points": 15,
+          "scoring_rule": {
+            "type": "per_unit",
+            "points_per_unit": 5,
+            "max_points": 15,
+            "unit_uz": "har bir turi uchun",
+            "unit_en": "each type (steam bath, hammam, etc.)",
+            "unit_ru": "за каждый вид (баня, хаммам и др.)"
           }
         },
         {
@@ -3257,7 +3284,16 @@
             "2_star": false,
             "3_star": false,
             "4_star": false,
-            "5_star": true
+            "5_star": false
+          },
+          "max_points": 9,
+          "scoring_rule": {
+            "type": "per_unit",
+            "points_per_unit": 3,
+            "max_points": 9,
+            "unit_uz": "har bir turi uchun",
+            "unit_en": "each type (high chair, food warmer, changing mat, baby monitor)",
+            "unit_ru": "за каждый вид (стульчик, подогреватель, коврик, радионяня)"
           }
         }
       ]
