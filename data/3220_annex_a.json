@@ -1,0 +1,538 @@
+{
+  "standard": "O'z DSt 3220:2023",
+  "sections": [
+    {
+      "id": "1",
+      "name": {
+        "uz": "Bino va unga tutash hudud",
+        "ru": "Здание и прилегающая территория",
+        "en": "Building and adjacent territory"
+      },
+      "requirements": [
+        {
+          "id": "1.1",
+          "title": {
+            "uz": "Binoning umumiy holati va tashqi ko'rinishi",
+            "ru": "Общее состояние и внешний вид здания",
+            "en": "General condition and exterior of building"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "1.2",
+          "title": {
+            "uz": "Hudud va yashillashtirish",
+            "ru": "Территория и озеленение",
+            "en": "Territory and landscaping"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "1.3",
+          "title": {
+            "uz": "Kirish joylari va yo'llar",
+            "ru": "Входы и подъезды",
+            "en": "Entrances and approaches"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "1.4",
+          "title": {
+            "uz": "Axlat uchun joy va chiqindilarn i saqlash",
+            "ru": "Место для мусора и хранение отходов",
+            "en": "Waste disposal area"
+          },
+          "mandatory": true
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "name": {
+        "uz": "Texnik jihozlar va asbob-uskunalar",
+        "ru": "Техническое оснащение и оборудование",
+        "en": "Technical equipment and facilities"
+      },
+      "requirements": [
+        {
+          "id": "2.1",
+          "title": {
+            "uz": "Suv ta'minoti tizimi",
+            "ru": "Система водоснабжения",
+            "en": "Water supply system"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "2.2",
+          "title": {
+            "uz": "Issiq suv ta'minoti",
+            "ru": "Горячее водоснабжение",
+            "en": "Hot water supply"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "2.3",
+          "title": {
+            "uz": "Elektr ta'minoti",
+            "ru": "Электроснабжение",
+            "en": "Electricity supply"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "2.4",
+          "title": {
+            "uz": "Isitish tizimi (mavsumiy)",
+            "ru": "Система отопления (сезонная)",
+            "en": "Heating system (seasonal)"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "2.5",
+          "title": {
+            "uz": "Ventilyatsiya tizimi",
+            "ru": "Система вентиляции",
+            "en": "Ventilation system"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "2.6",
+          "title": {
+            "uz": "Konditsionerlash (ixtiyoriy)",
+            "ru": "Кондиционирование (по желанию)",
+            "en": "Air conditioning (optional)"
+          },
+          "mandatory": false
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "name": {
+        "uz": "Nomer fondi",
+        "ru": "Номерной фонд",
+        "en": "Room inventory"
+      },
+      "requirements": [
+        {
+          "id": "3.1",
+          "title": {
+            "uz": "Nomerlarning minimal maydoni",
+            "ru": "Минимальная площадь номеров",
+            "en": "Minimum room area"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "3.2",
+          "title": {
+            "uz": "Deraza yoki tabiiy yoritish",
+            "ru": "Окно или естественное освещение",
+            "en": "Window or natural lighting"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "3.3",
+          "title": {
+            "uz": "Nomerlarning holati va tozaligi",
+            "ru": "Состояние и чистота номеров",
+            "en": "Room condition and cleanliness"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "3.4",
+          "title": {
+            "uz": "Yotoq joylari sifati",
+            "ru": "Качество спальных мест",
+            "en": "Quality of sleeping accommodations"
+          },
+          "mandatory": true
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "name": {
+        "uz": "Nomerlarning texnik jihozlanishi",
+        "ru": "Техническое оснащение номеров",
+        "en": "Technical equipment of rooms"
+      },
+      "requirements": [
+        {
+          "id": "4.1",
+          "title": {
+            "uz": "Elektr rozetkalar mavjudligi",
+            "ru": "Наличие электрических розеток",
+            "en": "Availability of power sockets"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "4.2",
+          "title": {
+            "uz": "Yoritish tizimlari",
+            "ru": "Системы освещения",
+            "en": "Lighting systems"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "4.3",
+          "title": {
+            "uz": "Telefon yoki aloqa vositalari",
+            "ru": "Телефон или средства связи",
+            "en": "Telephone or communication devices"
+          },
+          "mandatory": false
+        }
+      ]
+    },
+    {
+      "id": "5",
+      "name": {
+        "uz": "Nomerlarni mebel va inventarlar bilan jihozlash",
+        "ru": "Оснащение номеров мебелью и инвентарем",
+        "en": "Room furnishing and inventory"
+      },
+      "requirements": [
+        {
+          "id": "5.1",
+          "title": {
+            "uz": "Krovat yoki yotoq",
+            "ru": "Кровать или спальное место",
+            "en": "Bed or sleeping accommodation"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "5.2",
+          "title": {
+            "uz": "Yotoq to'plamlari",
+            "ru": "Постельные принадлежности",
+            "en": "Bedding"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "5.3",
+          "title": {
+            "uz": "Shkaf yoki kiyim ilgich",
+            "ru": "Шкаф или вешалка для одежды",
+            "en": "Wardrobe or clothes hanger"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "5.4",
+          "title": {
+            "uz": "Stul yoki kreslo",
+            "ru": "Стул или кресло",
+            "en": "Chair or armchair"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "5.5",
+          "title": {
+            "uz": "Stol (ish yoki ovqatlanish)",
+            "ru": "Стол (рабочий или обеденный)",
+            "en": "Table (work or dining)"
+          },
+          "mandatory": true
+        }
+      ]
+    },
+    {
+      "id": "6",
+      "name": {
+        "uz": "Nomerlarning sanitariya-gigiyenik jihozlanishi",
+        "ru": "Санитарно-гигиеническое оснащение номеров",
+        "en": "Sanitary and hygienic equipment of rooms"
+      },
+      "requirements": [
+        {
+          "id": "6.1",
+          "title": {
+            "uz": "Individual yoki umumiy sanuzel",
+            "ru": "Индивидуальный или общий санузел",
+            "en": "Private or shared bathroom"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "6.2",
+          "title": {
+            "uz": "Dush yoki vanna",
+            "ru": "Душ или ванна",
+            "en": "Shower or bathtub"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "6.3",
+          "title": {
+            "uz": "Issiq va sovuq suv",
+            "ru": "Горячая и холодная вода",
+            "en": "Hot and cold water"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "6.4",
+          "title": {
+            "uz": "Sochiq va gigienik vositalar",
+            "ru": "Полотенца и гигиенические средства",
+            "en": "Towels and hygiene items"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "6.5",
+          "title": {
+            "uz": "Ventilyatsiya tizimi",
+            "ru": "Система вентиляции",
+            "en": "Ventilation system"
+          },
+          "mandatory": true
+        }
+      ]
+    },
+    {
+      "id": "7",
+      "name": {
+        "uz": "Umumiy foydalanish uchun sanitariya obyektlari",
+        "ru": "Санитарные объекты общего пользования",
+        "en": "Shared sanitary facilities"
+      },
+      "requirements": [
+        {
+          "id": "7.1",
+          "title": {
+            "uz": "Umumiy sanitar tugunlar soni",
+            "ru": "Количество общих санузлов",
+            "en": "Number of shared bathrooms"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "7.2",
+          "title": {
+            "uz": "Umumiy sanuzellarda dush kabinalari",
+            "ru": "Душевые кабины в общих санузлах",
+            "en": "Shower cabins in shared bathrooms"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "7.3",
+          "title": {
+            "uz": "Tozalik va gigiyena",
+            "ru": "Чистота и гигиена",
+            "en": "Cleanliness and hygiene"
+          },
+          "mandatory": true
+        }
+      ]
+    },
+    {
+      "id": "8",
+      "name": {
+        "uz": "Jamoat joylari",
+        "ru": "Общественные зоны",
+        "en": "Public areas"
+      },
+      "requirements": [
+        {
+          "id": "8.1",
+          "title": {
+            "uz": "Qabul xonasi (resepshn)",
+            "ru": "Приёмная (ресепшн)",
+            "en": "Reception area"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "8.2",
+          "title": {
+            "uz": "Kutish zonasi yoki lobbi",
+            "ru": "Зона ожидания или лобби",
+            "en": "Waiting area or lobby"
+          },
+          "mandatory": false
+        },
+        {
+          "id": "8.3",
+          "title": {
+            "uz": "Umumiy joylarda yoritish",
+            "ru": "Освещение в общих зонах",
+            "en": "Lighting in public areas"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "8.4",
+          "title": {
+            "uz": "Umumiy joylarda tozalik",
+            "ru": "Чистота в общих зонах",
+            "en": "Cleanliness in public areas"
+          },
+          "mandatory": true
+        }
+      ]
+    },
+    {
+      "id": "9",
+      "name": {
+        "uz": "Xizmatlar",
+        "ru": "Услуги",
+        "en": "Services"
+      },
+      "requirements": [
+        {
+          "id": "9.1",
+          "title": {
+            "uz": "Qabul qilish va ro'yxatdan o'tkazish",
+            "ru": "Приём и регистрация",
+            "en": "Reception and registration"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "9.2",
+          "title": {
+            "uz": "Xonalarni tozalash xizmati",
+            "ru": "Услуга уборки номеров",
+            "en": "Room cleaning service"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "9.3",
+          "title": {
+            "uz": "Choyshablarni almashtirish",
+            "ru": "Смена постельного белья",
+            "en": "Linen change"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "9.4",
+          "title": {
+            "uz": "Axborot xizmatlari",
+            "ru": "Информационные услуги",
+            "en": "Information services"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "9.5",
+          "title": {
+            "uz": "Xavfsizlik va saqlash",
+            "ru": "Безопасность и хранение",
+            "en": "Security and storage"
+          },
+          "mandatory": true
+        }
+      ]
+    },
+    {
+      "id": "10",
+      "name": {
+        "uz": "Xodimlar va ularni tayyorlashga doir talablar",
+        "ru": "Персонал и требования к их подготовке",
+        "en": "Staff and training requirements"
+      },
+      "requirements": [
+        {
+          "id": "10.1",
+          "title": {
+            "uz": "Xodimlarning yetarliligi",
+            "ru": "Достаточность персонала",
+            "en": "Adequate staffing"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "10.2",
+          "title": {
+            "uz": "Xodimlarning tashqi ko'rinishi",
+            "ru": "Внешний вид персонала",
+            "en": "Staff appearance"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "10.3",
+          "title": {
+            "uz": "Xodimlarning malakasi",
+            "ru": "Квалификация персонала",
+            "en": "Staff qualifications"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "10.4",
+          "title": {
+            "uz": "Til bilish ko'nikmasi",
+            "ru": "Языковые навыки",
+            "en": "Language skills"
+          },
+          "mandatory": false
+        }
+      ]
+    },
+    {
+      "id": "11",
+      "name": {
+        "uz": "Axborot ta'minotiga doir talablar",
+        "ru": "Информационное обеспечение",
+        "en": "Information support"
+      },
+      "requirements": [
+        {
+          "id": "11.1",
+          "title": {
+            "uz": "Narxlar va xizmatlar haqida axborot",
+            "ru": "Информация о ценах и услугах",
+            "en": "Information on prices and services"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "11.2",
+          "title": {
+            "uz": "Qoidalar va tartiblar",
+            "ru": "Правила и порядок",
+            "en": "Rules and procedures"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "11.3",
+          "title": {
+            "uz": "Favqulodda vaziyatlar haqida axborot",
+            "ru": "Информация о чрезвычайных ситуациях",
+            "en": "Emergency information"
+          },
+          "mandatory": true
+        },
+        {
+          "id": "11.4",
+          "title": {
+            "uz": "Ko'p tilli axborot",
+            "ru": "Многоязычная информация",
+            "en": "Multilingual information"
+          },
+          "mandatory": false
+        }
+      ]
+    }
+  ]
+}

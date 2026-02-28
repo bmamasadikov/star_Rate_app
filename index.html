@@ -1,0 +1,2154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Classification System - O'z DSt 3220:2023 & 3296:2023</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #0b2e59;
+            --primary-light: #1f4d8b;
+            --success: #1f7a45;
+            --warning: #b46800;
+            --danger: #9b1c1c;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1f2937;
+            --gold: #b08a3e;
+            --surface: #ffffff;
+        }
+
+        body {
+            font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+            background-color: #eef2f6;
+            background-image:
+                linear-gradient(180deg, #f8fafc 0%, #eef2f6 100%),
+                repeating-linear-gradient(90deg, rgba(11,46,89,.05) 0 1px, transparent 1px 10px);
+            min-height: 100vh;
+        }
+
+        /* Login Page */
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-box {
+            background: var(--surface);
+            border-radius: 12px;
+            border: 1px solid var(--gray-200);
+            box-shadow: 0 10px 24px rgba(15, 23, 42, .12);
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-logo .stars {
+            font-size: 36px;
+            color: var(--gold);
+        }
+
+        .login-logo h1 {
+            font-size: 22px;
+            color: var(--gray-800);
+            margin: 10px 0 5px;
+        }
+
+        .login-logo p {
+            color: var(--gray-500);
+            font-size: 13px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--gray-700);
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid var(--gray-300);
+            border-radius: 6px;
+            font-size: 15px;
+            background: #fff;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-light);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all .2s;
+            letter-spacing: .01em;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-light);
+            box-shadow: 0 6px 14px rgba(11, 46, 89, .25);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: var(--gray-700);
+            border-color: var(--gray-300);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: #fff;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: #fff;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+
+        /* App Container */
+        .app-container {
+            display: none;
+            min-height: 100vh;
+            background-color: var(--gray-50);
+            background-image:
+                linear-gradient(180deg, #f8fafc 0%, #eef2f6 100%),
+                repeating-linear-gradient(0deg, rgba(11,46,89,.04) 0 1px, transparent 1px 12px);
+        }
+
+        .header {
+            background: var(--primary);
+            box-shadow: 0 2px 8px rgba(15, 23, 42, .2);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-logo .stars {
+            color: var(--gold);
+            font-size: 20px;
+        }
+
+        .header-logo h2 {
+            font-size: 16px;
+            color: #fff;
+            letter-spacing: .02em;
+        }
+
+        @media (max-width: 768px) {
+            .header-logo h2 {
+                font-size: 14px;
+            }
+        }
+
+        .header-nav {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .nav-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            background: rgba(255,255,255,.12);
+            border-radius: 8px;
+        }
+
+        .nav-btn {
+            padding: 8px 14px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 13px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 640px) {
+            .nav-btn {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+
+            .nav-group {
+                padding: 3px 6px;
+                gap: 4px;
+            }
+        }
+
+        .nav-btn:hover,
+        .nav-btn.active {
+            background: #fff;
+            color: var(--primary);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .lang-selector {
+            display: flex;
+            gap: 3px;
+        }
+
+        .lang-btn {
+            padding: 5px 10px;
+            border: 1px solid rgba(255,255,255,.5);
+            background: transparent;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        .lang-btn.active {
+            background: #fff;
+            color: var(--primary);
+            border-color: #fff;
+        }
+
+        .notification-badge {
+            position: relative;
+            padding: 6px 10px;
+            background: rgba(255,255,255,.15);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            color: #fff;
+        }
+
+        .notification-badge .count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--danger);
+            color: #fff;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .notification-badge .count.show {
+            display: block;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: rgba(255,255,255,.15);
+            border-radius: 8px;
+        }
+
+        @media (max-width: 640px) {
+            .user-info {
+                padding: 4px 8px;
+            }
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 13px;
+            color: #fff;
+        }
+
+        @media (max-width: 640px) {
+            .user-name {
+                font-size: 12px;
+            }
+        }
+
+        .user-role {
+            font-size: 10px;
+            color: #e2e8f0;
+        }
+
+        .main-content {
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .main-content {
+                padding: 10px;
+            }
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* Star Selection Cards */
+        .star-cards {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        @media (max-width: 1024px) {
+            .star-cards {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .star-cards {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+        }
+
+        .star-card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 18px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all .3s;
+            border: 1px solid var(--gray-300);
+        }
+
+        @media (max-width: 640px) {
+            .star-card {
+                padding: 12px 8px;
+            }
+        }
+
+        .star-card:hover {
+            box-shadow: 0 6px 16px rgba(15, 23, 42, .12);
+            border-color: var(--primary-light);
+        }
+
+        .star-card.selected {
+            border-color: var(--gold);
+            background: #fff7e6;
+        }
+
+        .star-card .stars {
+            font-size: 22px;
+            color: var(--gold);
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 640px) {
+            .star-card .stars {
+                font-size: 18px;
+            }
+        }
+
+        .star-card .label {
+            font-size: 12px;
+            color: var(--gray-600);
+            font-weight: 600;
+        }
+
+        .star-card .points {
+            font-size: 11px;
+            color: var(--gray-500);
+            margin-top: 5px;
+        }
+
+        @media (max-width: 640px) {
+            .star-card .points {
+                font-size: 10px;
+            }
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .progress-container {
+            background: #fff;
+            border-radius: 8px;
+            padding: 18px;
+            margin: 20px 0 25px;
+            border: 1px solid var(--gray-200);
+            box-shadow: 0 2px 6px rgba(15, 23, 42, .06);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .progress-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+
+        .progress-stats {
+            display: flex;
+            gap: 18px;
+            font-size: 12px;
+            color: var(--gray-600);
+        }
+
+        .progress-bar {
+            height: 10px;
+            background: var(--gray-200);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success), #059669);
+            border-radius: 10px;
+            transition: width .5s;
+        }
+
+        @media (max-width: 640px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+        }
+
+        .stat-card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid var(--gray-200);
+            box-shadow: 0 2px 6px rgba(15, 23, 42, .06);
+        }
+
+        @media (max-width: 640px) {
+            .stat-card {
+                padding: 15px;
+            }
+        }
+
+        .stat-card h3 {
+            font-size: 11px;
+            color: var(--gray-500);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+
+        @media (max-width: 640px) {
+            .stat-card .value {
+                font-size: 24px;
+            }
+        }
+
+        .stat-card .sub {
+            font-size: 11px;
+            color: var(--gray-500);
+            margin-top: 5px;
+        }
+
+        .stat-card.success .value {
+            color: var(--success);
+        }
+
+        .stat-card.warning .value {
+            color: var(--warning);
+        }
+
+        .stat-card.danger .value {
+            color: var(--danger);
+        }
+
+        .stats-grid-compact {
+            margin-bottom: 15px;
+        }
+
+        .filters {
+            background: #fff;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid var(--gray-200);
+            box-shadow: 0 2px 6px rgba(15, 23, 42, .06);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search {
+            flex: 1;
+            min-width: 180px;
+            position: relative;
+        }
+
+        .search input {
+            width: 100%;
+            padding: 10px 12px 10px 32px;
+            border: 1px solid var(--gray-200);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .search input:focus {
+            outline: none;
+            border-color: var(--primary-light);
+        }
+
+        .search::before {
+            content: "🔍";
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+        }
+
+        .filters select {
+            padding: 9px 30px 9px 10px;
+            border: 1px solid var(--gray-200);
+            border-radius: 6px;
+            font-size: 13px;
+            background: #fff;
+            appearance: none;
+            background-image: linear-gradient(45deg, transparent 50%, #6b7280 50%), linear-gradient(135deg, #6b7280 50%, transparent 50%);
+            background-position: calc(100% - 16px) 50%, calc(100% - 10px) 50%;
+            background-size: 6px 6px, 6px 6px;
+            background-repeat: no-repeat;
+        }
+
+        .filter-check {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--gray-600);
+            cursor: pointer;
+        }
+
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid var(--gray-200);
+        }
+
+        .compare-table th {
+            background: var(--primary);
+            color: #fff;
+            padding: 10px 12px;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .compare-table th:first-child {
+            text-align: left;
+        }
+
+        .compare-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--gray-200);
+            font-size: 13px;
+        }
+
+        .compare-table .category-row td {
+            background: var(--gray-50);
+            font-weight: 700;
+            color: var(--gray-700);
+        }
+
+        .compare-mark {
+            font-weight: 700;
+            color: var(--success);
+        }
+
+        .compare-dash {
+            color: var(--gray-400);
+        }
+
+        .assess-panel {
+            background: var(--surface);
+            border-radius: 10px;
+            padding: 18px;
+            color: var(--gray-800);
+            margin-bottom: 18px;
+            border: 1px solid var(--gray-200);
+            box-shadow: 0 2px 8px rgba(15, 23, 42, .08);
+        }
+
+        .assess-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .assess-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .assess-sub {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .assess-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .assess-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+        }
+
+        .a-stat {
+            text-align: center;
+            padding: 10px;
+            background: var(--gray-50);
+            border-radius: 8px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .a-stat .val {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .a-stat .lbl {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            color: var(--gray-500);
+        }
+
+        .result-box {
+            background: var(--primary);
+            color: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--primary-light);
+        }
+
+        .result-box .stars {
+            font-size: 18px;
+            letter-spacing: 3px;
+            color: var(--gold);
+        }
+
+        .result-box .lbl {
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .report-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+
+        .report-card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 16px;
+            border: 1px solid var(--gray-200);
+            cursor: pointer;
+            transition: transform .2s, box-shadow .2s, border-color .2s;
+        }
+
+        .report-card:hover {
+            border-color: var(--gold);
+            box-shadow: 0 6px 12px rgba(15, 23, 42, .12);
+            transform: translateY(-2px);
+        }
+
+        .report-card .icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(176, 138, 62, .12);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .report-card h4 {
+            font-size: 14px;
+            margin-bottom: 4px;
+            color: var(--gray-800);
+        }
+
+        .report-card p {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        /* Section Cards */
+        .section-card {
+            background: #fff;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            border: 1px solid var(--gray-200);
+            box-shadow: 0 2px 6px rgba(15, 23, 42, .06);
+        }
+
+        @media (max-width: 640px) {
+            .section-card {
+                margin-bottom: 10px;
+            }
+        }
+
+        .section-header {
+            background: var(--primary);
+            color: #fff;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            border-bottom: 1px solid rgba(255,255,255,.2);
+        }
+
+        @media (max-width: 640px) {
+            .section-header {
+                padding: 12px 15px;
+            }
+        }
+
+        .section-header h3 {
+            font-size: 14px;
+        }
+
+        @media (max-width: 640px) {
+            .section-header h3 {
+                font-size: 13px;
+            }
+        }
+
+        .section-header .toggle {
+            font-size: 18px;
+            transition: transform .3s;
+        }
+
+        .section-header .toggle.open {
+            transform: rotate(180deg);
+        }
+
+        .section-content {
+            padding: 15px;
+            display: none;
+        }
+
+        @media (max-width: 640px) {
+            .section-content {
+                padding: 10px;
+            }
+        }
+
+        .section-content.open {
+            display: block;
+        }
+
+        /* Criterion Item */
+        .criterion-item {
+            background: var(--gray-50);
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--gray-300);
+            border: 1px solid var(--gray-200);
+        }
+
+        @media (max-width: 640px) {
+            .criterion-item {
+                padding: 12px;
+                margin-bottom: 10px;
+            }
+        }
+
+        .criterion-item.mandatory {
+            border-left-color: var(--danger);
+            background: #fff1f2;
+        }
+
+        .criterion-item.fulfilled {
+            border-left-color: var(--success);
+            background: #f0fdf4;
+        }
+
+        .criterion-item.not-fulfilled {
+            border-left-color: var(--danger);
+        }
+
+        .criterion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .criterion-info {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .criterion-id {
+            display: inline-block;
+            background: var(--gray-200);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--gray-600);
+            margin-bottom: 5px;
+        }
+
+        .criterion-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        @media (max-width: 640px) {
+            .criterion-title {
+                font-size: 13px;
+            }
+        }
+
+        .criterion-badges {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .points-badge {
+            background: var(--gold);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 640px) {
+            .points-badge {
+                padding: 4px 10px;
+                font-size: 12px;
+            }
+        }
+
+        .mandatory-badge {
+            background: var(--danger);
+            color: #fff;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .optional-badge {
+            background: var(--gray-400);
+            color: #fff;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .assessment-controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .assessment-controls.with-divider {
+            padding-top: 12px;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        @media (max-width: 640px) {
+            .assessment-controls {
+                gap: 6px;
+            }
+        }
+
+        .status-btn {
+            padding: 8px 14px;
+            border: 1.5px solid var(--gray-300);
+            background: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all .2s;
+        }
+
+        @media (max-width: 640px) {
+            .status-btn {
+                padding: 6px 12px;
+                font-size: 11px;
+            }
+        }
+
+        .status-btn.yes {
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .status-btn.yes.active,
+        .status-btn.yes:hover {
+            background: var(--success);
+            color: #fff;
+        }
+
+        .status-btn.no {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .status-btn.no.active,
+        .status-btn.no:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .status-btn.na {
+            border-color: var(--gray-400);
+            color: var(--gray-400);
+        }
+
+        .status-btn.na.active,
+        .status-btn.na:hover {
+            background: var(--gray-400);
+            color: #fff;
+        }
+
+        .evidence-section {
+            margin-top: 12px;
+            padding: 12px;
+            background: #fff;
+            border-radius: 6px;
+            border: 1px dashed var(--gray-300);
+        }
+
+        .evidence-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--gray-600);
+            margin-bottom: 8px;
+        }
+
+        .evidence-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .evidence-btn {
+            padding: 6px 10px;
+            border: 1px solid var(--gray-200);
+            background: var(--gray-50);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--gray-700);
+        }
+
+        .evidence-btn:hover {
+            background: var(--primary-light);
+            color: #fff;
+            border-color: var(--primary-light);
+        }
+
+        .evidence-btn.has-file {
+            background: var(--success);
+            color: #fff;
+            border-color: var(--success);
+        }
+
+        .evidence-list {
+            margin-top: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .evidence-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 8px;
+            background: var(--gray-100);
+            border-radius: 5px;
+            font-size: 11px;
+        }
+
+        .evidence-item .remove {
+            cursor: pointer;
+            color: var(--danger);
+            font-weight: 700;
+        }
+
+        /* Report */
+        .report-container {
+            background: #fff;
+            border-radius: 10px;
+            padding: 40px;
+            max-width: 900px;
+            margin: 0 auto;
+            border: 1px solid var(--gray-200);
+            box-shadow: 0 6px 20px rgba(15, 23, 42, .08);
+        }
+
+        @media (max-width: 768px) {
+            .report-container {
+                padding: 25px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .report-container {
+                padding: 20px;
+                border-radius: 10px;
+            }
+        }
+
+        .report-header {
+            text-align: center;
+            padding-bottom: 25px;
+            border-bottom: 2px solid var(--gray-200);
+            margin-bottom: 25px;
+        }
+
+        .report-header h1 {
+            font-size: 22px;
+            color: var(--gray-800);
+            margin-bottom: 5px;
+        }
+
+        @media (max-width: 640px) {
+            .report-header h1 {
+                font-size: 18px;
+            }
+        }
+
+        .report-header .standard {
+            color: var(--gray-500);
+            font-size: 13px;
+        }
+
+        .report-hotel-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid var(--gray-200);
+            margin-bottom: 25px;
+        }
+
+        @media (max-width: 640px) {
+            .report-hotel-info {
+                grid-template-columns: 1fr;
+                gap: 10px;
+                padding: 15px;
+            }
+        }
+
+        .info-item label {
+            font-size: 11px;
+            color: var(--gray-500);
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .info-item span {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        @media (max-width: 640px) {
+            .info-item span {
+                font-size: 13px;
+            }
+        }
+
+        .report-result {
+            text-align: center;
+            padding: 30px;
+            background: #fdf6e3;
+            border-radius: 8px;
+            border: 1px solid rgba(176, 138, 62, .35);
+            margin-bottom: 25px;
+        }
+
+        @media (max-width: 640px) {
+            .report-result {
+                padding: 20px;
+            }
+        }
+
+        .report-result .stars {
+            font-size: 42px;
+            color: var(--gold);
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 640px) {
+            .report-result .stars {
+                font-size: 32px;
+            }
+        }
+
+        .report-result h2 {
+            font-size: 24px;
+            color: var(--gray-800);
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 640px) {
+            .report-result h2 {
+                font-size: 18px;
+            }
+        }
+
+        .report-result .score {
+            font-size: 16px;
+            color: var(--gray-600);
+        }
+
+        @media (max-width: 640px) {
+            .report-result .score {
+                font-size: 14px;
+            }
+        }
+
+        .compliance-status {
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border: 2px solid;
+        }
+
+        @media (max-width: 640px) {
+            .compliance-status {
+                padding: 15px;
+            }
+        }
+
+        .compliance-status.compliant {
+            background: #f0fdf4;
+            border-color: var(--success);
+        }
+
+        .compliance-status.non-compliant {
+            background: #fef2f2;
+            border-color: var(--danger);
+        }
+
+        .compliance-status h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 640px) {
+            .compliance-status h3 {
+                font-size: 14px;
+            }
+        }
+
+        .compliance-status.compliant h3 {
+            color: var(--success);
+        }
+
+        .compliance-status.non-compliant h3 {
+            color: var(--danger);
+        }
+
+        .legal-warning {
+            background: #fff7e6;
+            border: 1.5px solid var(--warning);
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            font-size: 13px;
+            color: var(--gray-800);
+        }
+
+        @media (max-width: 640px) {
+            .legal-warning {
+                padding: 12px;
+                font-size: 12px;
+            }
+        }
+
+        .report-summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        @media (max-width: 768px) {
+            .report-summary {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .report-summary {
+                gap: 8px;
+            }
+        }
+
+        .summary-item {
+            background: var(--gray-50);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        @media (max-width: 640px) {
+            .summary-item {
+                padding: 12px;
+            }
+        }
+
+        .summary-item .label {
+            font-size: 11px;
+            color: var(--gray-500);
+            margin-bottom: 5px;
+        }
+
+        @media (max-width: 640px) {
+            .summary-item .label {
+                font-size: 10px;
+            }
+        }
+
+        .summary-item .value {
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        @media (max-width: 640px) {
+            .summary-item .value {
+                font-size: 18px;
+            }
+        }
+
+        .summary-item.green .value {
+            color: var(--success);
+        }
+
+        .summary-item.red .value {
+            color: var(--danger);
+        }
+
+        .summary-item.orange .value {
+            color: var(--warning);
+        }
+
+        .summary-item.blue .value {
+            color: var(--primary);
+        }
+
+        .missing-section {
+            margin-bottom: 25px;
+        }
+
+        .missing-section h3 {
+            font-size: 15px;
+            color: var(--gray-800);
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        @media (max-width: 640px) {
+            .missing-section h3 {
+                font-size: 14px;
+            }
+        }
+
+        .missing-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            background: #fef2f2;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            border-left: 3px solid var(--danger);
+            gap: 10px;
+        }
+
+        @media (max-width: 640px) {
+            .missing-item {
+                padding: 8px 10px;
+            }
+        }
+
+        .missing-item .name {
+            font-size: 13px;
+            color: var(--gray-700);
+            flex: 1;
+        }
+
+        @media (max-width: 640px) {
+            .missing-item .name {
+                font-size: 12px;
+            }
+        }
+
+        .missing-item .pts {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--danger);
+            white-space: nowrap;
+        }
+
+        .report-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        .resolution-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .resolution-header h3 {
+            font-size: 16px;
+            color: var(--gray-800);
+            margin-bottom: 6px;
+        }
+
+        .resolution-header p {
+            color: var(--gray-500);
+            font-size: 12px;
+        }
+
+        .resolution-item {
+            background: #fff;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .resolution-item.pending {
+            border-color: var(--warning);
+            background: #fff7e6;
+        }
+
+        .resolution-item.submitted {
+            border-color: var(--primary-light);
+            background: #eff6ff;
+        }
+
+        .resolution-status {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .resolution-status.pending {
+            background: var(--warning);
+            color: #fff;
+        }
+
+        .resolution-status.submitted {
+            background: var(--primary-light);
+            color: #fff;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .admin-header h4 {
+            font-size: 14px;
+            color: var(--gray-800);
+        }
+
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--gray-200);
+        }
+
+        .user-table th,
+        .user-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+            font-size: 12px;
+        }
+
+        .user-table th {
+            background: var(--gray-50);
+            font-size: 11px;
+            color: var(--gray-600);
+            font-weight: 700;
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 700;
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .notification-panel {
+            position: fixed;
+            top: 64px;
+            right: 20px;
+            width: 320px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, .18);
+            display: none;
+            z-index: 200;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--gray-200);
+        }
+
+        .notification-panel.active {
+            display: block;
+        }
+
+        .notification-panel-header {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--gray-200);
+            font-weight: 700;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .notification-item {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--gray-100);
+            cursor: pointer;
+        }
+
+        .notification-item:hover {
+            background: var(--gray-50);
+        }
+
+        .notification-item.unread {
+            background: #eff6ff;
+        }
+
+        .notification-item .title {
+            font-weight: 700;
+            font-size: 12px;
+            color: var(--gray-800);
+            margin-bottom: 4px;
+        }
+
+        .notification-item .message {
+            font-size: 11px;
+            color: var(--gray-500);
+            margin-bottom: 3px;
+        }
+
+        .notification-item .time {
+            font-size: 10px;
+            color: var(--gray-400);
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        @media (max-width: 640px) {
+            .report-actions {
+                gap: 8px;
+            }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 15px 25px;
+            background: var(--gray-800);
+            color: #fff;
+            border-radius: 10px;
+            display: none;
+            z-index: 1000;
+            font-size: 14px;
+            max-width: 90vw;
+        }
+
+        @media (max-width: 640px) {
+            .toast {
+                bottom: 20px;
+                right: 20px;
+                left: 20px;
+                padding: 12px 20px;
+                font-size: 13px;
+            }
+        }
+
+        .toast.success {
+            background: var(--success);
+        }
+
+        .toast.error {
+            background: var(--danger);
+        }
+
+        .toast.active {
+            display: block;
+            animation: slideIn .3s ease;
+        }
+
+        .list-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            background: var(--gray-50);
+            margin-bottom: 8px;
+        }
+
+        .list-row .title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .list-row .meta {
+            font-size: 11px;
+            color: var(--gray-500);
+        }
+
+        .list-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn[disabled] {
+            opacity: .6;
+            cursor: not-allowed;
+        }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(17, 24, 39, .6);
+            z-index: 1200;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #fff;
+            border-radius: 10px;
+            padding: 24px;
+            width: 100%;
+            max-width: 420px;
+            border: 1px solid var(--gray-200);
+            box-shadow: 0 16px 32px rgba(15, 23, 42, .18);
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 6px;
+        }
+
+        .modal-subtitle {
+            font-size: 12px;
+            color: var(--gray-500);
+            margin-bottom: 18px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .modal-actions .btn {
+            flex: 1;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media print {
+            .header,
+            .report-actions,
+            .btn,
+            .nav-btn {
+                display: none !important;
+            }
+            .report-container {
+                box-shadow: none;
+                padding: 20px;
+            }
+            body {
+                background: #fff;
+            }
+        }
+
+        /* Prevent click event propagation on buttons */
+        .assessment-controls button {
+            position: relative;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Page -->
+    <div class="login-container" id="loginPage">
+        <div class="login-box">
+            <div class="login-logo">
+                <div class="stars">★★★★★</div>
+                <h1 id="loginTitle">Hotel Classification and Rating System</h1>
+                <p id="loginSubtitle">Based on O'z DSt 3220:2023 and 3296:2023</p>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label id="loginUsernameLabel">Username</label>
+                    <input type="text" id="username" placeholder="Enter username" required>
+                </div>
+                <div class="form-group">
+                    <label id="loginPasswordLabel">Password</label>
+                    <input type="password" id="password" placeholder="Enter password" required>
+                </div>
+                <button type="submit" class="btn btn-primary" id="loginButton">Login</button>
+            </form>
+            <p id="loginHint" style="margin-top:20px;text-align:center;font-size:11px;color:var(--gray-400)">Administrator account: master / master</p>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div class="app-container" id="appContainer">
+        <header class="header">
+            <div class="header-left">
+                <div class="header-logo">
+                    <span class="stars">★★★★★</span>
+                    <h2 id="headerTitle">Hotel Classification</h2>
+                </div>
+                <nav class="header-nav">
+                    <div class="nav-group">
+                        <button class="nav-btn active" data-page="dashboard" id="navDashboard">Dashboard</button>
+                    </div>
+                    <div class="nav-group">
+                        <button class="nav-btn" data-page="classification" id="navAssessment">Assessment</button>
+                    </div>
+                    <div class="nav-group">
+                        <button class="nav-btn" data-page="compare" id="navCompare">Compare</button>
+                    </div>
+                    <div class="nav-group">
+                        <button class="nav-btn" data-page="report" id="navReports">Reports</button>
+                    </div>
+                </nav>
+            </div>
+            <div class="header-right">
+                <div class="lang-selector">
+                    <button class="lang-btn active" data-lang="en">EN</button>
+                    <button class="lang-btn" data-lang="uz">UZ</button>
+                    <button class="lang-btn" data-lang="ru">RU</button>
+                </div>
+                <div class="notification-badge" id="notificationBtn" data-master-only>
+                    🔔<span class="count" id="notificationCount">0</span>
+                </div>
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">A</div>
+                    <div>
+                        <div class="user-name" id="displayUserName">Admin</div>
+                        <div class="user-role" id="displayUserRole">Administrator</div>
+                    </div>
+                </div>
+                <button class="btn btn-secondary btn-sm" id="logoutBtn">Logout</button>
+            </div>
+        </header>
+
+        <div class="notification-panel" id="notificationPanel" data-master-only>
+            <div class="notification-panel-header">
+                <span id="notificationTitle">Notifications</span>
+                <button class="btn btn-sm btn-secondary" id="clearNotificationsBtn">Clear</button>
+            </div>
+            <div id="notificationList">
+                <div style="padding:30px;text-align:center;color:var(--gray-400);font-size:13px" id="notificationEmpty">No notifications</div>
+            </div>
+        </div>
+
+        <main class="main-content">
+            <!-- Dashboard Page -->
+            <div class="page active" id="dashboardPage">
+                <h2 id="dashboardTitle" style="margin-bottom:20px;color:var(--gray-800)">Classification Dashboard</h2>
+                <div class="filters" style="margin-bottom:12px">
+                    <label class="filter-check" for="accommodationTypeSelect">
+                        <span id="accommodationTypeLabel">Accommodation Type</span>
+                    </label>
+                    <select id="accommodationTypeSelect"></select>
+                </div>
+                <div class="stats-grid stats-grid-compact">
+                    <div class="stat-card">
+                        <h3 id="statTotalLabel">Total Criteria</h3>
+                        <div class="value" id="statTotalCriteria">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="statCategoriesLabel">Categories</h3>
+                        <div class="value" id="statCategories">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="statMaxPointsLabel">Max Points</h3>
+                        <div class="value" id="statMaxPoints">0</div>
+                    </div>
+                    <div class="stat-card warning">
+                        <h3 id="statMandatoryLabel">Mandatory 5★</h3>
+                        <div class="value" id="statMandatory5">0</div>
+                    </div>
+                </div>
+                <div class="star-cards" id="starCards"></div>
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-header">
+                        <span class="progress-title" id="progressTitle">Assessment Progress</span>
+                        <div class="progress-stats">
+                            <span><strong id="assessedCount">0</strong> / <span id="totalCriteria">0</span> <span id="assessedLabel">assessed</span></span>
+                            <span><strong id="currentPoints">0</strong> / <strong id="maxPoints">0</strong> <span id="pointsLabel">points</span></span>
+                        </div>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card success">
+                        <h3 id="fulfilledLabel">Fulfilled</h3>
+                        <div class="value" id="fulfilledCount">0</div>
+                        <div class="sub" id="fulfilledSub">Criteria met</div>
+                    </div>
+                    <div class="stat-card danger">
+                        <h3 id="missingLabel">Missing</h3>
+                        <div class="value" id="missingCount">0</div>
+                        <div class="sub" id="missingSub">Criteria not met</div>
+                    </div>
+                    <div class="stat-card warning">
+                        <h3 id="mandatoryLabel">Mandatory</h3>
+                        <div class="value" id="mandatoryStatus">0/0</div>
+                        <div class="sub" id="mandatorySub">For selected star</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="evidenceLabel">Evidence</h3>
+                        <div class="value" id="evidenceCount">0</div>
+                        <div class="sub" id="evidenceSub">Files uploaded</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Compare Page -->
+            <div class="page" id="comparePage">
+                <h2 id="compareTitle" style="margin-bottom:6px;color:var(--gray-800)">Star Level Comparison</h2>
+                <p id="compareSubtitle" style="color:var(--gray-500);margin-bottom:12px">Compare mandatory requirements across all star levels</p>
+                <div class="filters">
+                    <select id="compareCategoryFilter"></select>
+                </div>
+                <div id="compareTable"></div>
+            </div>
+
+            <!-- 3220 Compliance Page -->
+            <div class="page" id="compliancePage">
+                <h2 id="complianceTitle" style="margin-bottom:20px;color:var(--gray-800)">O'z DSt 3220:2023 - Compliance</h2>
+                <div class="filters" style="margin-bottom:12px">
+                    <label class="filter-check" for="complianceFacilityTypeSelect">
+                        <span id="complianceFacilityTypeLabel">Facility Type</span>
+                    </label>
+                    <select id="complianceFacilityTypeSelect"></select>
+                </div>
+                <div id="complianceSections"></div>
+                <div style="text-align:center;margin-top:30px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+                    <button class="btn btn-primary" id="complete3220Btn" onclick="generateReport()">Complete 3220</button>
+                </div>
+            </div>
+
+            <!-- 3296 Classification Page -->
+            <div class="page" id="classificationPage">
+                <div class="assess-panel">
+                    <div class="assess-head">
+                        <div>
+                            <div class="assess-title" id="assessmentPanelTitle">Hotel Assessment</div>
+                            <div class="assess-sub" id="assessmentPanelSubtitle">Check criteria your hotel meets</div>
+                        </div>
+                        <div class="assess-actions">
+                            <button class="btn btn-secondary btn-sm" id="openHotelInfoBtn">Hotel Information</button>
+                            <button class="btn btn-secondary btn-sm" id="openComplianceBtn">3220</button>
+                            <button class="btn btn-secondary btn-sm" id="resetAssessmentBtn">Reset</button>
+                            <button class="btn btn-primary btn-sm" id="openFullReportBtn">Generate Report</button>
+                        </div>
+                    </div>
+                    <div class="assess-stats">
+                        <div class="a-stat">
+                            <div class="val" id="assessPoints">0</div>
+                            <div class="lbl" id="assessPointsLabel">Points</div>
+                        </div>
+                        <div class="a-stat">
+                            <div class="val" id="assessCount">0</div>
+                            <div class="lbl" id="assessCountLabel">Criteria</div>
+                        </div>
+                        <div class="a-stat">
+                            <div class="val" id="assessMandatoryPct">0%</div>
+                            <div class="lbl" id="assessMandatoryLabel">5★ Mandatory</div>
+                        </div>
+                        <div class="result-box">
+                            <div class="stars" id="assessEligible">☆☆☆☆☆</div>
+                            <div class="lbl" id="assessEligibleLabel">Eligible Rating</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="page-header">
+                    <h2 id="classificationTitle" style="color:var(--gray-800)">O'z DSt 3296:2023 - Classification</h2>
+                    <div class="page-actions">
+                        <button class="btn btn-secondary btn-sm" id="filterMandatoryBtn">Mandatory Only</button>
+                        <button class="btn btn-secondary btn-sm" id="filterMissingBtn">Show Missing</button>
+                    </div>
+                </div>
+                <div class="filters">
+                    <div class="search">
+                        <input type="text" id="classificationSearch" placeholder="Search...">
+                    </div>
+                    <select id="classificationCategoryFilter"></select>
+                    <label class="filter-check">
+                        <input type="checkbox" id="classificationHideChecked">
+                        <span id="classificationHideCheckedLabel">Unchecked only</span>
+                    </label>
+                </div>
+                <div id="classificationSections"></div>
+                <div style="text-align:center;margin-top:30px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+                    <button class="btn btn-success" id="complete3296Btn" onclick="generateReport()">Complete 3296</button>
+                </div>
+            </div>
+
+            <!-- Report Page -->
+            <div class="page" id="reportPage">
+                <div style="display:flex;justify-content:flex-end;margin-bottom:15px;gap:10px;flex-wrap:wrap">
+                    <button class="btn btn-warning" id="generateReportBtn" onclick="generateReport()">Generate Report</button>
+                </div>
+                <div class="section-card">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <h3 id="reportToolsTitle">📊 Report Generation</h3>
+                        <span class="toggle open">▼</span>
+                    </div>
+                    <div class="section-content open">
+                        <p id="reportToolsSubtitle" style="color:var(--gray-500);margin-bottom:12px">Generate detailed classification reports</p>
+                        <div class="report-grid">
+                            <div class="report-card" id="reportCardFull">
+                                <div class="icon">📊</div>
+                                <h4 id="reportCardFullTitle">Full Assessment</h4>
+                                <p id="reportCardFullDesc">Complete report with points breakdown</p>
+                            </div>
+                            <div class="report-card" id="reportCardGap">
+                                <div class="icon">🎯</div>
+                                <h4 id="reportCardGapTitle">Gap Analysis</h4>
+                                <p id="reportCardGapDesc">Missing criteria for each star level</p>
+                            </div>
+                            <div class="report-card" id="reportCardMandatory">
+                                <div class="icon">⚠️</div>
+                                <h4 id="reportCardMandatoryTitle">Mandatory Checklist</h4>
+                                <p id="reportCardMandatoryDesc">Required criteria for target star</p>
+                            </div>
+                            <div class="report-card" id="reportCardExport">
+                                <div class="icon">💾</div>
+                                <h4 id="reportCardExportTitle">Export Data</h4>
+                                <p id="reportCardExportDesc">Download assessment as JSON</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="section-card">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <h3 id="assessmentsTitle">📁 Assessments</h3>
+                        <span class="toggle open">▼</span>
+                    </div>
+                    <div class="section-content open">
+                        <div id="assessmentsList"></div>
+                    </div>
+                </div>
+                <div class="section-card">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <h3 id="reportsTitle">📄 Reports</h3>
+                        <span class="toggle open">▼</span>
+                    </div>
+                    <div class="section-content open">
+                        <div id="reportsList"></div>
+                    </div>
+                </div>
+                <div class="section-card" id="resolutionCard" data-master-only>
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <h3 id="resolutionTitle">📌 Resolution</h3>
+                        <span class="toggle open">▼</span>
+                    </div>
+                    <div class="section-content open">
+                        <div class="resolution-header">
+                            <h3 id="resolutionHeaderTitle">Resolution Portal</h3>
+                            <p id="resolutionHeaderSubtitle">Submit evidence for missing criteria to resolve deficiencies</p>
+                        </div>
+                        <div id="resolutionList">
+                            <p style="text-align:center;color:var(--gray-500);padding:30px" id="resolutionEmpty">No items pending resolution</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="section-card" id="userManagementCard" data-master-only style="display:none">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <h3 id="usersTitle">👤 Users</h3>
+                        <span class="toggle open">▼</span>
+                    </div>
+                    <div class="section-content open">
+                        <div class="admin-header">
+                            <h2 id="adminUsersTitle">User Management</h2>
+                            <button class="btn btn-primary btn-sm" id="openAddUserBtn">+ Add User</button>
+                        </div>
+                        <table class="user-table">
+                            <thead>
+                                <tr>
+                                    <th id="userTableUsername">Username</th>
+                                    <th id="userTableName">Full Name</th>
+                                    <th id="userTableRole">Role</th>
+                                    <th id="userTableStatus">Status</th>
+                                    <th id="userTableActions">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="report-container" id="reportContent">
+                    <p id="reportPlaceholder" style="text-align:center;color:var(--gray-500);padding:40px">Complete assessments to generate report</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <div class="modal" id="starModal" aria-hidden="true">
+        <div class="modal-content">
+            <div class="modal-title" id="starModalTitle">Star Rating</div>
+            <div class="modal-subtitle" id="starModalSubtitle">Choose what to view</div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" id="starModalMandatoryBtn">Mandatory</button>
+                <button class="btn btn-secondary" id="starModalOptionalBtn">Optional</button>
+                <button class="btn btn-danger" id="starModalCloseBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="addUserModal" data-master-only aria-hidden="true">
+        <div class="modal-content">
+            <div class="modal-title" id="addUserTitle">Add User</div>
+            <div class="modal-subtitle" id="addUserSubtitle">Create inspector access</div>
+            <form id="addUserForm">
+                <div class="form-group">
+                    <label id="newFullNameLabel">Full Name</label>
+                    <input type="text" id="newFullName" placeholder="Full name">
+                </div>
+                <div class="form-group">
+                    <label id="newUsernameLabel">Username</label>
+                    <input type="text" id="newUsername" placeholder="Username">
+                </div>
+                <div class="form-group">
+                    <label id="newPasswordLabel">Password</label>
+                    <input type="password" id="newPassword" placeholder="Password">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="addUserCancelBtn">Cancel</button>
+                    <button type="submit" class="btn btn-success" id="addUserSubmitBtn">Add User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <input type="file" class="file-input" id="photoInput" accept="image/*" multiple>
+    <input type="file" class="file-input" id="videoInput" accept="video/*">
+    <input type="file" class="file-input" id="documentInput" accept=".pdf,.doc,.docx">
+
+    <script src="js/app.js"></script>
+</body>
+</html>

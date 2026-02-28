@@ -1,0 +1,1259 @@
+{
+  "standard": "O'z DSt 3296:2023",
+  "maxPoints": 606,
+  "starLevels": [
+    {
+      "star": 1,
+      "label": "★",
+      "minTotalPoints": 320,
+      "mandatoryIds": [
+        "1",
+        "2",
+        "3",
+        "9.1",
+        "12.1",
+        "12.2",
+        "13.1",
+        "15.1",
+        "16.2",
+        "17",
+        "18",
+        "29.1",
+        "31.1",
+        "41",
+        "48",
+        "49",
+        "53",
+        "58.1",
+        "58.4",
+        "61",
+        "63",
+        "66",
+        "69",
+        "76",
+        "79",
+        "83",
+        "87",
+        "88",
+        "89",
+        "96",
+        "98",
+        "100",
+        "101",
+        "106",
+        "113",
+        "151",
+        "160",
+        "169"
+      ]
+    },
+    {
+      "star": 2,
+      "label": "★★",
+      "minTotalPoints": 378,
+      "mandatoryIds": [
+        "1",
+        "2",
+        "3",
+        "9.1",
+        "12.1",
+        "12.2",
+        "12.6",
+        "12.10",
+        "13.2",
+        "15.1",
+        "16.2",
+        "17",
+        "18",
+        "29.2",
+        "31.1",
+        "41",
+        "48",
+        "49",
+        "53",
+        "58.1",
+        "58.4",
+        "61",
+        "63",
+        "66",
+        "69",
+        "76",
+        "79",
+        "83",
+        "87",
+        "88",
+        "89",
+        "96",
+        "98",
+        "100",
+        "101",
+        "105",
+        "106",
+        "113",
+        "151",
+        "160",
+        "163",
+        "168",
+        "169"
+      ]
+    },
+    {
+      "star": 3,
+      "label": "★★★",
+      "minTotalPoints": 407,
+      "mandatoryIds": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "9.2",
+        "10.2",
+        "12.1",
+        "12.2",
+        "12.3",
+        "12.6",
+        "12.8",
+        "12.10",
+        "13.3",
+        "15.1",
+        "16.2",
+        "16.3",
+        "17",
+        "18",
+        "27",
+        "28",
+        "29.3",
+        "31.1",
+        "40",
+        "41",
+        "42",
+        "48",
+        "49",
+        "53",
+        "58.1",
+        "58.4",
+        "61",
+        "62",
+        "63",
+        "66",
+        "69",
+        "76",
+        "79",
+        "83",
+        "87",
+        "88",
+        "89",
+        "90",
+        "94",
+        "96",
+        "98",
+        "100",
+        "101",
+        "105",
+        "107",
+        "113",
+        "128",
+        "151",
+        "160",
+        "163",
+        "168",
+        "169",
+        "170"
+      ]
+    },
+    {
+      "star": 4,
+      "label": "★★★★",
+      "minTotalPoints": 465,
+      "mandatoryIds": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "9.2",
+        "10.2",
+        "11.5",
+        "12.1",
+        "12.2",
+        "12.3",
+        "12.5",
+        "12.6",
+        "12.8",
+        "12.10",
+        "13.3",
+        "15.1",
+        "16.2",
+        "16.3",
+        "17",
+        "18",
+        "23",
+        "24",
+        "27",
+        "28",
+        "29.4",
+        "30",
+        "31.2",
+        "32.7",
+        "40",
+        "41",
+        "42",
+        "48",
+        "49",
+        "53",
+        "54",
+        "55",
+        "58.2",
+        "58.4",
+        "60",
+        "61",
+        "62",
+        "63",
+        "66",
+        "67",
+        "69",
+        "76",
+        "79",
+        "83",
+        "87",
+        "88",
+        "89",
+        "90",
+        "94",
+        "96",
+        "98",
+        "100",
+        "101",
+        "102",
+        "103",
+        "105",
+        "108",
+        "112",
+        "113",
+        "114",
+        "128",
+        "134",
+        "137",
+        "151",
+        "160",
+        "163",
+        "166",
+        "167",
+        "168",
+        "169",
+        "170"
+      ]
+    },
+    {
+      "star": 5,
+      "label": "★★★★★",
+      "minTotalPoints": 494,
+      "mandatoryIds": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "9.2",
+        "12.1",
+        "12.2",
+        "12.3",
+        "12.6",
+        "12.8",
+        "12.10",
+        "13.3",
+        "15.1",
+        "16.2",
+        "16.3",
+        "17",
+        "18",
+        "23",
+        "24",
+        "25",
+        "27",
+        "28",
+        "29.4",
+        "30",
+        "31.2",
+        "32.7",
+        "40",
+        "41",
+        "42",
+        "48",
+        "49",
+        "53",
+        "54",
+        "55",
+        "58.2",
+        "58.4",
+        "60",
+        "61",
+        "62",
+        "63",
+        "66",
+        "67",
+        "69",
+        "76",
+        "79",
+        "83",
+        "87",
+        "88",
+        "89",
+        "90",
+        "94",
+        "96",
+        "98",
+        "100",
+        "101",
+        "102",
+        "103",
+        "105",
+        "108",
+        "112",
+        "113",
+        "114",
+        "128",
+        "137",
+        "151",
+        "160",
+        "163",
+        "165",
+        "166",
+        "167",
+        "168",
+        "169",
+        "170"
+      ]
+    }
+  ],
+  "sections": [
+    {
+      "id": 1,
+      "name": {
+        "uz": "Umumiy talablar",
+        "en": "General Requirements",
+        "ru": "Общие требования"
+      },
+      "criteria": [
+        {
+          "id": "1",
+          "title": {
+            "uz": "Tozalik va gigiena.",
+            "en": "Cleanliness and hygiene.",
+            "ru": "Чистота и гигиена."
+          },
+          "points": 0
+        },
+        {
+          "id": "2",
+          "title": {
+            "uz": "Tashqi ko'rinish.",
+            "en": "Exterior appearance.",
+            "ru": "Внешний вид."
+          },
+          "points": 0
+        },
+        {
+          "id": "3",
+          "title": {
+            "uz": "Jihozlar va uskunalar holati.",
+            "en": "Condition of facilities and equipment.",
+            "ru": "Состояние оборудования и сооружений."
+          },
+          "points": 0
+        },
+        {
+          "id": "4",
+          "title": {
+            "uz": "Ko'chmas generator.",
+            "en": "Stationary generator.",
+            "ru": "Стационарный генератор."
+          },
+          "points": 4
+        },
+        {
+          "id": "4.1",
+          "title": {
+            "uz": "Muqobil energiya manbalari.",
+            "en": "Renewable energy sources.",
+            "ru": "Возобновляемые источники энергии."
+          },
+          "points": 5
+        },
+        {
+          "id": "5",
+          "title": {
+            "uz": "Park xo'jaligi.",
+            "en": "Landscaped park areas.",
+            "ru": "Парковая зона."
+          },
+          "points": 3
+        },
+        {
+          "id": "9.1",
+          "title": {
+            "uz": "Lift (3 qavatdan yuqori).",
+            "en": "Elevator for 3+ floors.",
+            "ru": "Лифт для зданий 3+ этажей."
+          },
+          "points": 2
+        },
+        {
+          "id": "9.2",
+          "title": {
+            "uz": "Lift (2 qavatdan yuqori).",
+            "en": "Elevator for 2+ floors.",
+            "ru": "Лифт для зданий 2+ этажей."
+          },
+          "points": 2
+        },
+        {
+          "id": "10.2",
+          "title": {
+            "uz": "Soyabonli kirish joyi.",
+            "en": "Covered entrance.",
+            "ru": "Крытый вход."
+          },
+          "points": 5
+        },
+        {
+          "id": "11.5",
+          "title": {
+            "uz": "Maxsus moslamali sanuzel.",
+            "en": "Accessible restroom.",
+            "ru": "Санузел для инвалидов."
+          },
+          "points": 2
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": {
+        "uz": "Qabul qilish, joylashtirish va xizmatlar",
+        "en": "Reception, Accommodation and Services",
+        "ru": "Приём, размещение и услуги"
+      },
+      "criteria": [
+        {
+          "id": "12.1",
+          "title": {
+            "uz": "Milliy hunarmandchilik mahsulotlarini sotish hududi.",
+            "en": "Area for selling national handicraft products.",
+            "ru": "Зона продажи изделий национальных ремёсел."
+          },
+          "points": 2
+        },
+        {
+          "id": "12.2",
+          "title": {
+            "uz": "San'at kompozitsiyalari.",
+            "en": "Art compositions.",
+            "ru": "Арт-композиции."
+          },
+          "points": 2
+        },
+        {
+          "id": "12.3",
+          "title": {
+            "uz": "Lobbida o'tirish joylari va ichimlik buyurtma qilish imkoniyati.",
+            "en": "Lobby with seating and drink ordering.",
+            "ru": "Лобби с местами для сидения и заказом напитков."
+          },
+          "points": 5
+        },
+        {
+          "id": "12.5",
+          "title": {
+            "uz": "Avtoturargohga joylashtirish xizmati.",
+            "en": "Valet parking service.",
+            "ru": "Услуга парковки (valet)."
+          },
+          "points": 10
+        },
+        {
+          "id": "12.6",
+          "title": {
+            "uz": "Bagajni kechayu kunduz keltirish xizmati.",
+            "en": "24-hour luggage delivery.",
+            "ru": "Круглосуточная доставка багажа."
+          },
+          "points": 5
+        },
+        {
+          "id": "12.8",
+          "title": {
+            "uz": "Poyabzal tozalash avtomati.",
+            "en": "Shoe polishing machine.",
+            "ru": "Автомат для чистки обуви."
+          },
+          "points": 5
+        },
+        {
+          "id": "12.10",
+          "title": {
+            "uz": "Majburiy ventilyatsiya tizimi.",
+            "en": "Mandatory ventilation system.",
+            "ru": "Обязательная система вентиляции."
+          },
+          "points": 7
+        },
+        {
+          "id": "13.1",
+          "title": {
+            "uz": "Dahliz maydoni ≥ 9 m².",
+            "en": "Hall area ≥ 9 m².",
+            "ru": "Площадь холла ≥ 9 м²."
+          },
+          "points": 2
+        },
+        {
+          "id": "13.2",
+          "title": {
+            "uz": "Dahliz maydoni ≥ 20 m².",
+            "en": "Hall area ≥ 20 m².",
+            "ru": "Площадь холла ≥ 20 м²."
+          },
+          "points": 2
+        },
+        {
+          "id": "13.3",
+          "title": {
+            "uz": "Dahliz maydoni ≥ 30 m².",
+            "en": "Hall area ≥ 30 m².",
+            "ru": "Площадь холла ≥ 30 м²."
+          },
+          "points": 2
+        },
+        {
+          "id": "15.1",
+          "title": {
+            "uz": "Sochiqlarni har kuni almashtirish.",
+            "en": "Daily towel change.",
+            "ru": "Ежедневная смена полотенец."
+          },
+          "points": 1
+        },
+        {
+          "id": "16.2",
+          "title": {
+            "uz": "Kir yuvish va dazmollash xizmati.",
+            "en": "Laundry and ironing service.",
+            "ru": "Стирка и глажка."
+          },
+          "points": 1
+        },
+        {
+          "id": "16.3",
+          "title": {
+            "uz": "Kimyoviy tozalash (24 soat).",
+            "en": "Dry cleaning within 24 hours.",
+            "ru": "Химчистка в течение 24 часов."
+          },
+          "points": 5
+        },
+        {
+          "id": "17",
+          "title": {
+            "uz": "Naqd pulsiz hisob-kitob.",
+            "en": "Cashless payment.",
+            "ru": "Безналичная оплата."
+          },
+          "points": 1
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": {
+        "uz": "Boshqa xizmatlar",
+        "en": "Other Services",
+        "ru": "Прочие услуги"
+      },
+      "criteria": [
+        {
+          "id": "18",
+          "title": {
+            "uz": "Matbuot materiallari.",
+            "en": "Press materials.",
+            "ru": "Печатные материалы."
+          },
+          "points": 3
+        },
+        {
+          "id": "23",
+          "title": {
+            "uz": "Transportda tashish (transfer).",
+            "en": "Transfer service.",
+            "ru": "Трансфер."
+          },
+          "points": 5
+        },
+        {
+          "id": "24",
+          "title": {
+            "uz": "Mehmonga xonaga kuzatib qo'yish.",
+            "en": "Escort guest to room.",
+            "ru": "Сопровождение гостя в номер."
+          },
+          "points": 5
+        },
+        {
+          "id": "25",
+          "title": {
+            "uz": "Kechki tayyorlash xizmati.",
+            "en": "Evening turndown service.",
+            "ru": "Вечерняя подготовка номера."
+          },
+          "points": 7
+        },
+        {
+          "id": "27",
+          "title": {
+            "uz": "Yostiqlarni tozalash yoki yangilash.",
+            "en": "Annual pillow cleaning or replacement.",
+            "ru": "Ежегодная чистка или замена подушек."
+          },
+          "points": 1
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": {
+        "uz": "Nomerlar",
+        "en": "Rooms",
+        "ru": "Номера"
+      },
+      "criteria": [
+        {
+          "id": "28",
+          "title": {
+            "uz": "Faqat bir/ikki kishilik nomerlar.",
+            "en": "Only single or double rooms.",
+            "ru": "Только одно- или двухместные номера."
+          },
+          "points": 2
+        },
+        {
+          "id": "29.1",
+          "title": {
+            "uz": "Xona maydoni ≥ 12 m².",
+            "en": "Room size ≥ 12 m².",
+            "ru": "Площадь номера ≥ 12 м²."
+          },
+          "points": 10
+        },
+        {
+          "id": "29.2",
+          "title": {
+            "uz": "Xona maydoni ≥ 18 m².",
+            "en": "Room size ≥ 18 m².",
+            "ru": "Площадь номера ≥ 18 м²."
+          },
+          "points": 15
+        },
+        {
+          "id": "29.3",
+          "title": {
+            "uz": "Xona maydoni ≥ 22 m².",
+            "en": "Room size ≥ 22 m².",
+            "ru": "Площадь номера ≥ 22 м²."
+          },
+          "points": 20
+        },
+        {
+          "id": "29.4",
+          "title": {
+            "uz": "Xona maydoni ≥ 30 m².",
+            "en": "Room size ≥ 30 m².",
+            "ru": "Площадь номера ≥ 30 м²."
+          },
+          "points": 25
+        },
+        {
+          "id": "30",
+          "title": {
+            "uz": "Lyuks nomerlar soni.",
+            "en": "Number of suites.",
+            "ru": "Количество номеров люкс."
+          },
+          "points": 0
+        },
+        {
+          "id": "31.1",
+          "title": {
+            "uz": "Matras balandligi ≥ 18 sm.",
+            "en": "Mattress height ≥ 18 cm.",
+            "ru": "Высота матраса ≥ 18 см."
+          },
+          "points": 5
+        },
+        {
+          "id": "31.2",
+          "title": {
+            "uz": "Matras balandligi ≥ 22 sm.",
+            "en": "Mattress height ≥ 22 cm.",
+            "ru": "Высота матраса ≥ 22 см."
+          },
+          "points": 7
+        },
+        {
+          "id": "32.7",
+          "title": {
+            "uz": "Ikki kishilik krovat ≥ 1.8 m.",
+            "en": "Double bed ≥ 1.8 m.",
+            "ru": "Двуспальная кровать ≥ 1.8 м."
+          },
+          "points": 10
+        },
+        {
+          "id": "40",
+          "title": {
+            "uz": "Krovat yonidagi gilamcha.",
+            "en": "Bedside rug.",
+            "ru": "Коврик у кровати."
+          },
+          "points": 3
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": {
+        "uz": "Nomerlarni jihozlash",
+        "en": "Room Equipment",
+        "ru": "Оснащение номеров"
+      },
+      "criteria": [
+        {
+          "id": "41",
+          "title": {
+            "uz": "Stul, kamida 1 ta.",
+            "en": "At least one chair.",
+            "ru": "Не менее одного стула."
+          },
+          "points": 3
+        },
+        {
+          "id": "42",
+          "title": {
+            "uz": "Kreslo, kamida 1 ta.",
+            "en": "At least one armchair.",
+            "ru": "Минимум одно кресло."
+          },
+          "points": 7
+        },
+        {
+          "id": "48",
+          "title": {
+            "uz": "Bo'sh rozetka.",
+            "en": "Free power socket.",
+            "ru": "Свободная розетка."
+          },
+          "points": 1
+        },
+        {
+          "id": "49",
+          "title": {
+            "uz": "Har bir yashovchiga 4 xil ilgak.",
+            "en": "4 hangers per guest.",
+            "ru": "4 вида вешалок на гостя."
+          },
+          "points": 2
+        },
+        {
+          "id": "53",
+          "title": {
+            "uz": "O'qish chirog'i.",
+            "en": "Reading lamp.",
+            "ru": "Лампа для чтения."
+          },
+          "points": 3
+        },
+        {
+          "id": "54",
+          "title": {
+            "uz": "Mini-seyf.",
+            "en": "Mini safe.",
+            "ru": "Мини-сейф."
+          },
+          "points": 5
+        },
+        {
+          "id": "55",
+          "title": {
+            "uz": "Markazlashgan konditsioner va termostat.",
+            "en": "Central AC + thermostat.",
+            "ru": "Центральный кондиционер + термостат."
+          },
+          "points": 10
+        },
+        {
+          "id": "58.1",
+          "title": {
+            "uz": "Televizor ≥ 32 dyuym.",
+            "en": "TV ≥ 32 inches.",
+            "ru": "TV ≥ 32 дюйма."
+          },
+          "points": 2
+        },
+        {
+          "id": "58.2",
+          "title": {
+            "uz": "Televizor ≥ 40 dyuym.",
+            "en": "TV ≥ 40 inches.",
+            "ru": "TV ≥ 40 дюймов."
+          },
+          "points": 2
+        },
+        {
+          "id": "58.4",
+          "title": {
+            "uz": "Xalqaro kanallar.",
+            "en": "International channels.",
+            "ru": "Международные каналы."
+          },
+          "points": 5
+        },
+        {
+          "id": "60",
+          "title": {
+            "uz": "Xavfsiz internet (LAN/VPN).",
+            "en": "Secure internet (LAN/VPN).",
+            "ru": "Безопасный интернет (LAN/VPN)."
+          },
+          "points": 5
+        },
+        {
+          "id": "61",
+          "title": {
+            "uz": "2 xorijiy tilda ma'lumot.",
+            "en": "Information in 2 foreign languages.",
+            "ru": "Информация на 2 иностранных языках."
+          },
+          "points": 2
+        },
+        {
+          "id": "62",
+          "title": {
+            "uz": "Tikuv to'plami.",
+            "en": "Sewing kit.",
+            "ru": "Швейный набор."
+          },
+          "points": 3
+        },
+        {
+          "id": "63",
+          "title": {
+            "uz": "Yozuv ashyolari.",
+            "en": "Writing materials.",
+            "ru": "Письменные принадлежности."
+          },
+          "points": 1
+        },
+        {
+          "id": "66",
+          "title": {
+            "uz": "Tozalash to'plami.",
+            "en": "Cleaning kit.",
+            "ru": "Набор ухода."
+          },
+          "points": 2
+        },
+        {
+          "id": "67",
+          "title": {
+            "uz": "Eshikdagi ko'zcha.",
+            "en": "Door peephole.",
+            "ru": "Дверной глазок."
+          },
+          "points": 3
+        },
+        {
+          "id": "69",
+          "title": {
+            "uz": "Elektr choynak + choy to'plami.",
+            "en": "Electric kettle and tea set.",
+            "ru": "Электрочайник и чайный набор."
+          },
+          "points": 2
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "name": {
+        "uz": "Sanuzel",
+        "en": "Bathroom Requirements",
+        "ru": "Требования к санузлам"
+      },
+      "criteria": [
+        {
+          "id": "76",
+          "title": {
+            "uz": "Rakovina oldida yorug'lik.",
+            "en": "Lighting at sink.",
+            "ru": "Подсветка у раковины."
+          },
+          "points": 1
+        },
+        {
+          "id": "79",
+          "title": {
+            "uz": "Bo'sh rozetka oynaxonada.",
+            "en": "Free socket in bathroom.",
+            "ru": "Свободная розетка в ванной."
+          },
+          "points": 1
+        },
+        {
+          "id": "83",
+          "title": {
+            "uz": "Sochiq ilgichlari.",
+            "en": "Towel hooks.",
+            "ru": "Крючки для полотенец."
+          },
+          "points": 1
+        },
+        {
+          "id": "87",
+          "title": {
+            "uz": "Tish cho'tkasi stakani.",
+            "en": "Toothbrush cup.",
+            "ru": "Стакан для щёток."
+          },
+          "points": 1
+        },
+        {
+          "id": "88",
+          "title": {
+            "uz": "Yuvinish geli.",
+            "en": "Shower gel.",
+            "ru": "Гель для душа."
+          },
+          "points": 1
+        },
+        {
+          "id": "89",
+          "title": {
+            "uz": "Shampun.",
+            "en": "Shampoo.",
+            "ru": "Шампунь."
+          },
+          "points": 1
+        },
+        {
+          "id": "90",
+          "title": {
+            "uz": "Sanitariya to'plami.",
+            "en": "Sanitary kit.",
+            "ru": "Санитарный набор."
+          },
+          "points": 2
+        },
+        {
+          "id": "94",
+          "title": {
+            "uz": "Hammom xalatlari.",
+            "en": "Bathrobes.",
+            "ru": "Халаты."
+          },
+          "points": 3
+        },
+        {
+          "id": "96",
+          "title": {
+            "uz": "Bir martalik shippaklar.",
+            "en": "Disposable slippers.",
+            "ru": "Одноразовые тапочки."
+          },
+          "points": 1
+        },
+        {
+          "id": "98",
+          "title": {
+            "uz": "Fén.",
+            "en": "Hairdryer.",
+            "ru": "Фен."
+          },
+          "points": 3
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "name": {
+        "uz": "Gastronomiya",
+        "en": "Gastronomy",
+        "ru": "Гастрономия"
+      },
+      "criteria": [
+        {
+          "id": "100",
+          "title": {
+            "uz": "Mehmonxonada ichimlik taklif qilish.",
+            "en": "Beverage service available in the hotel.",
+            "ru": "Предоставление напитков в гостинице."
+          },
+          "points": 1
+        },
+        {
+          "id": "101",
+          "title": {
+            "uz": "Nomerda ichimlik taklif qilish.",
+            "en": "Beverage service in the room.",
+            "ru": "Предоставление напитков в номере."
+          },
+          "points": 3
+        },
+        {
+          "id": "102",
+          "title": {
+            "uz": "Nomerda minibar.",
+            "en": "Minibar in the room.",
+            "ru": "Мини-бар в номере."
+          },
+          "points": 5
+        },
+        {
+          "id": "103",
+          "title": {
+            "uz": "24 soat ichimlik yetkazish.",
+            "en": "24-hour beverage room service.",
+            "ru": "Круглосуточная подача напитков в номер."
+          },
+          "points": 15
+        },
+        {
+          "id": "105",
+          "title": {
+            "uz": "Nonushta hududida kofe mashina.",
+            "en": "Coffee machine in breakfast area.",
+            "ru": "Кофемашина в зоне завтраков."
+          },
+          "points": 5
+        },
+        {
+          "id": "106",
+          "title": {
+            "uz": "Kontinental nonushta.",
+            "en": "Continental breakfast.",
+            "ru": "Континентальный завтрак."
+          },
+          "points": 2
+        },
+        {
+          "id": "107",
+          "title": {
+            "uz": "Shved stoli nonushta.",
+            "en": "Buffet breakfast.",
+            "ru": "Завтрак «шведский стол»."
+          },
+          "points": 5
+        },
+        {
+          "id": "108",
+          "title": {
+            "uz": "Xizmat ko'rsatiladigan shved stoli.",
+            "en": "Serviced buffet breakfast.",
+            "ru": "Шведский стол с обслуживанием."
+          },
+          "points": 10
+        },
+        {
+          "id": "112",
+          "title": {
+            "uz": "24 soat taom yetkazish xizmati.",
+            "en": "24-hour food room service.",
+            "ru": "Круглосуточная доставка еды в номер."
+          },
+          "points": 15
+        },
+        {
+          "id": "113",
+          "title": {
+            "uz": "Restoran mavjudligi.",
+            "en": "Restaurant available.",
+            "ru": "Наличие ресторана."
+          },
+          "points": 5
+        },
+        {
+          "id": "114",
+          "title": {
+            "uz": "Kamida 2 ta restoran.",
+            "en": "At least 2 restaurants.",
+            "ru": "Минимум два ресторана."
+          },
+          "points": 10
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "name": {
+        "uz": "Tadbirlar uchun sharoitlar (MICE)",
+        "en": "Event Facilities (MICE)",
+        "ru": "Условия для мероприятий (MICE)"
+      },
+      "criteria": []
+    },
+    {
+      "id": 9,
+      "name": {
+        "uz": "Bo'sh vaqt",
+        "en": "Leisure Facilities",
+        "ru": "Условия для отдыха"
+      },
+      "criteria": [
+        {
+          "id": "128",
+          "title": {
+            "uz": "Kamida 4 xil trenajyorli zal.",
+            "en": "Gym with at least 4 types of fitness equipment.",
+            "ru": "Тренажёрный зал с минимум 4 видами тренажёров."
+          },
+          "points": 5
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "name": {
+        "uz": "SPA / Sog'lomlashtirish",
+        "en": "SPA & Wellness",
+        "ru": "SPA и оздоровление"
+      },
+      "criteria": [
+        {
+          "id": "134",
+          "title": {
+            "uz": "Kamida 6 o'rinli sauna (har biri 5 ball, maks 15 ball).",
+            "en": "Sauna with at least 6 seats (5 points each, max 15).",
+            "ru": "Сауна минимум на 6 мест (5 баллов каждая, макс. 15)."
+          },
+          "points": 5
+        },
+        {
+          "id": "137",
+          "title": {
+            "uz": "Suzish basseyni.",
+            "en": "Swimming pool.",
+            "ru": "Бассейн."
+          },
+          "points": 10
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "name": {
+        "uz": "Onlayn faollik",
+        "en": "Online Activity",
+        "ru": "Онлайн-активность"
+      },
+      "criteria": [
+        {
+          "id": "151",
+          "title": {
+            "uz": "Mehmonxonaning uch tildagi veb-sayti.",
+            "en": "Hotel website in three languages.",
+            "ru": "Веб-сайт отеля на трёх языках."
+          },
+          "points": 1
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "name": {
+        "uz": "Xodimlar va ularning tayyorgarligi",
+        "en": "Staff and Their Training",
+        "ru": "Персонал и их подготовка"
+      },
+      "criteria": [
+        {
+          "id": "160",
+          "title": {
+            "uz": "Xodimlar soni yetarli bo'lishi.",
+            "en": "Sufficient number of staff.",
+            "ru": "Достаточное количество персонала."
+          },
+          "points": 0
+        },
+        {
+          "id": "163",
+          "title": {
+            "uz": "Kamida 2 ta xorijiy tilni biladigan xodimlar.",
+            "en": "Staff speaking at least 2 foreign languages.",
+            "ru": "Сотрудники, владеющие минимум 2 иностранными языками."
+          },
+          "points": 3
+        },
+        {
+          "id": "165",
+          "title": {
+            "uz": "Shveysar (darbon).",
+            "en": "Doorman.",
+            "ru": "Швейцар."
+          },
+          "points": 15
+        },
+        {
+          "id": "166",
+          "title": {
+            "uz": "Konserj (alohida xodim).",
+            "en": "Concierge.",
+            "ru": "Консьерж."
+          },
+          "points": 15
+        },
+        {
+          "id": "167",
+          "title": {
+            "uz": "Bagaj tashuvchi (porter).",
+            "en": "Porter / bellboy.",
+            "ru": "Носильщик / коридорный."
+          },
+          "points": 15
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "name": {
+        "uz": "Xodimlar uchun sharoitlar",
+        "en": "Staff Facilities",
+        "ru": "Условия для персонала"
+      },
+      "criteria": [
+        {
+          "id": "168",
+          "title": {
+            "uz": "Xodimlar uchun alohida ovqatlanish xonasi.",
+            "en": "Separate staff dining area.",
+            "ru": "Отдельная столовая для персонала."
+          },
+          "points": 2
+        },
+        {
+          "id": "169",
+          "title": {
+            "uz": "Xodimlar uchun kiyinish xonalari va shkaflar.",
+            "en": "Changing rooms and lockers for staff.",
+            "ru": "Раздевалки и шкафчики для персонала."
+          },
+          "points": 2
+        },
+        {
+          "id": "170",
+          "title": {
+            "uz": "Xodimlar uchun dam olish xonasi.",
+            "en": "Staff rest area.",
+            "ru": "Комната отдыха для персонала."
+          },
+          "points": 2
+        }
+      ]
+    }
+  ]
+}
