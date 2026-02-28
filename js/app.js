@@ -467,7 +467,7 @@ const STORAGE_KEYS = {
 const INVITE_TOKEN_PARAM = 'invite';
 const UI_TEXT = {
     en: {
-        loginTitle: 'Hotel Classification and Rating System',
+        loginTitle: 'Hotel Classification System',
         loginSubtitle: "Based on O'z DSt 3220:2023 and MST 125",
         usernameLabel: 'Username',
         passwordLabel: 'Password',
@@ -476,7 +476,7 @@ const UI_TEXT = {
         loginButton: 'Login',
         loginHint: 'Administrator account: master / master',
         loadingData: 'Loading standards...',
-        headerTitle: 'Hotel Classification',
+        headerTitle: 'Hotel Classification System',
         navDashboard: 'Dashboard',
         navAssessment: 'Assessment',
         navCompare: 'Compare',
@@ -676,7 +676,7 @@ const UI_TEXT = {
         passwordMismatch: 'Passwords do not match'
     },
     uz: {
-        loginTitle: 'Mehmonxona tasniflash tizimi',
+        loginTitle: 'Hotel Classification System',
         loginSubtitle: "O'z DSt 3220:2023 & MST 125",
         usernameLabel: 'Foydalanuvchi nomi',
         passwordLabel: 'Parol',
@@ -685,7 +685,7 @@ const UI_TEXT = {
         loginButton: 'Kirish',
         loginHint: 'Master: master/master',
         loadingData: "Standartlar yuklanmoqda...",
-        headerTitle: 'Tasniflash',
+        headerTitle: 'Hotel Classification System',
         navDashboard: 'Bosh sahifa',
         navAssessment: 'Baholash',
         navCompare: 'Taqqoslash',
@@ -885,7 +885,7 @@ const UI_TEXT = {
         passwordMismatch: 'Parollar mos kelmadi'
     },
     ru: {
-        loginTitle: 'Система классификации гостиниц',
+        loginTitle: 'Hotel Classification System',
         loginSubtitle: "O'z DSt 3220:2023 & MST 125",
         usernameLabel: 'Имя пользователя',
         passwordLabel: 'Пароль',
@@ -894,7 +894,7 @@ const UI_TEXT = {
         loginButton: 'Войти',
         loginHint: 'Master: master/master',
         loadingData: 'Загрузка стандартов...',
-        headerTitle: 'Классификация',
+        headerTitle: 'Hotel Classification System',
         navDashboard: 'Панель',
         navAssessment: 'Оценка',
         navCompare: 'Сравнение',
