@@ -1328,6 +1328,7 @@ function initEventListeners() {
             selectedAccommodationType = accommodationTypeSelect.value;
             initStarCards();
             renderClassificationCriteria();
+            renderCompareTable();
             updateStats();
         });
     }
