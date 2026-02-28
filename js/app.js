@@ -367,21 +367,6 @@ async function loadData() {
 // CONSTANTS
 // =====================================================
 
-const TOTAL_CRITERIA_3296 = 170;
-const STAR_MANDATORY_TARGETS = Object.freeze({
-    1: 40,
-    2: 43,
-    3: 54,
-    4: 86,
-    5: 98
-});
-const STAR_MIN_POINTS_TARGETS = Object.freeze({
-    1: 135,
-    2: 193,
-    3: 274,
-    4: 338,
-    5: 399
-});
 const MASTER_ACCOUNT = { username: 'master', password: 'master', fullName: 'Master Account', role: 'master' };
 
 const STORAGE_KEYS = {
@@ -2535,7 +2520,14 @@ function isComplianceRequirementMandatory(req) {
 }
 
 function getMinPointsForStar(star) {
-    return STAR_MIN_POINTS_TARGETS[Number(star)] || 0;
+    ensureAccommodationTypeSelection();
+    const types = getAccommodationTypes();
+    const selectedType = types[selectedAccommodationType];
+    const selectedTypeMin = selectedType?.minScores ? Number(selectedType.minScores[Number(star)]) : NaN;
+    if (Number.isFinite(selectedTypeMin)) return selectedTypeMin;
+
+    const starLevel = getStarLevel(star);
+    return starLevel ? Number(starLevel.minTotalPoints) || 0 : 0;
 }
 
 function populateAccommodationTypeOptions() {
@@ -2573,14 +2565,6 @@ function getStrictStarKey(star) {
     return STAR_KEYS.includes(key) ? key : null;
 }
 
-function getMandatoryTargetCount(star) {
-    return STAR_MANDATORY_TARGETS[Number(star)] || 0;
-}
-
-function getOptionalTargetCount(star) {
-    return Math.max(0, TOTAL_CRITERIA_3296 - getMandatoryTargetCount(star));
-}
-
 function getStarCriteriaBuckets(star) {
     const starKey = getStrictStarKey(star);
     if (!starKey) {
@@ -2597,14 +2581,9 @@ function getStarCriteriaBuckets(star) {
         const isOptional = criterion?.optional?.[starKey] === true;
         return !isMandatory && isOptional;
     });
-
-    const mandatory = mandatoryStrict.slice(0, getMandatoryTargetCount(star));
-    const mandatoryIds = new Set(mandatory.map(criterion => String(criterion.id)));
-    const optional = optionalStrict
-        .filter(criterion => !mandatoryIds.has(String(criterion.id)))
-        .slice(0, getOptionalTargetCount(star));
-
-    const all = [...mandatory, ...optional];
+    const mandatory = mandatoryStrict;
+    const optional = optionalStrict;
+    const all = allCriteria;
     return {
         mandatory,
         optional,
@@ -2631,10 +2610,18 @@ function getMandatoryIdsForLevel(level) {
 }
 
 function getTotalClassificationCriteriaCount() {
-    return TOTAL_CRITERIA_3296;
+    if (!CLASSIFICATION_DATA_3296 || !Array.isArray(CLASSIFICATION_DATA_3296.sections)) return 0;
+    return CLASSIFICATION_DATA_3296.sections.reduce((sum, section) => {
+        const count = (section.criteria || []).filter(isAssessableClassificationCriterion).length;
+        return sum + count;
+    }, 0);
 }
 
 function getMaxPointsForStar(star = selectedStar) {
+    const configuredMaxPoints = Number(CLASSIFICATION_DATA_3296?.maxPoints);
+    if (Number.isFinite(configuredMaxPoints) && configuredMaxPoints > 0) {
+        return configuredMaxPoints;
+    }
     return getStarCriteriaBuckets(star).all.reduce((sum, criterion) => {
         return sum + (Number(criterion.points) || 0);
     }, 0);
