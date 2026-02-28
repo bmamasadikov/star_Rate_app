@@ -466,6 +466,7 @@ const STORAGE_KEYS = {
 };
 const INVITE_TOKEN_PARAM = 'invite';
 const INVITE_PAYLOAD_PARAM = 'invite_data';
+const DASHBOARD_VISUAL_TOTAL_CRITERIA = 170;
 const UI_TEXT = {
     en: {
         loginTitle: 'Hotel Classification System',
@@ -1339,7 +1340,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function initStarCards() {
     const container = document.getElementById('starCards');
-    const totalCriteriaCount = getTotalClassificationCriteriaCount();
+    const totalCriteriaCount = getDashboardVisualTotalCriteriaCount();
     container.innerHTML = '';
     ensureAccommodationTypeSelection();
 
@@ -1375,7 +1376,7 @@ function openStarModal(star) {
     const modal = document.getElementById('starModal');
     const title = document.getElementById('starModalTitle');
     const subtitle = document.getElementById('starModalSubtitle');
-    const totalCriteriaCount = getTotalClassificationCriteriaCount();
+    const totalCriteriaCount = getDashboardVisualTotalCriteriaCount();
     const starLevel = CLASSIFICATION_DATA_3296.starLevels.find(l => l.star === star);
     const mandatoryCount = starLevel ? getMandatoryIdsForLevel(starLevel).length : 0;
     const optionalCount = Math.max(0, totalCriteriaCount - mandatoryCount);
@@ -2194,7 +2195,7 @@ function updateStats() {
     if (fulfilledCountEl) fulfilledCountEl.textContent = fulfilled;
     if (missingCountEl) missingCountEl.textContent = missing;
 
-    const totalCriteriaCount = getTotalClassificationCriteriaCount();
+    const totalCriteriaCount = getDashboardVisualTotalCriteriaCount();
     const maxPointsForSelectedStar = getMaxPointsForStar(selectedStar);
     const assessedCountEl = document.getElementById('assessedCount');
     const totalCriteriaEl = document.getElementById('totalCriteria');
@@ -2207,7 +2208,7 @@ function updateStats() {
     if (maxPointsEl) maxPointsEl.textContent = maxPointsForSelectedStar;
     if (progressFillEl) {
         const pct = totalCriteriaCount ? (assessed / totalCriteriaCount) * 100 : 0;
-        progressFillEl.style.width = `${pct.toFixed(1)}%`;
+        progressFillEl.style.width = `${Math.min(100, pct).toFixed(1)}%`;
     }
 
     const currentStarLevel = CLASSIFICATION_DATA_3296.starLevels.find(l => l.star === selectedStar);
@@ -3142,6 +3143,10 @@ function getTotalClassificationCriteriaCount() {
     }, 0);
 }
 
+function getDashboardVisualTotalCriteriaCount() {
+    return DASHBOARD_VISUAL_TOTAL_CRITERIA;
+}
+
 function getMaxPointsForStar(star = selectedStar) {
     const configuredMaxPoints = Number(CLASSIFICATION_DATA_3296?.maxPoints);
     if (Number.isFinite(configuredMaxPoints) && configuredMaxPoints > 0) {
@@ -4057,7 +4062,7 @@ function updateAssessmentPanel() {
 }
 
 function updateDashboardStats() {
-    const totalCriteria = getTotalClassificationCriteriaCount();
+    const totalCriteria = getDashboardVisualTotalCriteriaCount();
     const categories = (CLASSIFICATION_DATA_3296.sections || []).length;
     const maxPoints = getMaxPointsForStar(selectedStar);
     const mandatory5 = getMandatoryIdsForLevel(getStarLevel(5)).length;
