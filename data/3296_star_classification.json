@@ -1,1259 +1,3706 @@
 {
-  "standard": "MST 125",
-  "maxPoints": 606,
-  "starLevels": [
-    {
-      "star": 1,
-      "label": "★",
-      "minTotalPoints": 320,
-      "mandatoryIds": [
-        "1",
-        "2",
-        "3",
-        "9.1",
-        "12.1",
-        "12.2",
-        "13.1",
-        "15.1",
-        "16.2",
-        "17",
-        "18",
-        "29.1",
-        "31.1",
-        "41",
-        "48",
-        "49",
-        "53",
-        "58.1",
-        "58.4",
-        "61",
-        "63",
-        "66",
-        "69",
-        "76",
-        "79",
-        "83",
-        "87",
-        "88",
-        "89",
-        "96",
-        "98",
-        "100",
-        "101",
-        "106",
-        "113",
-        "151",
-        "160",
-        "169"
-      ]
+  "standard": "OzDSt 3220:2023",
+  "title_uz": "Mehmonxonalar va o'xshash joylashtirish vositalarini toifalarga ajratish mezonlari",
+  "title_ru": "Критерии классификации гостиниц и аналогичных средств размещения",
+  "title_en": "Classification Criteria for Hotels and Similar Accommodation Facilities",
+  "max_points": 1023,
+  "minimum_scores": {
+    "hotels_and_similar": {
+      "name_uz": "Mehmonxonalar va o'xshash joylashtirish vositalari",
+      "name_ru": "Гостиницы и аналогичные средства размещения",
+      "name_en": "Hotels and similar accommodation facilities",
+      "1_star": 149,
+      "2_star": 230,
+      "3_star": 357,
+      "4_star": 523,
+      "5_star": 615
     },
-    {
-      "star": 2,
-      "label": "★★",
-      "minTotalPoints": 378,
-      "mandatoryIds": [
-        "1",
-        "2",
-        "3",
-        "9.1",
-        "12.1",
-        "12.2",
-        "12.6",
-        "12.10",
-        "13.2",
-        "15.1",
-        "16.2",
-        "17",
-        "18",
-        "29.2",
-        "31.1",
-        "41",
-        "48",
-        "49",
-        "53",
-        "58.1",
-        "58.4",
-        "61",
-        "63",
-        "66",
-        "69",
-        "76",
-        "79",
-        "83",
-        "87",
-        "88",
-        "89",
-        "96",
-        "98",
-        "100",
-        "101",
-        "105",
-        "106",
-        "113",
-        "151",
-        "160",
-        "163",
-        "168",
-        "169"
-      ]
+    "aparthotels": {
+      "name_uz": "Apartotелlar, apartamentlar majmui (qarorgohi)",
+      "name_ru": "Апартотели, апартаментные комплексы",
+      "name_en": "Aparthotels, apartment complexes",
+      "1_star": 117,
+      "2_star": 177,
+      "3_star": 261,
+      "4_star": 346,
+      "5_star": 409
     },
-    {
-      "star": 3,
-      "label": "★★★",
-      "minTotalPoints": 407,
-      "mandatoryIds": [
-        "1",
-        "2",
-        "3",
-        "4",
-        "9.2",
-        "10.2",
-        "12.1",
-        "12.2",
-        "12.3",
-        "12.6",
-        "12.8",
-        "12.10",
-        "13.3",
-        "15.1",
-        "16.2",
-        "16.3",
-        "17",
-        "18",
-        "27",
-        "28",
-        "29.3",
-        "31.1",
-        "40",
-        "41",
-        "42",
-        "48",
-        "49",
-        "53",
-        "58.1",
-        "58.4",
-        "61",
-        "62",
-        "63",
-        "66",
-        "69",
-        "76",
-        "79",
-        "83",
-        "87",
-        "88",
-        "89",
-        "90",
-        "94",
-        "96",
-        "98",
-        "100",
-        "101",
-        "105",
-        "107",
-        "113",
-        "128",
-        "151",
-        "160",
-        "163",
-        "168",
-        "169",
-        "170"
-      ]
-    },
-    {
-      "star": 4,
-      "label": "★★★★",
-      "minTotalPoints": 465,
-      "mandatoryIds": [
-        "1",
-        "2",
-        "3",
-        "4",
-        "9.2",
-        "10.2",
-        "11.5",
-        "12.1",
-        "12.2",
-        "12.3",
-        "12.5",
-        "12.6",
-        "12.8",
-        "12.10",
-        "13.3",
-        "15.1",
-        "16.2",
-        "16.3",
-        "17",
-        "18",
-        "23",
-        "24",
-        "27",
-        "28",
-        "29.4",
-        "30",
-        "31.2",
-        "32.7",
-        "40",
-        "41",
-        "42",
-        "48",
-        "49",
-        "53",
-        "54",
-        "55",
-        "58.2",
-        "58.4",
-        "60",
-        "61",
-        "62",
-        "63",
-        "66",
-        "67",
-        "69",
-        "76",
-        "79",
-        "83",
-        "87",
-        "88",
-        "89",
-        "90",
-        "94",
-        "96",
-        "98",
-        "100",
-        "101",
-        "102",
-        "103",
-        "105",
-        "108",
-        "112",
-        "113",
-        "114",
-        "128",
-        "134",
-        "137",
-        "151",
-        "160",
-        "163",
-        "166",
-        "167",
-        "168",
-        "169",
-        "170"
-      ]
-    },
-    {
-      "star": 5,
-      "label": "★★★★★",
-      "minTotalPoints": 494,
-      "mandatoryIds": [
-        "1",
-        "2",
-        "3",
-        "4",
-        "9.2",
-        "12.1",
-        "12.2",
-        "12.3",
-        "12.6",
-        "12.8",
-        "12.10",
-        "13.3",
-        "15.1",
-        "16.2",
-        "16.3",
-        "17",
-        "18",
-        "23",
-        "24",
-        "25",
-        "27",
-        "28",
-        "29.4",
-        "30",
-        "31.2",
-        "32.7",
-        "40",
-        "41",
-        "42",
-        "48",
-        "49",
-        "53",
-        "54",
-        "55",
-        "58.2",
-        "58.4",
-        "60",
-        "61",
-        "62",
-        "63",
-        "66",
-        "67",
-        "69",
-        "76",
-        "79",
-        "83",
-        "87",
-        "88",
-        "89",
-        "90",
-        "94",
-        "96",
-        "98",
-        "100",
-        "101",
-        "102",
-        "103",
-        "105",
-        "108",
-        "112",
-        "113",
-        "114",
-        "128",
-        "137",
-        "151",
-        "160",
-        "163",
-        "165",
-        "166",
-        "167",
-        "168",
-        "169",
-        "170"
-      ]
+    "specialized": {
+      "name_uz": "Ixtisoslashtirilgan joylashtirish vositalari",
+      "name_ru": "Специализированные средства размещения",
+      "name_en": "Specialized accommodation facilities",
+      "1_star": 135,
+      "2_star": 193,
+      "3_star": 274,
+      "4_star": 338,
+      "5_star": 399
     }
-  ],
-  "sections": [
+  },
+  "categories": [
     {
       "id": 1,
-      "name": {
-        "uz": "Umumiy talablar",
-        "en": "General Requirements",
-        "ru": "Общие требования"
-      },
-      "criteria": [
+      "name_uz": "Umumiy talablar",
+      "name_ru": "Общие требования",
+      "name_en": "General Requirements",
+      "reference": "А13",
+      "items": [
         {
           "id": "1",
-          "title": {
-            "uz": "Tozalik va gigiena.",
-            "en": "Cleanliness and hygiene.",
-            "ru": "Чистота и гигиена."
-          },
-          "points": 0
+          "criterion_uz": "Tozalik va gigiena. Joylashtirish vositalari hududi bo'ylab tozalik va gigiena qoidalariga amal qilinishi kerak.",
+          "criterion_ru": "Чистота и гигиена. На всей территории средства размещения должны соблюдаться правила чистоты и гигиены.",
+          "criterion_en": "Cleanliness and hygiene. Cleanliness and hygiene standards must be maintained throughout the accommodation facility.",
+          "reference": "А1",
+          "points": 0,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "2",
-          "title": {
-            "uz": "Tashqi ko'rinish.",
-            "en": "Exterior appearance.",
-            "ru": "Внешний вид."
-          },
-          "points": 0
+          "criterion_uz": "Tashqi ko'rinish. Fasad, balkonlar, lodjiyalarning sifati va holati tashqi nuqsonsiz, fasadning oldinga chiqqan elementlari yorilmagan, buzilmagan, shikastlanmagan, metall konstruksiyalarning bir-biri bilan payvandlangan joylari zang dog'larisiz bo'lishi kerak.",
+          "criterion_ru": "Внешний вид. Качество и состояние фасада, балконов, лоджий должны быть без внешних дефектов, выступающие элементы фасада без трещин, повреждений, сварные соединения металлических конструкций без следов коррозии.",
+          "criterion_en": "Exterior appearance. The quality and condition of the facade, balconies, and loggias must be free of external defects; protruding facade elements must be without cracks, damage, or deterioration; welded joints of metal structures must be free of rust stains.",
+          "points": 0,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "3",
-          "title": {
-            "uz": "Jihozlar va uskunalar holati.",
-            "en": "Condition of facilities and equipment.",
-            "ru": "Состояние оборудования и сооружений."
-          },
-          "points": 0
+          "criterion_uz": "Joylashtirish vositasi binolari va xonalarining jihozlari, inshootlari, asbob-uskunalari va inventarlari soz holatda va belgilangan funksional talablarga muvofiq bo'lishi kerak.",
+          "criterion_ru": "Оборудование, сооружения, приборы и инвентарь зданий и помещений средства размещения должны быть в исправном состоянии и соответствовать установленным функциональным требованиям.",
+          "criterion_en": "Equipment, installations, appliances, and inventory of the accommodation facility buildings and rooms must be in working order and comply with established functional requirements.",
+          "points": 0,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "4",
-          "title": {
-            "uz": "Ko'chmas generator.",
-            "en": "Stationary generator.",
-            "ru": "Стационарный генератор."
-          },
-          "points": 4
+          "criterion_uz": "Ko'chmas generatorning mavjudligi (24 soat davomida asosiy yoritish va uskunalar ishini, shuningdek birinchi qavatgacha liftlar ishini ta'minlashi kerak).",
+          "criterion_ru": "Наличие стационарного генератора (должен обеспечивать работу основного освещения и оборудования в течение 24 часов, а также работу лифтов до первого этажа).",
+          "criterion_en": "Availability of a stationary generator (must ensure operation of main lighting and equipment for 24 hours, as well as elevator operation to the ground floor).",
+          "points": 4,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "4.1",
-          "title": {
-            "uz": "Muqobil energiya manbalari.",
-            "en": "Renewable energy sources.",
-            "ru": "Возобновляемые источники энергии."
-          },
-          "points": 5
+          "criterion_uz": "Muqobil qayta tiklanuvchi energiya manbalari (quyosh panellari, shamol generatorlari va boshqalar).",
+          "criterion_ru": "Альтернативные возобновляемые источники энергии (солнечные панели, ветрогенераторы и другие).",
+          "criterion_en": "Alternative renewable energy sources (solar panels, wind generators, and others).",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "5",
-          "title": {
-            "uz": "Park xo'jaligi.",
-            "en": "Landscaped park areas.",
-            "ru": "Парковая зона."
-          },
-          "points": 3
+          "criterion_uz": "Park (o'rmon parki) xo'jaligining mavjudligi (daraxtlar, butalar, manzarali o'simliklar, o't qoplamasi, yo'lkalar, so'qmoq yo'llar).",
+          "criterion_ru": "Наличие парковой (лесопарковой) зоны (деревья, кустарники, декоративные растения, газоны, дорожки, тропинки).",
+          "criterion_en": "Availability of park (forest park) area (trees, shrubs, ornamental plants, lawns, pathways, trails).",
+          "reference": "А12",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "6",
+          "criterion_uz": "Ko'ngilochar va fitnes qurilmalarini ochiq havoda, joylashtirish vositalarga tutash ko'chalar, binolar va texnik hududlardan uzoq bo'lgan joylarda joylashishi.",
+          "criterion_ru": "Размещение развлекательных и фитнес-сооружений на открытом воздухе, вдали от прилегающих к средствам размещения улиц, зданий и технических зон.",
+          "criterion_en": "Location of leisure and fitness facilities outdoors, away from streets, buildings, and technical areas adjacent to the accommodation facility.",
+          "reference": "А12",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "7",
+          "criterion_uz": "Soyabonlar va shiyponlarning mavjudligi.",
+          "criterion_ru": "Наличие навесов и беседок.",
+          "criterion_en": "Availability of sunshades and shelters.",
+          "reference": "А12",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "8",
+          "criterion_uz": "Avtoturargoh/avtomobillarning to'xtash joyi.",
+          "criterion_ru": "Автостоянка/парковка автомобилей.",
+          "criterion_en": "Car park/parking area.",
+          "reference": "А7",
+          "points": 0,
+          "is_group_header": true,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "8.1",
+          "criterion_uz": "Joylashtirish vositasi yaqinida.",
+          "criterion_ru": "Вблизи средства размещения.",
+          "criterion_en": "Near the accommodation facility.",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "8.2",
+          "criterion_uz": "Avtobus to'xtab turish imkoniyati mavjudligi.",
+          "criterion_ru": "Наличие возможности парковки автобуса.",
+          "criterion_en": "Availability of bus parking.",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "8.3",
+          "criterion_uz": "Tashrif buyuruvchilar transporti uchun garaj mavjudligi.",
+          "criterion_ru": "Наличие гаража для транспорта посетителей.",
+          "criterion_en": "Availability of garage for guest vehicles.",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "8.4",
+          "criterion_uz": "Elektromobillar va boshqa turdagi elektrotransport uchun quvvatlash stantsiyasi mavjudligi.",
+          "criterion_ru": "Наличие зарядной станции для электромобилей и других видов электротранспорта.",
+          "criterion_en": "Availability of charging station for electric vehicles and other types of electric transport.",
+          "points": 10,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "9",
+          "criterion_uz": "Lift.",
+          "criterion_ru": "Лифт.",
+          "criterion_en": "Elevator.",
+          "points": 0,
+          "is_group_header": true,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "9.1",
-          "title": {
-            "uz": "Lift (3 qavatdan yuqori).",
-            "en": "Elevator for 3+ floors.",
-            "ru": "Лифт для зданий 3+ этажей."
-          },
-          "points": 2
+          "criterion_uz": "3 qavatdan yuqori joylashtirish vositalarida.",
+          "criterion_ru": "В средствах размещения выше 3 этажей.",
+          "criterion_en": "In accommodation facilities above 3 floors.",
+          "points": 2,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "9.2",
-          "title": {
-            "uz": "Lift (2 qavatdan yuqori).",
-            "en": "Elevator for 2+ floors.",
-            "ru": "Лифт для зданий 2+ этажей."
-          },
-          "points": 2
+          "criterion_uz": "2 qavatdan yuqori joylashtirish vositalarida.",
+          "criterion_ru": "В средствах размещения выше 2 этажей.",
+          "criterion_en": "In accommodation facilities above 2 floors.",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "9.3",
+          "criterion_uz": "Xizmat ko'rsatuvchi/yuk tashuvchi (yoki yuk ko'targich) qo'shimcha lift.",
+          "criterion_ru": "Дополнительный служебный/грузовой лифт (или грузоподъёмник).",
+          "criterion_en": "Additional service/cargo elevator (or freight lift).",
+          "reference": "А11",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "10",
+          "criterion_uz": "Boshqa talablar.",
+          "criterion_ru": "Прочие требования.",
+          "criterion_en": "Other requirements.",
+          "points": 0,
+          "is_group_header": true,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "10.1",
+          "criterion_uz": "Nomerlar balkon yoki terrasali bo'lishi.",
+          "criterion_ru": "Наличие балкона или террасы в номерах.",
+          "criterion_en": "Rooms with balcony or terrace.",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "10.2",
-          "title": {
-            "uz": "Soyabonli kirish joyi.",
-            "en": "Covered entrance.",
-            "ru": "Крытый вход."
-          },
-          "points": 5
+          "criterion_uz": "Mehmonlar uchun avtotransport vositalari joylashtirilgan joydan kelish yo'lida atmosfera yog'inlaridan himoyalaydigan soyabonli kirish joyi mavjud bo'lishi.",
+          "criterion_ru": "Наличие крытого входа с навесом, защищающим от атмосферных осадков на пути от парковки к входу для гостей.",
+          "criterion_en": "Availability of a covered entrance with canopy protecting from precipitation on the path from parking to guest entrance.",
+          "reference": "А7, А11",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "10.3",
+          "criterion_uz": "Suvga ishlov berish (filtratsiya va tozalash) bo'yicha uskuna.",
+          "criterion_ru": "Оборудование для водоподготовки (фильтрация и очистка).",
+          "criterion_en": "Water treatment equipment (filtration and purification).",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "11",
+          "criterion_uz": "Imkoniyati cheklangan shaxslar uchun qulayliklar.",
+          "criterion_ru": "Удобства для лиц с ограниченными возможностями.",
+          "criterion_en": "Accessibility features for persons with disabilities.",
+          "reference": "А7",
+          "points": 0,
+          "is_group_header": true,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "11.1",
+          "criterion_uz": "Imkoniyati cheklangan shaxslar uchun o'rindiqli aravача, yordam ko'rsatish vositalari (qo'ltiqtayoqlar).",
+          "criterion_ru": "Инвалидная коляска, вспомогательные средства (костыли) для лиц с ограниченными возможностями.",
+          "criterion_en": "Wheelchair, assistive devices (crutches) for persons with disabilities.",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "11.2",
+          "criterion_uz": "Imkoniyati cheklangan shaxslar uchun o'rindiqli elektron aravача.",
+          "criterion_ru": "Электрическая инвалидная коляска для лиц с ограниченными возможностями.",
+          "criterion_en": "Electric wheelchair for persons with disabilities.",
+          "points": 10,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "11.3",
+          "criterion_uz": "To'siqsiz harakatlanish. Jamoat joylarida ko'zi ojiz yoki ko'rish qobiliyati sust shaxslar uchun radio tovushli moslama.",
+          "criterion_ru": "Безбарьерная среда. Радиозвуковое устройство для слепых или слабовидящих лиц в общественных местах.",
+          "criterion_en": "Barrier-free access. Audio device for blind or visually impaired persons in public areas.",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "11.4",
+          "criterion_uz": "To'siqsiz harakatlanish. Jamoat joylarida kar yoki eshitish qobiliyati sust shaxslar uchun yoritgichli indikator.",
+          "criterion_ru": "Безбарьерная среда. Световой индикатор для глухих или слабослышащих лиц в общественных местах.",
+          "criterion_en": "Barrier-free access. Light indicator for deaf or hearing impaired persons in public areas.",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "11.5",
-          "title": {
-            "uz": "Maxsus moslamali sanuzel.",
-            "en": "Accessible restroom.",
-            "ru": "Санузел для инвалидов."
-          },
-          "points": 2
+          "criterion_uz": "Jamoat joylarida zarur moslamalarga ega sanuzel.",
+          "criterion_ru": "Санузел с необходимыми приспособлениями в общественных местах.",
+          "criterion_en": "Restroom with necessary accessibility features in public areas.",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": true
+          }
+        },
+        {
+          "id": "11.6",
+          "criterion_uz": "Mehmonxonaning kirish qismida audio va matnli ma'lumotlarning taqdim etilishi.",
+          "criterion_ru": "Предоставление аудио и текстовой информации при входе в гостиницу.",
+          "criterion_en": "Provision of audio and text information at the hotel entrance.",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         }
       ]
     },
     {
       "id": 2,
-      "name": {
-        "uz": "Qabul qilish, joylashtirish va xizmatlar",
-        "en": "Reception, Accommodation and Services",
-        "ru": "Приём, размещение и услуги"
-      },
-      "criteria": [
+      "name_uz": "Qabul qilish, joylashtirish va xizmatlar",
+      "name_ru": "Приём, размещение и услуги",
+      "name_en": "Reception, Accommodation and Services",
+      "items": [
+        {
+          "id": "12",
+          "criterion_uz": "Qabul qilish xizmati.",
+          "criterion_ru": "Служба приёма.",
+          "criterion_en": "Reception service.",
+          "points": 0,
+          "is_group_header": true,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
         {
           "id": "12.1",
-          "title": {
-            "uz": "Milliy hunarmandchilik mahsulotlarini sotish hududi.",
-            "en": "Area for selling national handicraft products.",
-            "ru": "Зона продажи изделий национальных ремёсел."
-          },
-          "points": 2
+          "criterion_uz": "Milliy hunarmandchilik mahsulotlarini sotish hududi.",
+          "criterion_ru": "Зона продажи изделий национальных ремёсел.",
+          "criterion_en": "Area for selling national handicraft products.",
+          "reference": "А8, А11",
+          "points": 2,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "12.2",
-          "title": {
-            "uz": "San'at kompozitsiyalari.",
-            "en": "Art compositions.",
-            "ru": "Арт-композиции."
-          },
-          "points": 2
+          "criterion_uz": "San'at kompozitsiyalari.",
+          "criterion_ru": "Арт-композиции.",
+          "criterion_en": "Art compositions.",
+          "reference": "А8, А11",
+          "points": 2,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "12.3",
-          "title": {
-            "uz": "Lobbida o'tirish joylari va ichimlik buyurtma qilish imkoniyati.",
-            "en": "Lobby with seating and drink ordering.",
-            "ru": "Лобби с местами для сидения и заказом напитков."
-          },
-          "points": 5
+          "criterion_uz": "O'tirish joylari va ichimlik buyurtma qilish imkoniyati bo'lgan lobbi.",
+          "criterion_ru": "Лобби с местами для сидения и возможностью заказа напитков.",
+          "criterion_en": "Lobby with seating areas and drink ordering capability.",
+          "reference": "А11",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "12.4",
+          "criterion_uz": "Tunu-kun qabul qilish, telefon va raqamli aloqa vositalari orqali xizmat ko'rsatish.",
+          "criterion_ru": "Круглосуточная служба приёма, обслуживание по телефону и цифровым средствам связи.",
+          "criterion_en": "24-hour reception service via telephone and digital communication.",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "12.5",
-          "title": {
-            "uz": "Avtoturargohga joylashtirish xizmati.",
-            "en": "Valet parking service.",
-            "ru": "Услуга парковки (valet)."
-          },
-          "points": 10
+          "criterion_uz": "Avtomobillarni avtoturargohga joylashtirish xizmati.",
+          "criterion_ru": "Услуга парковки автомобилей (valet parking).",
+          "criterion_en": "Valet parking service.",
+          "reference": "А8, А11",
+          "points": 10,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": false
+          }
         },
         {
           "id": "12.6",
-          "title": {
-            "uz": "Bagajni kechayu kunduz keltirish xizmati.",
-            "en": "24-hour luggage delivery.",
-            "ru": "Круглосуточная доставка багажа."
-          },
-          "points": 5
+          "criterion_uz": "Bagajni kechayu kunduz keltirish xizmati (mashinadan nomerga va nomerdan mashinaga).",
+          "criterion_ru": "Круглосуточная доставка багажа (из машины в номер и из номера в машину).",
+          "criterion_en": "24-hour luggage delivery service (from car to room and from room to car).",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "12.7",
+          "criterion_uz": "Mehmonlarning qimmatbaho buyumlarini saqlash uchun individual seyf xonachalari.",
+          "criterion_ru": "Индивидуальные сейфовые ячейки для хранения ценных вещей гостей.",
+          "criterion_en": "Individual safe deposit boxes for storing guest valuables.",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "12.8",
-          "title": {
-            "uz": "Poyabzal tozalash avtomati.",
-            "en": "Shoe polishing machine.",
-            "ru": "Автомат для чистки обуви."
-          },
-          "points": 5
+          "criterion_uz": "Poyabzal tozalash uchun avtomat uskunasi.",
+          "criterion_ru": "Автоматическое устройство для чистки обуви.",
+          "criterion_en": "Automatic shoe polishing machine.",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "12.9",
+          "criterion_uz": "Tashrif buyuruvchilar uchun kirish joyi (havo-issiqlik pardasi yoki tambur).",
+          "criterion_ru": "Входная зона для посетителей (воздушно-тепловая завеса или тамбур).",
+          "criterion_en": "Entrance area for guests (air-heat curtain or vestibule).",
+          "reference": "А11",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "12.10",
-          "title": {
-            "uz": "Majburiy ventilyatsiya tizimi.",
-            "en": "Mandatory ventilation system.",
-            "ru": "Обязательная система вентиляции."
-          },
-          "points": 7
+          "criterion_uz": "Texnik loyihalashga muvofiq jamoat va yashash joylarida majburiy ventilyatsiya tizimining mavjudligi.",
+          "criterion_ru": "Наличие обязательной системы вентиляции в общественных и жилых помещениях в соответствии с техническим проектированием.",
+          "criterion_en": "Mandatory ventilation system in public and residential areas in accordance with technical design.",
+          "reference": "А11",
+          "points": 7,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "13",
+          "criterion_uz": "Dahliz (xoll, vestibyul) maydoni.",
+          "criterion_ru": "Площадь холла (вестибюля).",
+          "criterion_en": "Lobby (hall, vestibule) area.",
+          "reference": "А6, А8, А11",
+          "points": 0,
+          "is_group_header": true,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "13.1",
-          "title": {
-            "uz": "Dahliz maydoni ≥ 9 m².",
-            "en": "Hall area ≥ 9 m².",
-            "ru": "Площадь холла ≥ 9 м²."
-          },
-          "points": 2
+          "criterion_uz": "9 m² dan kam bo'lmagan, 21-nomerdan boshlab har bir nomer hisobidan 1 m² qo'shiladi (maksimal maydon 25 m² dan oshmasligi ruxsat etiladi).",
+          "criterion_ru": "Не менее 9 м², начиная с 21-го номера прибавляется по 1 м² за каждый номер (максимальная площадь не должна превышать 25 м²).",
+          "criterion_en": "Not less than 9 m², from the 21st room 1 m² is added per room (maximum area shall not exceed 25 m²).",
+          "points": 2,
+          "mandatory": {
+            "1_star": true,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "13.2",
-          "title": {
-            "uz": "Dahliz maydoni ≥ 20 m².",
-            "en": "Hall area ≥ 20 m².",
-            "ru": "Площадь холла ≥ 20 м²."
-          },
-          "points": 2
+          "criterion_uz": "20 m² dan kam bo'lmagan, 21-nomerdan boshlab har bir nomer hisobidan 1 m² qo'shiladi (maksimal maydon 40 m² dan oshmasligi ruxsat etiladi).",
+          "criterion_ru": "Не менее 20 м², начиная с 21-го номера прибавляется по 1 м² за каждый номер (максимальная площадь не должна превышать 40 м²).",
+          "criterion_en": "Not less than 20 m², from the 21st room 1 m² is added per room (maximum area shall not exceed 40 m²).",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": true,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "13.3",
-          "title": {
-            "uz": "Dahliz maydoni ≥ 30 m².",
-            "en": "Hall area ≥ 30 m².",
-            "ru": "Площадь холла ≥ 30 м²."
-          },
-          "points": 2
+          "criterion_uz": "30 m² dan kam bo'lmagan, 21-nomerdan boshlab har bir nomer hisobidan 1 m² qo'shiladi (maksimal maydon 80 m² dan oshmasligi ruxsat etiladi).",
+          "criterion_ru": "Не менее 30 м², начиная с 21-го номера прибавляется по 1 м² за каждый номер (максимальная площадь не должна превышать 80 м²).",
+          "criterion_en": "Not less than 30 m², from the 21st room 1 m² is added per room (maximum area shall not exceed 80 m²).",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": true,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "13.4",
+          "criterion_uz": "30 m² dan kam bo'lmagan, 21-nomerdan boshlab har bir nomer hisobidan 1 m² qo'shiladi (bunda maksimal maydon 120 m² dan oshmasligi ruxsat etiladi).",
+          "criterion_ru": "Не менее 30 м², начиная с 21-го номера прибавляется по 1 м² за каждый номер (при этом максимальная площадь не должна превышать 120 м²).",
+          "criterion_en": "Not less than 30 m², from the 21st room 1 m² is added per room (maximum area shall not exceed 120 m²).",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": false
+          }
+        },
+        {
+          "id": "13.5",
+          "criterion_uz": "30 m² dan kam bo'lmagan, 21-nomerdan boshlab har bir nomer hisobidan 1 m² qo'shiladi (maksimal maydon 160 m² dan oshmasligi ruxsat etiladi).",
+          "criterion_ru": "Не менее 30 м², начиная с 21-го номера прибавляется по 1 м² за каждый номер (максимальная площадь не должна превышать 160 м²).",
+          "criterion_en": "Not less than 30 m², from the 21st room 1 m² is added per room (maximum area shall not exceed 160 m²).",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": true
+          }
+        },
+        {
+          "id": "14",
+          "criterion_uz": "Polda turadigan kiyim ilgich.",
+          "criterion_ru": "Напольная вешалка для одежды.",
+          "criterion_en": "Standing clothes hanger.",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "15",
+          "criterion_uz": "Xonalarni tozalash/choyshablarni almashtirish.",
+          "criterion_ru": "Уборка номеров/смена белья.",
+          "criterion_en": "Room cleaning/linen change.",
+          "points": 0,
+          "is_group_header": true,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "15.1",
-          "title": {
-            "uz": "Sochiqlarni har kuni almashtirish.",
-            "en": "Daily towel change.",
-            "ru": "Ежедневная смена полотенец."
-          },
-          "points": 1
+          "criterion_uz": "Sochiqlarni har kuni almashtirish (so'rovga ko'ra).",
+          "criterion_ru": "Ежедневная замена полотенец (по запросу).",
+          "criterion_en": "Daily towel change (on request).",
+          "points": 1,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "15.2",
+          "criterion_uz": "Choyshab-jildlarni haftada ikki marta almashtirish.",
+          "criterion_ru": "Смена постельного белья дважды в неделю.",
+          "criterion_en": "Bed linen change twice per week.",
+          "points": 3,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "15.3",
+          "criterion_uz": "Choyshab-jildlarni har kuni almashtirish (so'rovga ko'ra).",
+          "criterion_ru": "Ежедневная смена постельного белья (по запросу).",
+          "criterion_en": "Daily bed linen change (on request).",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "16",
+          "criterion_uz": "Kir yuvish va dazmollash xizmati.",
+          "criterion_ru": "Услуги стирки и глажки.",
+          "criterion_en": "Laundry and ironing service.",
+          "reference": "А8",
+          "points": 0,
+          "is_group_header": true,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "16.1",
+          "criterion_uz": "Dazmollash xizmati (1 soat ichida).",
+          "criterion_ru": "Услуга глажки (в течение 1 часа).",
+          "criterion_en": "Ironing service (within 1 hour).",
+          "reference": "А11",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "16.2",
-          "title": {
-            "uz": "Kir yuvish va dazmollash xizmati.",
-            "en": "Laundry and ironing service.",
-            "ru": "Стирка и глажка."
-          },
-          "points": 1
+          "criterion_uz": "Kir yuvish va dazmollash xizmati (kelishuv bo'yicha bajarish, kirxona xaltalari taqdim qilish).",
+          "criterion_ru": "Стирка и глажка (выполнение по договорённости, предоставление пакетов для белья).",
+          "criterion_en": "Laundry and ironing service (execution by agreement, laundry bags provided).",
+          "points": 1,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "16.3",
-          "title": {
-            "uz": "Kimyoviy tozalash (24 soat).",
-            "en": "Dry cleaning within 24 hours.",
-            "ru": "Химчистка в течение 24 часов."
-          },
-          "points": 5
+          "criterion_uz": "Kimyoviy tozalash/quruq tozalash xizmati (24 soat ichida bajarish, kelishuvga asosan qaytarish, kirxona xaltalari taqdim qilish).",
+          "criterion_ru": "Химчистка/сухая чистка (выполнение в течение 24 часов, возврат по договорённости, предоставление пакетов для белья).",
+          "criterion_en": "Dry cleaning service (execution within 24 hours, return by agreement, laundry bags provided).",
+          "reference": "А4",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "17",
-          "title": {
-            "uz": "Naqd pulsiz hisob-kitob.",
-            "en": "Cashless payment.",
-            "ru": "Безналичная оплата."
-          },
-          "points": 1
+          "criterion_uz": "Naqd pulsiz hisob-kitob qilish imkoniyati.",
+          "criterion_ru": "Возможность безналичного расчёта.",
+          "criterion_en": "Cashless payment capability.",
+          "points": 1,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         }
       ]
     },
     {
       "id": 3,
-      "name": {
-        "uz": "Boshqa xizmatlar",
-        "en": "Other Services",
-        "ru": "Прочие услуги"
-      },
-      "criteria": [
+      "name_uz": "Boshqa xizmatlar",
+      "name_ru": "Прочие услуги",
+      "name_en": "Other Services",
+      "items": [
         {
           "id": "18",
-          "title": {
-            "uz": "Matbuot materiallari.",
-            "en": "Press materials.",
-            "ru": "Печатные материалы."
-          },
-          "points": 3
+          "criterion_uz": "Matbuot materiallari (nashr qilingan yoki raqamli).",
+          "criterion_ru": "Печатные материалы (в печатном или цифровом формате).",
+          "criterion_en": "Press materials (printed or digital).",
+          "reference": "А8",
+          "points": 3,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "19",
+          "criterion_uz": "Kiyimlarni kichik ta'mirlash.",
+          "criterion_ru": "Мелкий ремонт одежды.",
+          "criterion_en": "Minor clothing repair.",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "20",
+          "criterion_uz": "So'rovga ko'ra nashr qilish imkoniyati.",
+          "criterion_ru": "Возможность печати по запросу.",
+          "criterion_en": "Printing on request.",
+          "reference": "А8, А11",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": true
+          }
+        },
+        {
+          "id": "21",
+          "criterion_uz": "Poyabzal tozalash.",
+          "criterion_ru": "Чистка обуви.",
+          "criterion_en": "Shoe cleaning.",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "22",
+          "criterion_uz": "Ekskursiyalar, gidlar va gid-tarjimonlar.",
+          "criterion_ru": "Экскурсии, гиды и гиды-переводчики.",
+          "criterion_en": "Excursions, guides, and guide-interpreters.",
+          "reference": "А4",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "23",
-          "title": {
-            "uz": "Transportda tashish (transfer).",
-            "en": "Transfer service.",
-            "ru": "Трансфер."
-          },
-          "points": 5
+          "criterion_uz": "Transportda tashish (transfer).",
+          "criterion_ru": "Трансфер.",
+          "criterion_en": "Transfer service.",
+          "reference": "А4, А8, А11",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "24",
-          "title": {
-            "uz": "Mehmonga xonaga kuzatib qo'yish.",
-            "en": "Escort guest to room.",
-            "ru": "Сопровождение гостя в номер."
-          },
-          "points": 5
+          "criterion_uz": "Mehmon kelgandan so'ng nomerga kuzatib qo'yish.",
+          "criterion_ru": "Сопровождение гостя в номер после прибытия.",
+          "criterion_en": "Escorting guest to room upon arrival.",
+          "reference": "А8, А11",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "25",
-          "title": {
-            "uz": "Kechki tayyorlash xizmati.",
-            "en": "Evening turndown service.",
-            "ru": "Вечерняя подготовка номера."
-          },
-          "points": 7
+          "criterion_uz": "Qo'shimcha servis sifatida nomerni kechki tayyorlash.",
+          "criterion_ru": "Вечерняя подготовка номера как дополнительный сервис.",
+          "criterion_en": "Evening turndown service as additional service.",
+          "reference": "А8, А11",
+          "points": 7,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": true
+          }
+        },
+        {
+          "id": "26",
+          "criterion_uz": "Matraslarni har yili yuvish yoki tozalash.",
+          "criterion_ru": "Ежегодная стирка или чистка матрасов.",
+          "criterion_en": "Annual mattress washing or cleaning.",
+          "reference": "А4",
+          "points": 10,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "27",
-          "title": {
-            "uz": "Yostiqlarni tozalash yoki yangilash.",
-            "en": "Annual pillow cleaning or replacement.",
-            "ru": "Ежегодная чистка или замена подушек."
-          },
-          "points": 1
+          "criterion_uz": "Yostiqlarni har yili tozalash yoki yangi yostiqlarni sotib olish.",
+          "criterion_ru": "Ежегодная чистка подушек или приобретение новых.",
+          "criterion_en": "Annual pillow cleaning or purchase of new ones.",
+          "points": 1,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         }
       ]
     },
     {
       "id": 4,
-      "name": {
-        "uz": "Nomerlar",
-        "en": "Rooms",
-        "ru": "Номера"
-      },
-      "criteria": [
+      "name_uz": "Nomerlar",
+      "name_ru": "Номера",
+      "name_en": "Rooms",
+      "items": [
         {
           "id": "28",
-          "title": {
-            "uz": "Faqat bir/ikki kishilik nomerlar.",
-            "en": "Only single or double rooms.",
-            "ru": "Только одно- или двухместные номера."
-          },
-          "points": 2
+          "criterion_uz": "Faqat bir/ikki kishilik nomerlar.",
+          "criterion_ru": "Только одно-/двухместные номера.",
+          "criterion_en": "Only single/double rooms.",
+          "reference": "А8",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "29",
+          "criterion_uz": "Nomer maydoni (vannaxona, lodjiya, balkoni hisobga olmaganda).",
+          "criterion_ru": "Площадь номера (без учёта ванной, лоджии, балкона).",
+          "criterion_en": "Room area (excluding bathroom, loggia, balcony).",
+          "points": 0,
+          "is_group_header": true,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "29.1",
-          "title": {
-            "uz": "Xona maydoni ≥ 12 m².",
-            "en": "Room size ≥ 12 m².",
-            "ru": "Площадь номера ≥ 12 м²."
-          },
-          "points": 10
+          "criterion_uz": "Xonalar o'lchami ≥ 12 m².",
+          "criterion_ru": "Размер номеров ≥ 12 м².",
+          "criterion_en": "Room size ≥ 12 m².",
+          "reference": "А14",
+          "points": 10,
+          "mandatory": {
+            "1_star": true,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "29.2",
-          "title": {
-            "uz": "Xona maydoni ≥ 18 m².",
-            "en": "Room size ≥ 18 m².",
-            "ru": "Площадь номера ≥ 18 м²."
-          },
-          "points": 15
+          "criterion_uz": "Xonalar o'lchami ≥ 18 m².",
+          "criterion_ru": "Размер номеров ≥ 18 м².",
+          "criterion_en": "Room size ≥ 18 m².",
+          "reference": "А14",
+          "points": 15,
+          "mandatory": {
+            "1_star": false,
+            "2_star": true,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "29.3",
-          "title": {
-            "uz": "Xona maydoni ≥ 22 m².",
-            "en": "Room size ≥ 22 m².",
-            "ru": "Площадь номера ≥ 22 м²."
-          },
-          "points": 20
+          "criterion_uz": "Xonalar o'lchami ≥ 22 m².",
+          "criterion_ru": "Размер номеров ≥ 22 м².",
+          "criterion_en": "Room size ≥ 22 m².",
+          "reference": "А14",
+          "points": 20,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": true,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "29.4",
-          "title": {
-            "uz": "Xona maydoni ≥ 30 m².",
-            "en": "Room size ≥ 30 m².",
-            "ru": "Площадь номера ≥ 30 м²."
-          },
-          "points": 25
+          "criterion_uz": "Xonalar o'lchami ≥ 30 m².",
+          "criterion_ru": "Размер номеров ≥ 30 м².",
+          "criterion_en": "Room size ≥ 30 m².",
+          "reference": "А14",
+          "points": 25,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": false
+          }
+        },
+        {
+          "id": "29.5",
+          "criterion_uz": "Yarimlyuks, 25 m² dan kam emas.",
+          "criterion_ru": "Полулюкс, не менее 25 м².",
+          "criterion_en": "Junior suite, not less than 25 m².",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "29.6",
+          "criterion_uz": "Lyuks, 35 m² dan kam emas.",
+          "criterion_ru": "Люкс, не менее 35 м².",
+          "criterion_en": "Suite, not less than 35 m².",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "29.7",
+          "criterion_uz": "Apartament, 40 m² dan kam emas.",
+          "criterion_ru": "Апартаменты, не менее 40 м².",
+          "criterion_en": "Apartment, not less than 40 m².",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "29.8",
+          "criterion_uz": "Studiya, 25 m² dan kam emas.",
+          "criterion_ru": "Студия, не менее 25 м².",
+          "criterion_en": "Studio, not less than 25 m².",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "30",
-          "title": {
-            "uz": "Lyuks nomerlar soni.",
-            "en": "Number of suites.",
-            "ru": "Количество номеров люкс."
-          },
-          "points": 0
+          "criterion_uz": "Lyuks nomerlar soni.",
+          "criterion_ru": "Количество номеров люкс.",
+          "criterion_en": "Number of suites.",
+          "reference": "А8, А11",
+          "points": 0,
+          "points_note_uz": "har bir nomerga 2 balldan, maksimum 10 ball",
+          "points_note_ru": "по 2 балла за каждый номер, максимум 10 баллов",
+          "points_note_en": "2 points per suite, maximum 10 points",
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "31",
+          "criterion_uz": "Matras balandligi quyidagidan kam bo'lmagan krovat.",
+          "criterion_ru": "Кровать с высотой матраса не менее.",
+          "criterion_en": "Bed with mattress height not less than.",
+          "points": 0,
+          "is_group_header": true,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "31.1",
-          "title": {
-            "uz": "Matras balandligi ≥ 18 sm.",
-            "en": "Mattress height ≥ 18 cm.",
-            "ru": "Высота матраса ≥ 18 см."
-          },
-          "points": 5
+          "criterion_uz": "18 cm.",
+          "criterion_ru": "18 см.",
+          "criterion_en": "18 cm.",
+          "points": 5,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "31.2",
-          "title": {
-            "uz": "Matras balandligi ≥ 22 sm.",
-            "en": "Mattress height ≥ 22 cm.",
-            "ru": "Высота матраса ≥ 22 см."
-          },
-          "points": 7
+          "criterion_uz": "22 cm.",
+          "criterion_ru": "22 см.",
+          "criterion_en": "22 cm.",
+          "points": 7,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "32",
+          "criterion_uz": "Krovat kengligi quyidagidan kam bo'lmasligi.",
+          "criterion_ru": "Ширина кровати не менее.",
+          "criterion_en": "Bed width not less than.",
+          "points": 0,
+          "is_group_header": true,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "32.1",
+          "criterion_uz": "Bir kishilik 0,8 m.",
+          "criterion_ru": "Односпальная 0,8 м.",
+          "criterion_en": "Single 0.8 m.",
+          "points": 1,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "32.2",
+          "criterion_uz": "Bir kishilik 0,9 m.",
+          "criterion_ru": "Односпальная 0,9 м.",
+          "criterion_en": "Single 0.9 m.",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "32.3",
+          "criterion_uz": "Bir kishilik 1,0 m.",
+          "criterion_ru": "Односпальная 1,0 м.",
+          "criterion_en": "Single 1.0 m.",
+          "points": 10,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": true
+          }
+        },
+        {
+          "id": "32.4",
+          "criterion_uz": "Bir kishilik 1,2 m.",
+          "criterion_ru": "Односпальная 1,2 м.",
+          "criterion_en": "Single 1.2 m.",
+          "points": 15,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "32.5",
+          "criterion_uz": "Ikki kishilik 1,4 m.",
+          "criterion_ru": "Двуспальная 1,4 м.",
+          "criterion_en": "Double 1.4 m.",
+          "points": 1,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "32.6",
+          "criterion_uz": "Ikki kishilik 1,6 m.",
+          "criterion_ru": "Двуспальная 1,6 м.",
+          "criterion_en": "Double 1.6 m.",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "32.7",
-          "title": {
-            "uz": "Ikki kishilik krovat ≥ 1.8 m.",
-            "en": "Double bed ≥ 1.8 m.",
-            "ru": "Двуспальная кровать ≥ 1.8 м."
-          },
-          "points": 10
+          "criterion_uz": "Ikki kishilik 1,8 m.",
+          "criterion_ru": "Двуспальная 1,8 м.",
+          "criterion_en": "Double 1.8 m.",
+          "points": 10,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": true
+          }
+        },
+        {
+          "id": "32.8",
+          "criterion_uz": "Ikki kishilik 2,0 m.",
+          "criterion_ru": "Двуспальная 2,0 м.",
+          "criterion_en": "Double 2.0 m.",
+          "points": 15,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "33",
+          "criterion_uz": "Krovat uzunligi quyidagidan kam bo'lmasligi.",
+          "criterion_ru": "Длина кровати не менее.",
+          "criterion_en": "Bed length not less than.",
+          "points": 0,
+          "is_group_header": true,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "33.1",
+          "criterion_uz": "1,9 m.",
+          "criterion_ru": "1,9 м.",
+          "criterion_en": "1.9 m.",
+          "points": 1,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "33.2",
+          "criterion_uz": "2,0 m.",
+          "criterion_ru": "2,0 м.",
+          "criterion_en": "2.0 m.",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": true
+          }
+        },
+        {
+          "id": "34",
+          "criterion_uz": "Bolalar krovati (so'rovga ko'ra).",
+          "criterion_ru": "Детская кроватка (по запросу).",
+          "criterion_en": "Baby crib (on request).",
+          "points": 1,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "35",
+          "criterion_uz": "Xarid qilinganiga 5 yil bo'lmagan yangi matraslar.",
+          "criterion_ru": "Новые матрасы, приобретённые не более 5 лет назад.",
+          "criterion_en": "New mattresses purchased not more than 5 years ago.",
+          "points": 10,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "36",
+          "criterion_uz": "Allergiyasi bor tashrif buyuruvchilar uchun yotoq ko'rpa-jildlari va yotoq buyumlari (so'rovga ko'ra).",
+          "criterion_ru": "Гипоаллергенное постельное бельё и принадлежности для гостей с аллергией (по запросу).",
+          "criterion_en": "Hypoallergenic bedding and bed accessories for guests with allergies (on request).",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "37",
+          "criterion_uz": "Dekorativ bo'lgan qo'shimcha yostiq.",
+          "criterion_ru": "Дополнительная декоративная подушка.",
+          "criterion_en": "Additional decorative pillow.",
+          "points": 1,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "38",
+          "criterion_uz": "Bir kishiga 2 ta dekorativ bo'lmagan yostiq.",
+          "criterion_ru": "2 стандартные (не декоративные) подушки на человека.",
+          "criterion_en": "2 standard (non-decorative) pillows per person.",
+          "reference": "А11",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": true
+          }
+        },
+        {
+          "id": "39",
+          "criterion_uz": "Turli yostiqlarni tanlash imkonini beruvchi yostiq menyusi.",
+          "criterion_ru": "Меню подушек с возможностью выбора различных подушек.",
+          "criterion_en": "Pillow menu offering a choice of various pillows.",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "40",
-          "title": {
-            "uz": "Krovat yonidagi gilamcha.",
-            "en": "Bedside rug.",
-            "ru": "Коврик у кровати."
-          },
-          "points": 3
+          "criterion_uz": "Krovat yonidagi gilamcha.",
+          "criterion_ru": "Коврик у кровати.",
+          "criterion_en": "Bedside rug.",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
         }
       ]
     },
     {
       "id": 5,
-      "name": {
-        "uz": "Nomerlarni jihozlash",
-        "en": "Room Equipment",
-        "ru": "Оснащение номеров"
-      },
-      "criteria": [
+      "name_uz": "Nomerlarni jihozlash",
+      "name_ru": "Оснащение номеров",
+      "name_en": "Room Equipment",
+      "items": [
         {
           "id": "41",
-          "title": {
-            "uz": "Stul, kamida 1 ta.",
-            "en": "At least one chair.",
-            "ru": "Не менее одного стула."
-          },
-          "points": 3
+          "criterion_uz": "Stul, kamida 1 ta.",
+          "criterion_ru": "Стул, не менее 1.",
+          "criterion_en": "Chair, at least 1.",
+          "points": 3,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "42",
-          "title": {
-            "uz": "Kreslo, kamida 1 ta.",
-            "en": "At least one armchair.",
-            "ru": "Минимум одно кресло."
-          },
-          "points": 7
+          "criterion_uz": "Kreslo, kamida 1 ta.",
+          "criterion_ru": "Кресло, не менее 1.",
+          "criterion_en": "Armchair, at least 1.",
+          "points": 7,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "43",
+          "criterion_uz": "Ikki kishilik yoki lyuks nomerlarda 1 ta qo'shimcha qulay yumshoq kreslo yoki divan.",
+          "criterion_ru": "1 дополнительное мягкое кресло или диван в двухместных или люкс номерах.",
+          "criterion_en": "1 additional comfortable armchair or sofa in double or suite rooms.",
+          "points": 7,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "44",
+          "criterion_uz": "Stol, stolning usti yoki ishlash hududi.",
+          "criterion_ru": "Стол, столешница или рабочая зона.",
+          "criterion_en": "Table, tabletop, or workspace.",
+          "reference": "А11",
+          "points": 1,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "45",
+          "criterion_uz": "0,35 m² bo'sh minimal ish hududiga ega, yaqinida rozetka bo'lgan va yetarli yorug'lik bilan ta'minlangan stol, stolning usti yoki ishlash hududi.",
+          "criterion_ru": "Стол или рабочая зона с минимальной свободной рабочей поверхностью 0,35 м², с розеткой поблизости и достаточным освещением.",
+          "criterion_en": "Table or workspace with minimum 0.35 m² free work surface, nearby power socket and adequate lighting.",
+          "reference": "А11",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": true,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "46",
+          "criterion_uz": "0,50 m² bo'sh minimal ish hududiga ega, yaqinida rozetka bo'lgan va yetarli yorug'lik bilan ta'minlangan stol, stolning usti yoki ishlash hududi.",
+          "criterion_ru": "Стол или рабочая зона с минимальной свободной рабочей поверхностью 0,50 м², с розеткой поблизости и достаточным освещением.",
+          "criterion_en": "Table or workspace with minimum 0.50 m² free work surface, nearby power socket and adequate lighting.",
+          "reference": "А11",
+          "points": 7,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "47",
+          "criterion_uz": "Har bir yashovchi uchun yetarli miqdorda o'tirish joyi bo'lgan ovqatlanish stoli.",
+          "criterion_ru": "Обеденный стол с достаточным количеством посадочных мест для каждого проживающего.",
+          "criterion_en": "Dining table with sufficient seating for each occupant.",
+          "reference": "А9",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "48",
-          "title": {
-            "uz": "Bo'sh rozetka.",
-            "en": "Free power socket.",
-            "ru": "Свободная розетка."
-          },
-          "points": 1
+          "criterion_uz": "Bo'sh rozetka (kuchlanish ko'rsatilishi lozim).",
+          "criterion_ru": "Свободная розетка (с указанием напряжения).",
+          "criterion_en": "Free power socket (voltage must be indicated).",
+          "points": 1,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "49",
-          "title": {
-            "uz": "Har bir yashovchiga 4 xil ilgak.",
-            "en": "4 hangers per guest.",
-            "ru": "4 вида вешалок на гостя."
-          },
-          "points": 2
+          "criterion_uz": "Har bir yashovchi uchun turli xildagi 4 donadan ilgaklar.",
+          "criterion_ru": "4 разных вешалки на каждого проживающего.",
+          "criterion_en": "4 different types of hangers per occupant.",
+          "points": 2,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "50",
+          "criterion_uz": "Butun xonani yoritish uchun markazlashgan ulab-uzgich (sanuzeldan tashqari).",
+          "criterion_ru": "Центральный выключатель для освещения всей комнаты (кроме санузла).",
+          "criterion_en": "Central light switch for the entire room (excluding bathroom).",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "51",
+          "criterion_uz": "Butun xonani yoritish uchun krovat oldidagi ulab-uzgich (sanuzeldan tashqari).",
+          "criterion_ru": "Прикроватный выключатель для освещения всей комнаты (кроме санузла).",
+          "criterion_en": "Bedside light switch for the entire room (excluding bathroom).",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "52",
+          "criterion_uz": "Tunchiroq.",
+          "criterion_ru": "Ночник.",
+          "criterion_en": "Night lamp.",
+          "points": 1,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "53",
-          "title": {
-            "uz": "O'qish chirog'i.",
-            "en": "Reading lamp.",
-            "ru": "Лампа для чтения."
-          },
-          "points": 3
+          "criterion_uz": "Krovat oldidagi o'qish uchun chiroq.",
+          "criterion_ru": "Прикроватная лампа для чтения.",
+          "criterion_en": "Bedside reading lamp.",
+          "points": 3,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "54",
-          "title": {
-            "uz": "Mini-seyf.",
-            "en": "Mini safe.",
-            "ru": "Мини-сейф."
-          },
-          "points": 5
+          "criterion_uz": "Mini-seyf.",
+          "criterion_ru": "Мини-сейф.",
+          "criterion_en": "Mini safe.",
+          "reference": "А11",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "55",
-          "title": {
-            "uz": "Markazlashgan konditsioner va termostat.",
-            "en": "Central AC + thermostat.",
-            "ru": "Центральный кондиционер + термостат."
-          },
-          "points": 10
+          "criterion_uz": "Barcha xonalarda yil bo'yi markazlashgan konditsiylash tizimining mavjudligi va nomerlarda haroratni individual tartibga solish uchun termostatning mavjudligi (qishda isitish tizimi, yozda sovitish/konditsiylash tizimi).",
+          "criterion_ru": "Наличие центральной системы кондиционирования круглый год во всех номерах и термостатов для индивидуальной регулировки температуры (зимой — система отопления, летом — охлаждение/кондиционирование).",
+          "criterion_en": "Year-round central air conditioning system in all rooms with individual temperature control thermostats (heating system in winter, cooling/air conditioning in summer).",
+          "points": 10,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "56",
+          "criterion_uz": "Jamoat joylarida yoqimli muhit (yoritish, yoqimli hid, musiqa, gullar va boshqalar).",
+          "criterion_ru": "Приятная атмосфера в общественных местах (освещение, приятный аромат, музыка, цветы и другое).",
+          "criterion_en": "Pleasant atmosphere in public areas (lighting, pleasant scent, music, flowers, etc.).",
+          "points": 1,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "57",
+          "criterion_uz": "Audio va multimedia ko'ngilochar xizmatlari.",
+          "criterion_ru": "Аудио и мультимедийные развлекательные услуги.",
+          "criterion_en": "Audio and multimedia entertainment services.",
+          "reference": "А12",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "58",
+          "criterion_uz": "Televizor.",
+          "criterion_ru": "Телевизор.",
+          "criterion_en": "Television.",
+          "points": 0,
+          "is_group_header": true,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "58.1",
-          "title": {
-            "uz": "Televizor ≥ 32 dyuym.",
-            "en": "TV ≥ 32 inches.",
-            "ru": "TV ≥ 32 дюйма."
-          },
-          "points": 2
+          "criterion_uz": "32 dyuym va yuqori diagonalli.",
+          "criterion_ru": "Диагональ 32 дюйма и выше.",
+          "criterion_en": "32 inches or larger diagonal.",
+          "points": 2,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "58.2",
-          "title": {
-            "uz": "Televizor ≥ 40 dyuym.",
-            "en": "TV ≥ 40 inches.",
-            "ru": "TV ≥ 40 дюймов."
-          },
-          "points": 2
+          "criterion_uz": "40 dyuym va yuqori diagonalli.",
+          "criterion_ru": "Диагональ 40 дюймов и выше.",
+          "criterion_en": "40 inches or larger diagonal.",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "58.3",
+          "criterion_uz": "Har bir xonada, nomerlarda (lyuks).",
+          "criterion_ru": "В каждой комнате номера (люкс).",
+          "criterion_en": "In each room of the suite.",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "58.4",
-          "title": {
-            "uz": "Xalqaro kanallar.",
-            "en": "International channels.",
-            "ru": "Международные каналы."
-          },
-          "points": 5
+          "criterion_uz": "Dunyo telekompaniyalarining asosiy dasturlarini translyatsiya qilish.",
+          "criterion_ru": "Трансляция основных программ мировых телекомпаний.",
+          "criterion_en": "Broadcasting main programs of international TV companies.",
+          "points": 5,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "58.5",
+          "criterion_uz": "O'zbekiston Respublikasining tarixi va madaniyati, turistik salohiyati to'g'risidagi materiallarni namoyish qilishga ixtisoslashtirilgan televizion kanallar, shuningdek xorijiy televizion dasturlarni translyatsiya qilish.",
+          "criterion_ru": "Специализированные телевизионные каналы, демонстрирующие материалы об истории, культуре и туристическом потенциале Республики Узбекистан, а также трансляция зарубежных телевизионных программ.",
+          "criterion_en": "Specialized TV channels featuring materials about the history, culture, and tourism potential of the Republic of Uzbekistan, as well as broadcasting of foreign TV programs.",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "59",
+          "criterion_uz": "Internet qurilmalarni taqdim qilish (so'rovga ko'ra noutbuk, planshet yoki boshqa jihozlar).",
+          "criterion_ru": "Предоставление интернет-устройств (по запросу ноутбук, планшет или другое оборудование).",
+          "criterion_en": "Provision of internet devices (laptop, tablet, or other equipment on request).",
+          "reference": "А11",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": true
+          }
         },
         {
           "id": "60",
-          "title": {
-            "uz": "Xavfsiz internet (LAN/VPN).",
-            "en": "Secure internet (LAN/VPN).",
-            "ru": "Безопасный интернет (LAN/VPN)."
-          },
-          "points": 5
+          "criterion_uz": "Internet jahon axborot tarmog'iga xavfsiz bog'lanish (LAN, VPN yoki ekvivalent).",
+          "criterion_ru": "Безопасное подключение к глобальной сети Интернет (LAN, VPN или эквивалент).",
+          "criterion_en": "Secure internet connection to the worldwide web (LAN, VPN, or equivalent).",
+          "reference": "А11",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "61",
-          "title": {
-            "uz": "2 xorijiy tilda ma'lumot.",
-            "en": "Information in 2 foreign languages.",
-            "ru": "Информация на 2 иностранных языках."
-          },
-          "points": 2
+          "criterion_uz": "Davlat va boshqa ikki xorijiy tilda axborot ma'lumotlari (bosma yoki raqamli): taqdim qilinadigan xizmatlar ro'yxati; turistik va boshqa ma'lumotli reklama materiallari (bukletlar, risolalar va boshqalar).",
+          "criterion_ru": "Информационные материалы на государственном и двух иностранных языках (печатные или цифровые): перечень предоставляемых услуг; туристические и другие рекламные материалы (буклеты, брошюры и другие).",
+          "criterion_en": "Information materials in the state language and two foreign languages (printed or digital): list of provided services; tourism and other promotional materials (brochures, leaflets, etc.).",
+          "points": 2,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "62",
-          "title": {
-            "uz": "Tikuv to'plami.",
-            "en": "Sewing kit.",
-            "ru": "Швейный набор."
-          },
-          "points": 3
+          "criterion_uz": "Nomerlarda tikuv to'plami.",
+          "criterion_ru": "Швейный набор в номере.",
+          "criterion_en": "Sewing kit in room.",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "63",
-          "title": {
-            "uz": "Yozuv ashyolari.",
-            "en": "Writing materials.",
-            "ru": "Письменные принадлежности."
-          },
-          "points": 1
+          "criterion_uz": "Yozuv ashyolari to'plami (qog'oz, ruchka yoki qalam).",
+          "criterion_ru": "Набор письменных принадлежностей (бумага, ручка или карандаш).",
+          "criterion_en": "Writing supplies set (paper, pen, or pencil).",
+          "reference": "А11",
+          "points": 1,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "64",
+          "criterion_uz": "Nomerlarda dazmol va dazmollash taxtasi.",
+          "criterion_ru": "Утюг и гладильная доска в номере.",
+          "criterion_en": "Iron and ironing board in room.",
+          "points": 1,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "65",
+          "criterion_uz": "Nomerlarda dazmol va dazmollash taxtasi, kir quritish.",
+          "criterion_ru": "Утюг, гладильная доска и сушилка для белья в номере.",
+          "criterion_en": "Iron, ironing board, and clothes dryer in room.",
+          "reference": "А9",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "66",
-          "title": {
-            "uz": "Tozalash to'plami.",
-            "en": "Cleaning kit.",
-            "ru": "Набор ухода."
-          },
-          "points": 2
+          "criterion_uz": "Tozalash uchun to'plam (nomerlarda cho'tkalar — kiyim, poyabzal (yoki poyabzal uchun gubka) uchun, poyabzal uchun qoshiq).",
+          "criterion_ru": "Набор для чистки (щётки для одежды и обуви (или губка для обуви), ложка для обуви).",
+          "criterion_en": "Cleaning kit (clothes and shoe brushes (or shoe sponge), shoehorn).",
+          "reference": "А11",
+          "points": 2,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "67",
-          "title": {
-            "uz": "Eshikdagi ko'zcha.",
-            "en": "Door peephole.",
-            "ru": "Дверной глазок."
-          },
-          "points": 3
+          "criterion_uz": "Eshikdagi ko'zcha.",
+          "criterion_ru": "Дверной глазок.",
+          "criterion_en": "Door peephole.",
+          "reference": "А11",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "68",
+          "criterion_uz": "Nomer eshigini qo'shimcha bloklash mexanizmi.",
+          "criterion_ru": "Дополнительный механизм блокировки двери номера.",
+          "criterion_en": "Additional door locking mechanism.",
+          "points": 1,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "69",
-          "title": {
-            "uz": "Elektr choynak + choy to'plami.",
-            "en": "Electric kettle and tea set.",
-            "ru": "Электрочайник и чайный набор."
-          },
-          "points": 2
+          "criterion_uz": "Nomerlarda elektr choynak va choy idishlari to'plami.",
+          "criterion_ru": "Электрический чайник и чайный набор в номере.",
+          "criterion_en": "Electric kettle and tea set in room.",
+          "points": 2,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "70",
+          "criterion_uz": "Nomerlarda kofe to'plami bo'lgan kofe mashina.",
+          "criterion_ru": "Кофемашина с кофейным набором в номере.",
+          "criterion_en": "Coffee machine with coffee set in room.",
+          "reference": "А9",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "71",
+          "criterion_uz": "Kir yuvish mashinasi.",
+          "criterion_ru": "Стиральная машина.",
+          "criterion_en": "Washing machine.",
+          "reference": "А9",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         }
       ]
     },
     {
       "id": 6,
-      "name": {
-        "uz": "Sanuzel",
-        "en": "Bathroom Requirements",
-        "ru": "Требования к санузлам"
-      },
-      "criteria": [
+      "name_uz": "Sanuzel",
+      "name_ru": "Санузел",
+      "name_en": "Bathroom",
+      "reference": "А2",
+      "items": [
+        {
+          "id": "72",
+          "criterion_uz": "Maydoni quyidagidan kam bo'lmagan sanuzel.",
+          "criterion_ru": "Санузел площадью не менее.",
+          "criterion_en": "Bathroom area not less than.",
+          "reference": "А7, А14",
+          "points": 0,
+          "is_group_header": true,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "72.1",
+          "criterion_uz": "≥ 4,0 m².",
+          "criterion_ru": "≥ 4,0 м².",
+          "criterion_en": "≥ 4.0 m².",
+          "points": 10,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "72.2",
+          "criterion_uz": "≥ 5,0 m².",
+          "criterion_ru": "≥ 5,0 м².",
+          "criterion_en": "≥ 5.0 m².",
+          "points": 15,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "73",
+          "criterion_uz": "Nomerlarda alohida (ajratilgan) qo'shimcha hojatxona.",
+          "criterion_ru": "Отдельный (выделенный) дополнительный туалет в номере.",
+          "criterion_en": "Separate additional toilet in room.",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "74",
+          "criterion_uz": "To'siq bilan to'silgan dush.",
+          "criterion_ru": "Душ с ограждением.",
+          "criterion_en": "Enclosed shower.",
+          "points": 1,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "75",
+          "criterion_uz": "Ikki xonali yoki lyuks xonalarda qo'shimcha bet-qo'l yuvgich (rakovina).",
+          "criterion_ru": "Дополнительная раковина в двухкомнатных или люкс номерах.",
+          "criterion_en": "Additional washbasin in two-room or suite rooms.",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
         {
           "id": "76",
-          "title": {
-            "uz": "Rakovina oldida yorug'lik.",
-            "en": "Lighting at sink.",
-            "ru": "Подсветка у раковины."
-          },
-          "points": 1
+          "criterion_uz": "Bet-qo'l yuvgich (rakovina) oldida yorug'lik bo'lishi.",
+          "criterion_ru": "Освещение перед раковиной.",
+          "criterion_en": "Lighting at washbasin.",
+          "points": 1,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "77",
+          "criterion_uz": "Sirpanish vaqtida yiqilishdan himoya qiluvchi vanna/dushdagi doimiy yoki olinadigan maxsus qoplama.",
+          "criterion_ru": "Постоянное или съёмное специальное противоскользящее покрытие в ванне/душе.",
+          "criterion_en": "Permanent or removable anti-slip surface in bathtub/shower.",
+          "points": 1,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "78",
+          "criterion_uz": "Sirpanish vaqtida yiqilishni oldini olish uchun vannada yoki vannadagi devorda xavfsizlik tutqichi (vanna mavjud bo'lganda).",
+          "criterion_ru": "Поручень безопасности в ванне или на стене ванной для предотвращения падения (при наличии ванны).",
+          "criterion_en": "Safety grab bar in bathtub or on bathroom wall to prevent falls (when bathtub is present).",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "79",
-          "title": {
-            "uz": "Bo'sh rozetka oynaxonada.",
-            "en": "Free socket in bathroom.",
-            "ru": "Свободная розетка в ванной."
-          },
-          "points": 1
+          "criterion_uz": "Ko'zgu oldida bo'sh rozetka.",
+          "criterion_ru": "Свободная розетка перед зеркалом.",
+          "criterion_en": "Free power socket near mirror.",
+          "points": 1,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "80",
+          "criterion_uz": "Moslashuvchgan kosmetik ko'zgu.",
+          "criterion_ru": "Регулируемое косметическое зеркало.",
+          "criterion_en": "Adjustable cosmetic mirror.",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "81",
+          "criterion_uz": "Yoritiladigan ko'zgu.",
+          "criterion_ru": "Зеркало с подсветкой.",
+          "criterion_en": "Illuminated mirror.",
+          "points": 1,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "82",
+          "criterion_uz": "Isitiladigan sochiq quritgich.",
+          "criterion_ru": "Полотенцесушитель с подогревом.",
+          "criterion_en": "Heated towel rail.",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "83",
-          "title": {
-            "uz": "Sochiq ilgichlari.",
-            "en": "Towel hooks.",
-            "ru": "Крючки для полотенец."
-          },
-          "points": 1
+          "criterion_uz": "Sochiqlar uchun ilgich yoki ilgak.",
+          "criterion_ru": "Крючок или вешалка для полотенец.",
+          "criterion_en": "Towel hook or hanger.",
+          "points": 1,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "84",
+          "criterion_uz": "Vannaxonani isitish (issiq pol).",
+          "criterion_ru": "Обогрев ванной комнаты (тёплый пол).",
+          "criterion_en": "Bathroom heating (heated floor).",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "85",
+          "criterion_uz": "Sochiqlar to'plamini saqlash uchun yuza.",
+          "criterion_ru": "Поверхность для хранения комплекта полотенец.",
+          "criterion_en": "Surface for towel set storage.",
+          "points": 1,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "86",
+          "criterion_uz": "Bide yoki unitaz uchun gigienik dush.",
+          "criterion_ru": "Биде или гигиенический душ для унитаза.",
+          "criterion_en": "Bidet or hygienic shower.",
+          "points": 0,
+          "is_group_header": true,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "86.1",
+          "criterion_uz": "Kamida 50 foiz nomerlarda.",
+          "criterion_ru": "Не менее чем в 50% номеров.",
+          "criterion_en": "In at least 50% of rooms.",
+          "reference": "А11",
+          "points": 2,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "86.2",
+          "criterion_uz": "Kamida 75 foiz nomerlarda.",
+          "criterion_ru": "Не менее чем в 75% номеров.",
+          "criterion_en": "In at least 75% of rooms.",
+          "reference": "А11",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": true,
+            "4_star": true,
+            "5_star": false
+          }
+        },
+        {
+          "id": "86.3",
+          "criterion_uz": "Barcha nomerlarda.",
+          "criterion_ru": "Во всех номерах.",
+          "criterion_en": "In all rooms.",
+          "reference": "А11",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": true
+          }
         },
         {
           "id": "87",
-          "title": {
-            "uz": "Tish cho'tkasi stakani.",
-            "en": "Toothbrush cup.",
-            "ru": "Стакан для щёток."
-          },
-          "points": 1
+          "criterion_uz": "Tish cho'tkalari uchun stakan.",
+          "criterion_ru": "Стакан для зубных щёток.",
+          "criterion_en": "Toothbrush cup.",
+          "points": 1,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "88",
-          "title": {
-            "uz": "Yuvinish geli.",
-            "en": "Shower gel.",
-            "ru": "Гель для душа."
-          },
-          "points": 1
+          "criterion_uz": "Yuvinish uchun gel.",
+          "criterion_ru": "Гель для душа.",
+          "criterion_en": "Shower gel.",
+          "reference": "А11",
+          "points": 1,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "89",
-          "title": {
-            "uz": "Shampun.",
-            "en": "Shampoo.",
-            "ru": "Шампунь."
-          },
-          "points": 1
+          "criterion_uz": "Shampun.",
+          "criterion_ru": "Шампунь.",
+          "criterion_en": "Shampoo.",
+          "points": 1,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "90",
-          "title": {
-            "uz": "Sanitariya to'plami.",
-            "en": "Sanitary kit.",
-            "ru": "Санитарный набор."
-          },
-          "points": 2
+          "criterion_uz": "Sanitariya-gigiena buyumlarini taqdim qilish (eng kamida tish cho'tkasi, tish pastasi, soqol olish uchun to'plam).",
+          "criterion_ru": "Предоставление санитарно-гигиенических принадлежностей (минимум зубная щётка, зубная паста, набор для бритья).",
+          "criterion_en": "Provision of sanitary-hygiene items (minimum toothbrush, toothpaste, shaving set).",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "91",
+          "criterion_uz": "Qo'shimcha kosmetik buyumlar: dush uchun qalpoqcha, paxtali cho'plar, paxtali disklar, tana uchun losyon, soch uchun konditsioner, vanna uchun ko'pik (vanna mavjud bo'lganda).",
+          "criterion_ru": "Дополнительные косметические принадлежности: шапочка для душа, ватные палочки, ватные диски, лосьон для тела, кондиционер для волос, пена для ванны (при наличии ванны).",
+          "criterion_en": "Additional cosmetic items: shower cap, cotton buds, cotton pads, body lotion, hair conditioner, bath foam (when bathtub is present).",
+          "points": 1,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "92",
+          "criterion_uz": "Har bir mehmonga yuz uchun salfetkalar (momiq).",
+          "criterion_ru": "Мягкие (тканевые) салфетки для лица для каждого гостя.",
+          "criterion_en": "Soft (fabric) face tissues for each guest.",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": true
+          }
+        },
+        {
+          "id": "93",
+          "criterion_uz": "Yuz uchun qog'oz salfetkalar.",
+          "criterion_ru": "Бумажные салфетки для лица.",
+          "criterion_en": "Paper facial tissues.",
+          "points": 3,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": false
+          }
         },
         {
           "id": "94",
-          "title": {
-            "uz": "Hammom xalatlari.",
-            "en": "Bathrobes.",
-            "ru": "Халаты."
-          },
-          "points": 3
+          "criterion_uz": "Har bir mehmonga hammom xalati.",
+          "criterion_ru": "Банный халат для каждого гостя.",
+          "criterion_en": "Bathrobe for each guest.",
+          "reference": "А11",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "95",
+          "criterion_uz": "Bolalar uchun momiq hammom xalati (so'rovga ko'ra).",
+          "criterion_ru": "Мягкий детский банный халат (по запросу).",
+          "criterion_en": "Children's soft bathrobe (on request).",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "96",
-          "title": {
-            "uz": "Bir martalik shippaklar.",
-            "en": "Disposable slippers.",
-            "ru": "Одноразовые тапочки."
-          },
-          "points": 1
+          "criterion_uz": "Har bir mehmonga bir martalik shippaklar.",
+          "criterion_ru": "Одноразовые тапочки для каждого гостя.",
+          "criterion_en": "Disposable slippers for each guest.",
+          "points": 1,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "97",
+          "criterion_uz": "Bolalar uchun bir martalik shippaklar (so'rovga ko'ra).",
+          "criterion_ru": "Одноразовые детские тапочки (по запросу).",
+          "criterion_en": "Disposable children's slippers (on request).",
+          "points": 1,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "98",
-          "title": {
-            "uz": "Fén.",
-            "en": "Hairdryer.",
-            "ru": "Фен."
-          },
-          "points": 3
+          "criterion_uz": "Soch quritkich (fen).",
+          "criterion_ru": "Фен для волос.",
+          "criterion_en": "Hairdryer.",
+          "points": 3,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "99",
+          "criterion_uz": "Vannaxonada baland bo'lmagan taburetka (so'rovga ko'ra).",
+          "criterion_ru": "Невысокий табурет в ванной комнате (по запросу).",
+          "criterion_en": "Low bathroom stool (on request).",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         }
       ]
     },
     {
       "id": 7,
-      "name": {
-        "uz": "Gastronomiya",
-        "en": "Gastronomy",
-        "ru": "Гастрономия"
-      },
-      "criteria": [
+      "name_uz": "Gastronomiya",
+      "name_ru": "Гастрономия",
+      "name_en": "Gastronomy",
+      "reference": "А8",
+      "items": [
         {
           "id": "100",
-          "title": {
-            "uz": "Mehmonxonada ichimlik taklif qilish.",
-            "en": "Beverage service available in the hotel.",
-            "ru": "Предоставление напитков в гостинице."
-          },
-          "points": 1
+          "criterion_uz": "Mehmonxonada ichimlik taklif qilish.",
+          "criterion_ru": "Предоставление напитков в гостинице.",
+          "criterion_en": "Beverage service in the hotel.",
+          "reference": "А11",
+          "points": 1,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "101",
-          "title": {
-            "uz": "Nomerda ichimlik taklif qilish.",
-            "en": "Beverage service in the room.",
-            "ru": "Предоставление напитков в номере."
-          },
-          "points": 3
+          "criterion_uz": "Nomerlarda ichimlik taklif qilish.",
+          "criterion_ru": "Предоставление напитков в номере.",
+          "criterion_en": "Beverage service in room.",
+          "reference": "А11",
+          "points": 3,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "102",
-          "title": {
-            "uz": "Nomerda minibar.",
-            "en": "Minibar in the room.",
-            "ru": "Мини-бар в номере."
-          },
-          "points": 5
+          "criterion_uz": "Nomerlarda mini bar (ichimlik va yegulik menyusi bilan birga).",
+          "criterion_ru": "Мини-бар в номере (с меню напитков и закусок).",
+          "criterion_en": "Mini bar in room (with beverage and food menu).",
+          "reference": "А11",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "103",
-          "title": {
-            "uz": "24 soat ichimlik yetkazish.",
-            "en": "24-hour beverage room service.",
-            "ru": "Круглосуточная подача напитков в номер."
-          },
-          "points": 15
+          "criterion_uz": "24 soat mobaynida nomerga ichimlik yetkazish xizmati.",
+          "criterion_ru": "Круглосуточная служба доставки напитков в номер.",
+          "criterion_en": "24-hour beverage room service.",
+          "reference": "А11",
+          "points": 15,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "104",
+          "criterion_uz": "Ichimliklar va gazaklar menyusi (qog'ozli yoki raqamli) bilan xizmat ko'rsatish bari (lounj bar) (tunu-kun ochiq).",
+          "criterion_ru": "Бар (лаунж-бар) с меню напитков и закусок (бумажным или цифровым), открытый круглосуточно.",
+          "criterion_en": "Bar (lounge bar) with drink and snack menu (paper or digital), open 24 hours.",
+          "reference": "А11",
+          "points": 10,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "105",
-          "title": {
-            "uz": "Nonushta hududida kofe mashina.",
-            "en": "Coffee machine in breakfast area.",
-            "ru": "Кофемашина в зоне завтраков."
-          },
-          "points": 5
+          "criterion_uz": "Nonushta qilish hududida kofe to'plami bilan kofe mashina.",
+          "criterion_ru": "Кофемашина с кофейным набором в зоне завтрака.",
+          "criterion_en": "Coffee machine with coffee set in breakfast area.",
+          "reference": "А11",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "106",
-          "title": {
-            "uz": "Kontinental nonushta.",
-            "en": "Continental breakfast.",
-            "ru": "Континентальный завтрак."
-          },
-          "points": 2
+          "criterion_uz": "Kontinental nonushta.",
+          "criterion_ru": "Континентальный завтрак.",
+          "criterion_en": "Continental breakfast.",
+          "points": 2,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "107",
-          "title": {
-            "uz": "Shved stoli nonushta.",
-            "en": "Buffet breakfast.",
-            "ru": "Завтрак «шведский стол»."
-          },
-          "points": 5
+          "criterion_uz": "«Shved stoli» nonushtasi yoki shunga mos nonushta menyusi.",
+          "criterion_ru": "Завтрак «шведский стол» или соответствующее меню завтрака.",
+          "criterion_en": "Buffet breakfast or equivalent breakfast menu.",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": true,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "108",
-          "title": {
-            "uz": "Xizmat ko'rsatiladigan shved stoli.",
-            "en": "Serviced buffet breakfast.",
-            "ru": "Шведский стол с обслуживанием."
-          },
-          "points": 10
+          "criterion_uz": "Xizmat ko'rsatiladigan «shved stoli» nonushtasi yoki shunga mos nonushta menyusi.",
+          "criterion_ru": "Завтрак «шведский стол» с обслуживанием или соответствующее меню завтрака.",
+          "criterion_en": "Serviced buffet breakfast or equivalent breakfast menu.",
+          "reference": "А11",
+          "points": 10,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "109",
+          "criterion_uz": "Nomerlarga xizmat ko'rsatish orqali nonushta menyusi.",
+          "criterion_ru": "Меню завтрака с обслуживанием в номере.",
+          "criterion_en": "Breakfast menu via room service.",
+          "reference": "А11",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": true
+          }
+        },
+        {
+          "id": "110",
+          "criterion_uz": "Allergiya yoki diabeti borlar uchun xavfsiz mahsulotlar (glyutensiz, laktozasiz va boshqalar).",
+          "criterion_ru": "Безопасные продукты для аллергиков и диабетиков (безглютеновые, безлактозные и другие).",
+          "criterion_en": "Safe products for allergy and diabetes sufferers (gluten-free, lactose-free, etc.).",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "111",
+          "criterion_uz": "Menyuda milliy taomlar.",
+          "criterion_ru": "Национальные блюда в меню.",
+          "criterion_en": "National dishes in menu.",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "112",
-          "title": {
-            "uz": "24 soat taom yetkazish xizmati.",
-            "en": "24-hour food room service.",
-            "ru": "Круглосуточная доставка еды в номер."
-          },
-          "points": 15
+          "criterion_uz": "Nomerlarda 24 soat taom taqdim qilish xizmati.",
+          "criterion_ru": "Круглосуточная подача блюд в номер.",
+          "criterion_en": "24-hour food room service.",
+          "reference": "А11",
+          "points": 15,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "113",
-          "title": {
-            "uz": "Restoran mavjudligi.",
-            "en": "Restaurant available.",
-            "ru": "Наличие ресторана."
-          },
-          "points": 5
+          "criterion_uz": "Restoran.",
+          "criterion_ru": "Ресторан.",
+          "criterion_en": "Restaurant.",
+          "reference": "А11",
+          "points": 5,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "114",
-          "title": {
-            "uz": "Kamida 2 ta restoran.",
-            "en": "At least 2 restaurants.",
-            "ru": "Минимум два ресторана."
-          },
-          "points": 10
+          "criterion_uz": "Kamida ikkita restoran.",
+          "criterion_ru": "Минимум два ресторана.",
+          "criterion_en": "At least two restaurants.",
+          "reference": "А11",
+          "points": 10,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "115",
+          "criterion_uz": "Bog'li va tabiiy ko'kalamzorshtirilgan yozgi restoran.",
+          "criterion_ru": "Летний ресторан с садом и натуральным озеленением.",
+          "criterion_en": "Summer garden restaurant with natural landscaping.",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "116",
+          "criterion_uz": "Har kuni ishlaydigan restoran.",
+          "criterion_ru": "Ежедневно работающий ресторан.",
+          "criterion_en": "Daily operating restaurant.",
+          "reference": "А7, А11",
+          "points": 5,
+          "points_note_uz": "har biriga 5 ball, maksimum 10 ball",
+          "points_note_ru": "по 5 баллов за каждый, максимум 10 баллов",
+          "points_note_en": "5 points each, maximum 10 points",
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         }
       ]
     },
     {
       "id": 8,
-      "name": {
-        "uz": "Tadbirlar uchun sharoitlar (MICE)",
-        "en": "Event Facilities (MICE)",
-        "ru": "Условия для мероприятий (MICE)"
-      },
-      "criteria": []
+      "name_uz": "Tadbirlar o'tkazish uchun sharoitlar (MICE)",
+      "name_ru": "Условия для проведения мероприятий (MICE)",
+      "name_en": "Event Facilities (MICE)",
+      "reference": "А8",
+      "items": [
+        {
+          "id": "117",
+          "criterion_uz": "Kamida 50 kishi uchun banket o'tkazish imkoniyati mavjudligi (restoran hisobga olinmaydi).",
+          "criterion_ru": "Возможность проведения банкета минимум на 50 человек (без учёта ресторана).",
+          "criterion_en": "Banquet capacity for at least 50 persons (excluding restaurant).",
+          "points": 1,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "118",
+          "criterion_uz": "Kamida 100 kishi uchun banket o'tkazish imkoniyati mavjudligi (restoran hisobga olinmaydi).",
+          "criterion_ru": "Возможность проведения банкета минимум на 100 человек (без учёта ресторана).",
+          "criterion_en": "Banquet capacity for at least 100 persons (excluding restaurant).",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "119",
+          "criterion_uz": "Kamida 250 kishi uchun banket o'tkazish imkoniyati mavjudligi (restoran hisobga olinmaydi).",
+          "criterion_ru": "Возможность проведения банкета минимум на 250 человек (без учёта ресторана).",
+          "criterion_en": "Banquet capacity for at least 250 persons (excluding restaurant).",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "120",
+          "criterion_uz": "Kovorking uchun maxsus xona/guruh bo'lib ishlash uchun zal.",
+          "criterion_ru": "Специальное помещение для коворкинга/зал для групповой работы.",
+          "criterion_en": "Dedicated coworking room/group work hall.",
+          "points": 10,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "121",
+          "criterion_uz": "Kamida 100 m² maydonga ega konferensiya zali.",
+          "criterion_ru": "Конференц-зал площадью не менее 100 м².",
+          "criterion_en": "Conference hall with at least 100 m² area.",
+          "points": 10,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "122",
+          "criterion_uz": "Konferens-servis (alohida bo'lim, alohida xodim).",
+          "criterion_ru": "Конференц-сервис (отдельный отдел, выделенный сотрудник).",
+          "criterion_en": "Conference service (dedicated department, dedicated staff).",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "123",
+          "criterion_uz": "Konferensiya zalida tabiiy yorug'likning bo'lishi va qorong'u qilish imkoniyati.",
+          "criterion_ru": "Наличие естественного освещения и возможности затемнения в конференц-зале.",
+          "criterion_en": "Natural light and blackout capability in conference hall.",
+          "points": 1,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "124",
+          "criterion_uz": "Biznes markaz (alohida ofis va xizmat ko'rsatuvchi xodim).",
+          "criterion_ru": "Бизнес-центр (отдельный офис и обслуживающий персонал).",
+          "criterion_en": "Business center (dedicated office and service staff).",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "125",
+          "criterion_uz": "Konferensiya zalida havoni tartibga soluvchi markaziy konditsiylash tizimi.",
+          "criterion_ru": "Центральная система кондиционирования с регулировкой воздуха в конференц-зале.",
+          "criterion_en": "Central air conditioning system with climate control in conference hall.",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        }
+      ]
     },
     {
       "id": 9,
-      "name": {
-        "uz": "Bo'sh vaqt",
-        "en": "Leisure Facilities",
-        "ru": "Условия для отдыха"
-      },
-      "criteria": [
+      "name_uz": "Bo'sh vaqt",
+      "name_ru": "Досуг",
+      "name_en": "Leisure",
+      "reference": "А8",
+      "items": [
+        {
+          "id": "126",
+          "criterion_uz": "Joylashtirish vositasi hududida yoki ochiq havoda dam olish uchun imkoniyat mavjudligi: xususiy bog', tennis korti, plyaj yoki ko'lga chiqish, golf maydoni va boshqalar.",
+          "criterion_ru": "Наличие возможностей для отдыха на территории средства размещения или на открытом воздухе: частный сад, теннисный корт, пляж или доступ к озеру, поле для гольфа и другие.",
+          "criterion_en": "Availability of leisure opportunities on facility grounds or outdoors: private garden, tennis court, beach or lake access, golf course, etc.",
+          "points": 9,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "127",
+          "criterion_uz": "Sport inventarlari ijarasi (chang'ilar, qayiq va boshqalar).",
+          "criterion_ru": "Аренда спортивного инвентаря (лыжи, лодка и другие).",
+          "criterion_en": "Sports equipment rental (skis, boat, etc.).",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
         {
           "id": "128",
-          "title": {
-            "uz": "Kamida 4 xil trenajyorli zal.",
-            "en": "Gym with at least 4 types of fitness equipment.",
-            "ru": "Тренажёрный зал с минимум 4 видами тренажёров."
-          },
-          "points": 5
+          "criterion_uz": "Kamida 4 xil trenajyorlari bor trenajyor zali (gantellar, kuch mashg'ulotlari uchun trenajyor, yugurish yo'lakchasi, velotrenajyor, zinali trenajyor).",
+          "criterion_ru": "Тренажёрный зал с минимум 4 видами тренажёров (гантели, силовой тренажёр, беговая дорожка, велотренажёр, степпер).",
+          "criterion_en": "Gym with at least 4 types of equipment (dumbbells, strength trainer, treadmill, exercise bike, stepper).",
+          "reference": "А7",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "129",
+          "criterion_uz": "Ixtisoslashtirilgan dam olishni tashkillashtirish (ov, baliq ovi va boshqalar).",
+          "criterion_ru": "Организация специализированного отдыха (охота, рыбалка и другие).",
+          "criterion_en": "Organization of specialized leisure activities (hunting, fishing, etc.).",
+          "reference": "А4",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "130",
+          "criterion_uz": "Avtotransport (suv va suvmotor transport, katamaranlar, akvalanglar, individual mobil vositalar va boshqalar), hayvo nlar (otlar, tuyalar), kurort-maishiy tovarlar va inventarlarning ijarasi mavjudligi.",
+          "criterion_ru": "Наличие аренды транспорта (водный и моторный транспорт, катамараны, акваланги, индивидуальные мобильные средства и другие), животных (лошади, верблюды), курортно-бытовых товаров и инвентаря.",
+          "criterion_en": "Availability of rental transport (watercraft, catamarans, scuba gear, personal mobility devices, etc.), animals (horses, camels), resort and household goods and equipment.",
+          "reference": "А4",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         }
       ]
     },
     {
       "id": 10,
-      "name": {
-        "uz": "SPA / Sog'lomlashtirish",
-        "en": "SPA & Wellness",
-        "ru": "SPA и оздоровление"
-      },
-      "criteria": [
+      "name_uz": "SPA / Sog'lomlashtirish",
+      "name_ru": "SPA / Оздоровление",
+      "name_en": "SPA / Wellness",
+      "reference": "А2, А7",
+      "items": [
+        {
+          "id": "131",
+          "criterion_uz": "Har xil massaj turlari bilan kamida 10 m² maydonga ega massaj xonasi.",
+          "criterion_ru": "Массажный кабинет площадью не менее 10 м² с различными видами массажа.",
+          "criterion_en": "Massage room of at least 10 m² with various massage types.",
+          "points": 9,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "132",
+          "criterion_uz": "Kamida 20 m² maydonga ega alohida dam olish xonasi yoki joyi.",
+          "criterion_ru": "Отдельная комната или зона отдыха площадью не менее 20 м².",
+          "criterion_en": "Separate relaxation room or area of at least 20 m².",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "133",
+          "criterion_uz": "Gidromassajli vanna.",
+          "criterion_ru": "Гидромассажная ванна.",
+          "criterion_en": "Hydromassage bathtub.",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
         {
           "id": "134",
-          "title": {
-            "uz": "Kamida 6 o'rinli sauna (har biri 5 ball, maks 15 ball).",
-            "en": "Sauna with at least 6 seats (5 points each, max 15).",
-            "ru": "Сауна минимум на 6 мест (5 баллов каждая, макс. 15)."
-          },
-          "points": 5
+          "criterion_uz": "Kamida 6 o'rinli sauna (banya, hammom va boshqalar).",
+          "criterion_ru": "Сауна (баня, хаммам и другие) минимум на 6 мест.",
+          "criterion_en": "Sauna (steam bath, hammam, etc.) with at least 6 seats.",
+          "reference": "А7, А11",
+          "points": 5,
+          "points_note_uz": "har bir turi uchun 5 balldan, maksimum 15 ball",
+          "points_note_ru": "по 5 баллов за каждый вид, максимум 15 баллов",
+          "points_note_en": "5 points per type, maximum 15 points",
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": true
+          }
+        },
+        {
+          "id": "135",
+          "criterion_uz": "Kamida 4 xil turli muolajaga ega go'zallik saloni.",
+          "criterion_ru": "Салон красоты с минимум 4 видами процедур.",
+          "criterion_en": "Beauty salon with at least 4 types of treatments.",
+          "points": 10,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "136",
+          "criterion_uz": "Individual SPA muolajalari uchun hudud.",
+          "criterion_ru": "Зона для индивидуальных СПА-процедур.",
+          "criterion_en": "Area for individual SPA treatments.",
+          "points": 10,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         },
         {
           "id": "137",
-          "title": {
-            "uz": "Suzish basseyni.",
-            "en": "Swimming pool.",
-            "ru": "Бассейн."
-          },
-          "points": 10
+          "criterion_uz": "Suzish basseyni.",
+          "criterion_ru": "Бассейн.",
+          "criterion_en": "Swimming pool.",
+          "points": 10,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "138",
+          "criterion_uz": "Suv yuzasining maydoni kamida 60 m² bo'lgan isitiladigan suvli ochiq basseyn.",
+          "criterion_ru": "Открытый бассейн с подогревом воды площадью водной поверхности не менее 60 м².",
+          "criterion_en": "Outdoor heated pool with water surface area of at least 60 m².",
+          "reference": "А7",
+          "points": 10,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "139",
+          "criterion_uz": "Suv yuzasining maydoni kamida 40 m² bo'lgan isitiladigan suvli yopiq basseyn.",
+          "criterion_ru": "Крытый бассейн с подогревом воды площадью водной поверхности не менее 40 м².",
+          "criterion_en": "Indoor heated pool with water surface area of at least 40 m².",
+          "reference": "А7",
+          "points": 10,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "name_uz": "Ixtisoslashtirilgan joylashtirish vositalari uchun sharoitlar",
+      "name_ru": "Условия для специализированных средств размещения",
+      "name_en": "Conditions for Specialized Accommodation Facilities",
+      "reference": "А12",
+      "items": [
+        {
+          "id": "140",
+          "criterion_uz": "Sog'lomlashtiruvchi davolash muolajalar mavjudligi.",
+          "criterion_ru": "Наличие оздоровительных лечебных процедур.",
+          "criterion_en": "Availability of wellness treatment services.",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "141",
+          "criterion_uz": "Sog'lomlashtirish xizmatlarini ko'rsatish uchun tabiiy omillar mavjudligi.",
+          "criterion_ru": "Наличие природных факторов для оказания оздоровительных услуг.",
+          "criterion_en": "Availability of natural factors for wellness services.",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "142",
+          "criterion_uz": "Sog'lomlashtirish muolajalari uchun zamonaviy jihozlar mavjudligi (jihozning ishlab chiqarish muddati 5 yildan ko'p bo'lmasligi).",
+          "criterion_ru": "Наличие современного оборудования для оздоровительных процедур (срок эксплуатации оборудования не более 5 лет).",
+          "criterion_en": "Modern wellness equipment available (equipment service life not exceeding 5 years).",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "143",
+          "criterion_uz": "Mineral suv va shifobaxsh loy muolajasi mavjudligi.",
+          "criterion_ru": "Наличие процедур с минеральной водой и лечебной грязью.",
+          "criterion_en": "Availability of mineral water and therapeutic mud treatments.",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "144",
+          "criterion_uz": "Boshqa sog'lomlashtirish muolajalari xonalari mavjudligi.",
+          "criterion_ru": "Наличие помещений для дополнительных оздоровительных процедур.",
+          "criterion_en": "Availability of additional wellness treatment rooms.",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "145",
+          "criterion_uz": "Mutaxassis vrach ning malakali tibbiy yordami, tibbiyot xonasi.",
+          "criterion_ru": "Квалифицированная медицинская помощь врача-специалиста, медицинский кабинет.",
+          "criterion_en": "Qualified medical assistance from specialist doctor, medical room.",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "name_uz": "Bolalar uchun sharoitlar",
+      "name_ru": "Условия для детей",
+      "name_en": "Children's Facilities",
+      "items": [
+        {
+          "id": "146",
+          "criterion_uz": "Malakali mutaxassis tomonidan qarab turish.",
+          "criterion_ru": "Присмотр квалифицированным специалистом.",
+          "criterion_en": "Qualified childcare supervision.",
+          "reference": "А4",
+          "points": 10,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "147",
+          "criterion_uz": "Bolalar hududi (o'yin xonasi/o'yin maydoni).",
+          "criterion_ru": "Детская зона (игровая комната/игровая площадка).",
+          "criterion_en": "Children's area (playroom/playground).",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "148",
+          "criterion_uz": "So'rovga ko'ra bolalar jihozlari (ovqatlantirish uchun stulcha, taom isitish uskunasi, yo'rgaklash gilamchasi, bolalar radio enagasi).",
+          "criterion_ru": "Детское оборудование по запросу (стульчик для кормления, подогреватель питания, пеленальный коврик, радионяня).",
+          "criterion_en": "Children's equipment on request (high chair, food warmer, changing mat, baby monitor).",
+          "points": 3,
+          "points_note_uz": "har bir turi uchun 3 balldan, maksimum 9 ball",
+          "points_note_ru": "по 3 балла за каждый вид, максимум 9 баллов",
+          "points_note_en": "3 points per type, maximum 9 points",
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": true
+          }
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "name_uz": "Boshqa sharoitlar",
+      "name_ru": "Дополнительные условия",
+      "name_en": "Other Conditions",
+      "items": [
+        {
+          "id": "149",
+          "criterion_uz": "Kutubxona.",
+          "criterion_ru": "Библиотека.",
+          "criterion_en": "Library.",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "150",
+          "criterion_uz": "Boshlovchi/animatsiya dasturi.",
+          "criterion_ru": "Анимационная программа/ведущий.",
+          "criterion_en": "Host-led/animation program.",
+          "reference": "А12",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         }
       ]
     },
     {
       "id": 14,
-      "name": {
-        "uz": "Onlayn faollik",
-        "en": "Online Activity",
-        "ru": "Онлайн-активность"
-      },
-      "criteria": [
+      "name_uz": "Onlayn faollik",
+      "name_ru": "Онлайн-активность",
+      "name_en": "Online Activity",
+      "items": [
         {
           "id": "151",
-          "title": {
-            "uz": "Mehmonxonaning uch tildagi veb-sayti.",
-            "en": "Hotel website in three languages.",
-            "ru": "Веб-сайт отеля на трёх языках."
-          },
-          "points": 1
+          "criterion_uz": "Mehmonxonaning doimiy yangilanib turiladigan, shuningdek joylashgan joyi haqiqiy rasmlar (krovat o'lchamlari va boshqa ma'lumotlar) bilan ko'rsatilgan uch tildagi o'z veb-sayti.",
+          "criterion_ru": "Собственный регулярно обновляемый веб-сайт гостиницы на трёх языках с реальными фотографиями расположения (размеры кроватей и другая информация).",
+          "criterion_en": "Hotel's own regularly updated website in three languages with real location photos (bed sizes and other information).",
+          "points": 1,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "152",
+          "criterion_uz": "To'g'ridan-to'g'ri bronlash imkoni bo'lgan veb-sayt.",
+          "criterion_ru": "Веб-сайт с возможностью прямого бронирования.",
+          "criterion_en": "Website with direct booking capability.",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "153",
+          "criterion_uz": "Veb-saytning moslashtirilgan mobil versiyasi yoki mobil ilovasi.",
+          "criterion_ru": "Адаптированная мобильная версия веб-сайта или мобильное приложение.",
+          "criterion_en": "Adaptive mobile website version or mobile app.",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "154",
+          "criterion_uz": "Portal yoki saytda fikr-mulohazalarni bildirish uchun mehmonxonadan ketayotgan mehmonlarni individual taklif qilish.",
+          "criterion_ru": "Индивидуальное приглашение выезжающих гостей оставить отзыв на портале или сайте.",
+          "criterion_en": "Individual invitation for departing guests to leave feedback on portal or website.",
+          "points": 5,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "name_uz": "Sifat talablari",
+      "name_ru": "Требования к качеству",
+      "name_en": "Quality Requirements",
+      "items": [
+        {
+          "id": "155",
+          "criterion_uz": "Energetika menejmenti tizimi bo'yicha sertifikat mavjudligi.",
+          "criterion_ru": "Наличие сертификата системы энергетического менеджмента.",
+          "criterion_en": "Energy management system certification.",
+          "points": 15,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "156",
+          "criterion_uz": "Oziq-ovqat xavfsizligi menejmenti tizimi bo'yicha sertifikat mavjudligi.",
+          "criterion_ru": "Наличие сертификата системы управления пищевой безопасностью.",
+          "criterion_en": "Food safety management system certification.",
+          "points": 10,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "157",
+          "criterion_uz": "Sifat menejmenti tizimi bo'yicha sertifikat mavjudligi.",
+          "criterion_ru": "Наличие сертификата системы менеджмента качества.",
+          "criterion_en": "Quality management system certification.",
+          "points": 10,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "158",
+          "criterion_uz": "Ekologik menejment tizimi bo'yicha sertifikat mavjudligi.",
+          "criterion_ru": "Наличие сертификата системы экологического менеджмента.",
+          "criterion_en": "Environmental management system certification.",
+          "points": 10,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
+        },
+        {
+          "id": "159",
+          "criterion_uz": "Ekologik xavfsizlik belgisi bilan markovkalash sertifikati mavjudligi.",
+          "criterion_ru": "Наличие сертификата экологической маркировки.",
+          "criterion_en": "Eco-label certification.",
+          "points": 15,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": false
+          }
         }
       ]
     },
     {
       "id": 16,
-      "name": {
-        "uz": "Xodimlar va ularning tayyorgarligi",
-        "en": "Staff and Their Training",
-        "ru": "Персонал и их подготовка"
-      },
-      "criteria": [
+      "name_uz": "Xodimlar va ularning tayyorgarligiga doir talablar",
+      "name_ru": "Требования к персоналу и их подготовке",
+      "name_en": "Staff and Training Requirements",
+      "items": [
         {
           "id": "160",
-          "title": {
-            "uz": "Xodimlar soni yetarli bo'lishi.",
-            "en": "Sufficient number of staff.",
-            "ru": "Достаточное количество персонала."
-          },
-          "points": 0
+          "criterion_uz": "Joylashtirish vositasining uzluksiz ravishda ishini ta'minlash uchun xodimlarning soni yetarlicha mavjudligi.",
+          "criterion_ru": "Достаточная численность персонала для обеспечения бесперебойной работы средства размещения.",
+          "criterion_en": "Sufficient number of staff to ensure uninterrupted operation of the accommodation facility.",
+          "points": 0,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "161",
+          "criterion_uz": "Funksional majburiyatlar va ishning belgilangan qoidalarini qayd qiluvchi, xodimlar uchun yozma standartlar va barcha xizmatlar xodimlarining ularga rioya qilishi.",
+          "criterion_ru": "Письменные стандарты для персонала, фиксирующие функциональные обязанности и установленные правила работы, и соблюдение их всеми сотрудниками.",
+          "criterion_en": "Written standards for staff documenting functional duties and established work rules, and compliance by all service staff.",
+          "reference": "А11",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "162",
+          "criterion_uz": "Yo'nalishlar bo'yicha xodimlar uchun o'tkazilgan mashg'ulotlarning yozuvlari.",
+          "criterion_ru": "Записи о проведённых тренингах для персонала по направлениям.",
+          "criterion_en": "Records of training sessions conducted for staff by departments.",
+          "reference": "А11",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "163",
-          "title": {
-            "uz": "Kamida 2 ta xorijiy tilni biladigan xodimlar.",
-            "en": "Staff speaking at least 2 foreign languages.",
-            "ru": "Сотрудники, владеющие минимум 2 иностранными языками."
-          },
-          "points": 3
+          "criterion_uz": "Kamida ikkita xorijiy tilni biladigan xodimlar (davlat tili va boshqalar).",
+          "criterion_ru": "Сотрудники, владеющие минимум двумя иностранными языками (помимо государственного).",
+          "criterion_en": "Staff speaking at least two foreign languages (in addition to the state language).",
+          "points": 3,
+          "mandatory": {
+            "1_star": false,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
+        },
+        {
+          "id": "164",
+          "criterion_uz": "Kamida uchta xorijiy tilni biladigan xodimlar (davlat tili va boshqalar).",
+          "criterion_ru": "Сотрудники, владеющие минимум тремя иностранными языками (помимо государственного).",
+          "criterion_en": "Staff speaking at least three foreign languages (in addition to the state language).",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "165",
-          "title": {
-            "uz": "Shveysar (darbon).",
-            "en": "Doorman.",
-            "ru": "Швейцар."
-          },
-          "points": 15
+          "criterion_uz": "Shveysar (darbon) (alohida xodim).",
+          "criterion_ru": "Швейцар (привратник) (отдельный сотрудник).",
+          "criterion_en": "Doorman (dedicated staff member).",
+          "reference": "А3, А8, А11",
+          "points": 15,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": false,
+            "5_star": true
+          }
         },
         {
           "id": "166",
-          "title": {
-            "uz": "Konserj (alohida xodim).",
-            "en": "Concierge.",
-            "ru": "Консьерж."
-          },
-          "points": 15
+          "criterion_uz": "Konserj (alohida xodim).",
+          "criterion_ru": "Консьерж (отдельный сотрудник).",
+          "criterion_en": "Concierge (dedicated staff member).",
+          "reference": "А8, А11",
+          "points": 15,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "167",
-          "title": {
-            "uz": "Bagaj tashuvchi (porter).",
-            "en": "Porter / bellboy.",
-            "ru": "Носильщик / коридорный."
-          },
-          "points": 15
+          "criterion_uz": "Tashuvchi (alohida xodim, bagaj tashuvchi).",
+          "criterion_ru": "Носильщик (отдельный сотрудник, портье).",
+          "criterion_en": "Porter / bellboy (dedicated staff member).",
+          "reference": "А8, А11",
+          "points": 15,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": false,
+            "4_star": true,
+            "5_star": true
+          }
         }
       ]
     },
     {
       "id": 17,
-      "name": {
-        "uz": "Xodimlar uchun sharoitlar",
-        "en": "Staff Facilities",
-        "ru": "Условия для персонала"
-      },
-      "criteria": [
+      "name_uz": "Xodimlar uchun sharoitlar",
+      "name_ru": "Условия для персонала",
+      "name_en": "Staff Facilities",
+      "items": [
         {
           "id": "168",
-          "title": {
-            "uz": "Xodimlar uchun alohida ovqatlanish xonasi.",
-            "en": "Separate staff dining area.",
-            "ru": "Отдельная столовая для персонала."
-          },
-          "points": 2
+          "criterion_uz": "Ovqatlanish uchun alohida oshxona/joy.",
+          "criterion_ru": "Отдельная кухня/столовая для питания персонала.",
+          "criterion_en": "Dedicated kitchen/dining area for staff.",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "169",
-          "title": {
-            "uz": "Xodimlar uchun kiyinish xonalari va shkaflar.",
-            "en": "Changing rooms and lockers for staff.",
-            "ru": "Раздевалки и шкафчики для персонала."
-          },
-          "points": 2
+          "criterion_uz": "Kiyim almashtirish xonalari, shkaflar/loker bo'lma.",
+          "criterion_ru": "Раздевалки, шкафы/локеры.",
+          "criterion_en": "Changing rooms, lockers.",
+          "points": 2,
+          "mandatory": {
+            "1_star": true,
+            "2_star": true,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         },
         {
           "id": "170",
-          "title": {
-            "uz": "Xodimlar uchun dam olish xonasi.",
-            "en": "Staff rest area.",
-            "ru": "Комната отдыха для персонала."
-          },
-          "points": 2
+          "criterion_uz": "Dam olish xonasi/hududi.",
+          "criterion_ru": "Комната/зона отдыха для персонала.",
+          "criterion_en": "Staff rest room/area.",
+          "points": 2,
+          "mandatory": {
+            "1_star": false,
+            "2_star": false,
+            "3_star": true,
+            "4_star": true,
+            "5_star": true
+          }
         }
       ]
+    }
+  ],
+  "annotations": [
+    {
+      "code": "A1",
+      "text_uz": "Karantin sharoitida tozalik va gigiena bo'yicha alohida talablar belgilanishi mumkin.",
+      "text_ru": "В условиях карантина могут быть установлены особые требования по чистоте и гигиене.",
+      "text_en": "Special cleanliness and hygiene requirements may be established under quarantine conditions."
+    },
+    {
+      "code": "A2",
+      "text_uz": "«Brand Finance» kompaniyasining top-50 yoki top-5 reytingiga kiruvchi franchayzing mehmonxonalar standartida ko'rsatilgan maydonni qo'llashga ruxsat etiladi.",
+      "text_ru": "Разрешается применять площади, указанные в стандартах франчайзинговых гостиниц, входящих в рейтинг топ-50 или топ-5 компании «Brand Finance».",
+      "text_en": "The area specified in the standards of franchise hotels included in the Brand Finance top-50 or top-5 rating may be applied."
+    },
+    {
+      "code": "A3",
+      "text_uz": "Talab avtomatik sensor eshiklar yoki aylanadigan kompakt sensor eshiklariga ega bo'lgan joylashtirish vositalari uchun majburiy emas.",
+      "text_ru": "Требование не является обязательным для средств размещения, оборудованных автоматическими сенсорными дверями или компактными вращающимися сенсорными дверями.",
+      "text_en": "The requirement is not mandatory for accommodation facilities equipped with automatic sensor doors or compact revolving sensor doors."
+    },
+    {
+      "code": "A4",
+      "text_uz": "Ushbu talab tegishli xizmatlarni ko'rsatuvchi boshqa korxonalar bilan shartnoma tuzish yo'li orqali amalga oshirilishi mumkin. Shuningdek, joylashtirish vositasi yaqinida 100 m gacha masofada talab etilayotgan xizmatlar mavjud bo'lganda majburiy emas.",
+      "text_ru": "Данное требование может быть выполнено путём заключения договора с другими предприятиями, предоставляющими соответствующие услуги. Также не является обязательным при наличии требуемых услуг в радиусе до 100 м от средства размещения.",
+      "text_en": "This requirement may be fulfilled through contracts with other enterprises providing the relevant services. Also not mandatory when the required services are available within 100 m of the accommodation facility."
+    },
+    {
+      "code": "A5",
+      "text_uz": "Talab 100 foiz nomerlarda individual seyflar bor bo'lganda majburiy emas.",
+      "text_ru": "Требование не является обязательным при наличии индивидуальных сейфов в 100% номеров.",
+      "text_en": "The requirement is not mandatory when individual safes are available in 100% of rooms."
+    },
+    {
+      "code": "A6",
+      "text_uz": "Madaniy meros ob'ekti bo'lgan binolarda yoki tarixiy manzilgohlar hududida joylashgan joylashtirish vositalari uchun talab etilayotgan maydonning 50 foiziga ruxsat etiladi.",
+      "text_ru": "Для средств размещения, расположенных в зданиях — объектах культурного наследия или на территории исторических достопримечательностей, допускается 50% от требуемой площади.",
+      "text_en": "For accommodation facilities located in cultural heritage buildings or within historic landmark areas, 50% of the required area is permitted."
+    },
+    {
+      "code": "A7",
+      "text_uz": "Madaniy meros ob'ekti bo'lgan binolarda joylashgan joylashtirish vositalari uchun talab majburiy emas.",
+      "text_ru": "Требование не является обязательным для средств размещения, расположенных в зданиях — объектах культурного наследия.",
+      "text_en": "The requirement is not mandatory for accommodation facilities located in cultural heritage buildings."
+    },
+    {
+      "code": "A8",
+      "text_uz": "Talab apartotellar uchun majburiy emas.",
+      "text_ru": "Требование не является обязательным для апартотелей.",
+      "text_en": "The requirement is not mandatory for aparthotels."
+    },
+    {
+      "code": "A9",
+      "text_uz": "Talab apartotellar uchun majburiy.",
+      "text_ru": "Требование является обязательным для апартотелей.",
+      "text_en": "The requirement is mandatory for aparthotels."
+    },
+    {
+      "code": "A10",
+      "text_uz": "«Brand Finance» kompaniyasining top-50 yoki top-5 reytingga kiruvchi franchayzing mehmonxonalar uchun majburiy emas.",
+      "text_ru": "Требование не является обязательным для франчайзинговых гостиниц, входящих в рейтинг топ-50 или топ-5 компании «Brand Finance».",
+      "text_en": "The requirement is not mandatory for franchise hotels included in the Brand Finance top-50 or top-5 rating."
+    },
+    {
+      "code": "A11",
+      "text_uz": "Talab ixtisoslashtirilgan joylashtirish vositalari uchun majburiy emas.",
+      "text_ru": "Требование не является обязательным для специализированных средств размещения.",
+      "text_en": "The requirement is not mandatory for specialized accommodation facilities."
+    },
+    {
+      "code": "A12",
+      "text_uz": "Talab ixtisoslashtirilgan joylashtirish vositalari uchun majburiy.",
+      "text_ru": "Требование является обязательным для специализированных средств размещения.",
+      "text_en": "The requirement is mandatory for specialized accommodation facilities."
+    },
+    {
+      "code": "A13",
+      "text_uz": "Ixtisoslashtirilgan joylashtirish vositalari uchun majburiy bo'lgan ballar mehmonxona va shunga o'xshash turdagi joylashtirish vositalariga tadbiq etilmaydi.",
+      "text_ru": "Баллы, обязательные для специализированных средств размещения, не применяются к гостиницам и аналогичным средствам размещения.",
+      "text_en": "Points mandatory for specialized accommodation facilities do not apply to hotels and similar accommodation facilities."
+    },
+    {
+      "code": "A14",
+      "text_uz": "Nomer fondining 15 % gacha o'lchamgacha kichik bo'lishiga ruxsat etiladi.",
+      "text_ru": "Допускается уменьшение площади до 15% от номерного фонда.",
+      "text_en": "Up to 15% of the room stock may be smaller in size than the required area."
     }
   ]
 }
