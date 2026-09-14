@@ -56,7 +56,7 @@
   function newAssessment(type) {
     return {
       id: uid(), type: type || '958', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-      facility: { name: '', address: '', region: '', kind: '', rooms: '', beds: '', floors: '', contact: '', phone: '', email: '', inspector: '', date: todayIso(), target: 3,
+      facility: { name: '', address: '', region: '', kind: '', rooms: '', beds: '', floors: '', contact: '', phone: '', email: '', inspector: '', date: todayIso(), target: 0,
         seasonal: false, heritage: false, rural: false, naturalWater: false, sensorDoors: false, brand: false },
       a958: {}, a125: {}
     };
@@ -67,6 +67,8 @@
   const has125 = a => typeOf(a) !== '958' && !!clsOf(a);
   const typeLabel = a => typeOf(a) === '958' ? t('type958') : typeOf(a) === '125' ? t('type125') : t('type958') + ' + ' + t('type125');
   // ordered visible steps for an assessment
+  const hasTarget = a => !!a.facility.target;
+  const goalStar = a => a.facility.target || Math.min(5, bestStar(a) + 1);
   const stepsOf = a => typeOf(a) === '958' ? [1, 2, 4] : typeOf(a) === '125' ? [1, 3, 4] : [1, 2, 3, 4];
   const nextStep = (a, n) => { const st = stepsOf(a); const i = st.indexOf(n); return st[Math.min(st.length - 1, i + 1)]; };
   const prevStep = (a, n) => { const st = stepsOf(a); const i = st.indexOf(n); return st[Math.max(0, i - 1)]; };
@@ -75,9 +77,9 @@
   const C = window.Cloud || { enabled: false };
   const pushTimers = {};
   function summaryOf(a) {
-    const e958 = eval958(a); const cls = has125(a) ? clsOf(a) : null; const eT = cls ? eval125(a, a.facility.target) : null; const best = cls && (has958(a) ? e958.compliant : true) ? bestStar(a) : 0;
+    const e958 = eval958(a); const cls = has125(a) ? clsOf(a) : null; const eT = cls ? eval125(a, goalStar(a)) : null; const best = cls && (has958(a) ? e958.compliant : true) ? bestStar(a) : 0;
     const complete = (!has958(a) || (e958.hasAnnex && e958.unanswered.length === 0)) && (!cls || progress125(a).answered === progress125(a).total);
-    return { facility_name: a.facility.name || '', facility_kind: a.facility.kind || '', region: a.facility.region || '', target_star: cls ? a.facility.target : null,
+    return { facility_name: a.facility.name || '', facility_kind: a.facility.kind || '', region: a.facility.region || '', target_star: cls && a.facility.target ? a.facility.target : null,
       result_star: best, compliant_958: has958(a) ? e958.compliant : null, complete, points: eT ? eT.points : null, threshold: eT ? eT.threshold : null, assessed_on: a.facility.date || null, assess_type: typeOf(a) };
   }
   function schedulePush(a) {
@@ -238,7 +240,7 @@
   function showStep(n) {
     const a = cur(); if (!a) return;
     if (n > 1 && !facilityValid(a).ok) { toast(t('stepLocked'), 'error'); n = 1; }
-    if (n === 3 && state.step !== 3) filters.mode125 = 'mandatory';
+    if (n === 3 && state.step !== 3) filters.mode125 = hasTarget(a) ? 'mandatory' : 'all';
     state.step = n; save();
     if (!stepsOf(a).includes(n)) n = stepsOf(a)[0];
     $$('.step').forEach(el => el.classList.toggle('hidden', el.id !== 'step-' + n));
@@ -282,7 +284,7 @@
       return `<div class="card assess-card" data-id="${a.id}">
         <div style="min-width:0">
           <div class="name">${esc(a.facility.name || t('untitled'))} ${badge}</div>
-          <div class="sub">${a.owner_name && C.enabled && C.isAdmin() && a.owner_id !== C.user.id ? esc(a.owner_name) + ' · ' : ''}${esc(kindName(a.facility.kind))}${a.facility.region ? ' · ' + esc(a.facility.region) : ''} · ${esc(fmtDate(a.facility.date))} ${cls ? ' · ' + esc(t('fTarget')) + ': ' + starStr(a.facility.target) + ' · ' + eval125(a, a.facility.target).points + ' ' + esc(t('pts')) : ''}</div>
+          <div class="sub">${a.owner_name && C.enabled && C.isAdmin() && a.owner_id !== C.user.id ? esc(a.owner_name) + ' · ' : ''}${esc(kindName(a.facility.kind))}${a.facility.region ? ' · ' + esc(a.facility.region) : ''} · ${esc(fmtDate(a.facility.date))} ${cls ? (a.facility.target ? ' · ' + esc(t('fTarget')) + ': ' + starStr(a.facility.target) : '') + ' · ' + eval125(a, goalStar(a)).points + ' ' + esc(t('pts')) : ''}</div>
           <div class="progress" style="margin-top:8px;max-width:320px"><span style="width:${pct}%"></span></div>
         </div>
         <div class="actions">
@@ -319,7 +321,7 @@
     $('#assessTypeHint').textContent = typeOf(a) === '125' ? t('new125D') : typeOf(a) === '958' ? t('new958D') : '';
     $$('#step-1 [data-f]').forEach(el => { const k = el.dataset.f; el.value = f[k] == null ? '' : f[k]; el.classList.remove('invalid'); });
     updateKindDisplay(a);
-    const sp = $('#starPicker'); sp.innerHTML = STARS.map(s => `<button type="button" data-star="${s}" class="${f.target === s ? 'active' : ''}"><span class="s">${starStr(s)}</span>${s}</button>`).join('');
+    const sp = $('#starPicker'); sp.innerHTML = `<button type="button" data-star="0" class="${!f.target ? 'active' : ''}" style="flex:2"><span class="s">☆</span>${esc(t('noTarget'))}</button>` + STARS.map(s => `<button type="button" data-star="${s}" class="${f.target === s ? 'active' : ''}"><span class="s">${starStr(s)}</span>${s}</button>`).join('');
     const flagDefs = [['seasonal', 'flagSeasonal', 'flagSeasonalD'], ['heritage', 'flagHeritage', 'flagHeritageD'], ['rural', 'flagRural', 'flagRuralD'], ['naturalWater', 'flagNaturalWater', 'flagNaturalWaterD'], ['sensorDoors', 'flagSensorDoors', 'flagSensorDoorsD'], ['brand', 'flagBrand', 'flagBrandD']];
     $('#flagGrid').innerHTML = flagDefs.map(([k, l, d]) => `<label class="check ${f[k] ? 'on' : ''}"><input type="checkbox" data-flag="${k}" ${f[k] ? 'checked' : ''}><span><span class="lbl">${esc(t(l))}</span><br><span class="desc">${esc(t(d))}</span></span></label>`).join('');
   }
@@ -451,10 +453,10 @@
     $('#noPoints125').classList.toggle('hidden', !!cls);
     if (!cls) { box.innerHTML = ''; $('#progress125Text').textContent = ''; $('#progress125Bar').style.width = '0%'; $('#groupLabel125').textContent = ''; return; }
     $('#groupLabel125').textContent = `— ${clsName(cls)}`;
-    const q = filters.q125.trim().toLowerCase(); const target = a.facility.target; const mode = filters.mode125;
+    const q = filters.q125.trim().toLowerCase(); const target = goalStar(a); const mode = filters.mode125;
     const nM = leaves125().filter(i => isMandatory(i, target, a)).length;
     $$('#mode125 button').forEach(b => { b.classList.toggle('active', b.dataset.mode === mode); b.textContent = b.dataset.mode === 'mandatory' ? t('modeMandatory', { s: starStr(target) }) + ` · ${nM}` : b.dataset.mode === 'optional' ? t('modeOptional') + ` · ${leaves125().length - nM}` : t('modeAll'); });
-    const tsel = $('#target125'); tsel.innerHTML = STARS.map(st => `<option value="${st}" ${st === target ? 'selected' : ''}>${starStr(st)} ${st}</option>`).join('');
+    const tsel = $('#target125'); tsel.innerHTML = `<option value="0" ${!hasTarget(a) ? 'selected' : ''}>${esc(t('goalAuto'))} (${starStr(target)})</option>` + STARS.map(st => `<option value="${st}" ${hasTarget(a) && st === target ? 'selected' : ''}>${starStr(st)} ${st}</option>`).join('');
     let html = '';
     S125.categories.forEach(c => {
       const leaves = c.items.filter(i => !i.header); const done = leaves.filter(i => a.a125[i.id] && a.a125[i.id].v).length;
@@ -478,7 +480,7 @@
     updateProgress125(a);
   }
   function renderRow125(a, i) {
-    const ans = a.a125[i.id] || {}; const v = ans.v || ''; const target = a.facility.target;
+    const ans = a.a125[i.id] || {}; const v = ans.v || ''; const target = goalStar(a);
     const mStars = mandatoryStars(i, a); const isM = mStars.includes(target);
     const annNotes = i.ann.map(x => `<div>• ${x}: ${esc(tr('125ann:' + x, S125.annotations[x] || ''))}</div>`).join('');
     const hasExtra = !!(ans.note || (ans.photos && ans.photos.length));
@@ -503,8 +505,8 @@
       </div></div>`;
   }
   function updateProgress125(a) {
-    if (!has125(a)) return; const p = progress125(a); const e = eval125(a, a.facility.target); if (!e) return;
-    $('#progress125Text').innerHTML = `<strong>${e.points}</strong> / ${e.threshold} ${esc(t('pts'))} · ${e.mandatory.length - e.missing.length}/${e.mandatory.length} ${esc(t('mandDone'))} · ${p.answered}/${p.total}`;
+    if (!has125(a)) return; const p = progress125(a); const e = eval125(a, goalStar(a)); if (!e) return; const best = bestStar(a);
+    $('#progress125Text').innerHTML = `<strong>${e.points}</strong> ${esc(t('pts'))} · ${esc(t('currentBest'))}: <strong>${starStr(best)}</strong> · ${starStr(e.star)}: ${e.mandatory.length - e.missing.length}/${e.mandatory.length} ${esc(t('mandDone'))}, ${e.threshold} ${esc(t('pts'))} · ${p.answered}/${p.total}`;
     const bar = $('#progress125Bar'); bar.style.width = Math.round(100 * p.answered / p.total) + '%'; bar.parentElement.className = 'progress ' + (e.points >= e.threshold ? 'ok' : '');
     $$('#list125 .section').forEach(secEl => {
       const c = S125.categories.find(x => x.id === secEl.dataset.sec); const leaves = c.items.filter(i => !i.header);
@@ -543,8 +545,8 @@
 
   // ---------------------------------------------------------------- step 4 (result)
   function renderStep4(a) {
-    const e958 = eval958(a); const cls = has125(a) ? clsOf(a) : null; const target = a.facility.target; const ax = has958(a) ? annexFor(a) : null;
-    const eT = cls ? eval125(a, target) : null; const best = cls ? bestStar(a) : 0; const gate = has958(a) ? e958.compliant : true;
+    const e958 = eval958(a); const cls = has125(a) ? clsOf(a) : null; const target = goalStar(a); const ax = has958(a) ? annexFor(a) : null;
+    const eT = cls ? eval125(a, target) : null; const best = cls ? bestStar(a) : 0; const gate = has958(a) ? e958.compliant : true; const tgt = hasTarget(a);
     const incomplete = e958.unanswered.length > 0 || (cls && progress125(a).answered < progress125(a).total);
     let hero;
     if (cls) {
@@ -552,7 +554,7 @@
       hero = `<div class="result-hero ${finalStar ? 'pass' : 'fail'}"><div class="stars ${finalStar ? '' : 'none'}">${starStr(finalStar)}</div>
         <h2>${finalStar ? `${esc(t('achieved'))}: ${finalStar}★` : esc(t('notAchieved'))}</h2>
         <div>${has958(a) ? (e958.compliant ? `<span class="badge ok">${esc(t('genReqs'))}: ${esc(t('compliant'))}</span>` : `<span class="badge m">${esc(t('genReqs'))}: ${esc(incomplete && !e958.no.length ? t('incomplete') : t('nonCompliant'))}</span>`) : ''}
-        <span class="badge ${eT.achieved && gate ? 'ok' : 'warn'}">${esc(t('fTarget'))} ${starStr(target)}: ${esc(eT.achieved && gate ? t('targetMet') : t('targetNotMet'))}</span></div></div>`;
+        ${tgt ? `<span class="badge ${eT.achieved && gate ? 'ok' : 'warn'}">${esc(t('fTarget'))} ${starStr(target)}: ${esc(eT.achieved && gate ? t('targetMet') : t('targetNotMet'))}</span>` : ''}</div></div>`;
     } else {
       hero = `<div class="result-hero ${e958.compliant ? 'pass' : 'fail'}"><div class="stars ${e958.compliant ? '' : 'none'}">${e958.compliant ? '✔' : '✖'}</div>
         <h2>${esc(t('genReqs'))}: ${esc(e958.compliant ? t('compliant') : (incomplete && !e958.no.length ? t('incomplete') : t('nonCompliant')))}</h2>
@@ -568,11 +570,11 @@
     if (cls) {
       starTable = `<div class="card"><div class="card-title"><h3>${esc(t('starTable'))}</h3><span class="badge info">${esc(clsName(cls))}</span></div><div class="table-wrap"><table class="tbl"><tr><th>${esc(t('star'))}</th><th class="num">${esc(t('mandatoryMet'))}</th><th class="num">${esc(t('points'))}</th><th class="num">${esc(t('threshold'))}</th><th>${esc(t('status'))}</th></tr>` +
         STARS.map(s => { const e = eval125(a, s); const st = e.achieved ? `<span class="badge ok">${esc(t('achievedShort'))}</span>` : (e.missing.length ? `<span class="badge m">${esc(t('missingMandatory'))}: ${e.missing.length}</span>` : `<span class="badge warn">${esc(t('shortfall'))}: ${e.shortfall}</span>`);
-          return `<tr class="${s === target ? 'hl' : ''}"><td>${starStr(s)}</td><td class="num">${e.mandatory.length - e.missing.length}/${e.mandatory.length}</td><td class="num">${e.points}</td><td class="num">${e.threshold}</td><td>${st}</td></tr>`; }).join('') + '</table></div></div>';
+          return `<tr class="${(tgt ? s === target : s === best) ? 'hl' : ''}"><td>${starStr(s)}</td><td class="num">${e.mandatory.length - e.missing.length}/${e.mandatory.length}</td><td class="num">${e.points}</td><td class="num">${e.threshold}</td><td>${st}</td></tr>`; }).join('') + '</table></div></div>';
     }
     let gap = '';
     if (eT && !(eT.achieved && gate)) {
-      gap += `<div class="card"><div class="card-title"><h3>${esc(t('gapTitle'))} (${starStr(target)})</h3></div>`;
+      gap += `<div class="card"><div class="card-title"><h3>${tgt ? esc(t('gapTitle')) + ' (' + starStr(target) + ')' : esc(t('nextGap', { s: starStr(target) }))}</h3></div>`;
       if (eT.missing.length) gap += `<p class="small muted"><strong>${esc(t('gapMandatory'))}</strong></p>` + eT.missing.map(i => `<div class="list-item"><a href="#" data-jump125="${esc(i.id)}"><b>${esc(i.label)}</b> ${esc(tr('125:' + i.id, i.text))}</a><span class="pts">${i.points} ${esc(t('pts'))}</span></div>`).join('');
       if (eT.shortfall > 0) {
         const cands = leaves125().filter(i => !satisfied125(i, a) && !(a.a125[i.id] && a.a125[i.id].v === 'yes')).sort((x, y) => y.points - x.points).slice(0, 12);
@@ -603,7 +605,7 @@
 
   // ---------------------------------------------------------------- report
   function buildReportHtml(a, opts) {
-    const e958 = eval958(a); const cls = has125(a) ? clsOf(a) : null; const target = a.facility.target; const ax = has958(a) ? annexFor(a) : null;
+    const e958 = eval958(a); const cls = has125(a) ? clsOf(a) : null; const target = goalStar(a); const tgt = hasTarget(a); const ax = has958(a) ? annexFor(a) : null;
     const eT = cls ? eval125(a, target) : null; const best = cls ? bestStar(a) : 0; const gate = has958(a) ? e958.compliant : true; const finalStar = gate ? best : 0; const f = a.facility;
     const ansTxt = v => v === 'yes' ? `<span class="yes">${esc(t('yes'))}</span>` : v === 'no' ? `<span class="no">${esc(t('no'))}</span>` : v === 'na' ? `<span class="na">${esc(t('na'))}</span>` : `<span class="none">—</span>`;
     const photos = ans => opts.photos && ans && ans.photos && ans.photos.length ? `<div class="rp-photos">${ans.photos.map(p => `<img src="${p}" alt="">`).join('')}</div>` : '';
@@ -615,17 +617,17 @@
       <div><b>${esc(t('fAddress'))}</b><span>${esc([f.region, f.address].filter(Boolean).join(', '))}</span></div><div><b>${esc(t('fGroup'))}</b><span>${esc(groupName((kindInfo(f.kind) || {}).group))} (${esc(t('annex'))} ${ax ? ax.key : ''})</span></div>
       <div><b>${esc(t('fRooms'))} / ${esc(t('fBeds'))}</b><span>${esc(f.rooms || '—')} / ${esc(f.beds || '—')}</span></div><div><b>${esc(t('fFloors'))}</b><span>${esc(f.floors || '—')}</span></div>
       <div><b>${esc(t('fContact'))}</b><span>${esc([f.contact, f.phone, f.email].filter(Boolean).join(', ') || '—')}</span></div><div><b>${esc(t('fInspector'))}</b><span>${esc(f.inspector || '—')}</span></div>
-      <div><b>${esc(t('fDate'))}</b><span>${esc(fmtDate(f.date))}</span></div><div><b>${esc(t('fTarget'))}</b><span>${cls ? starStr(target) : '—'}</span></div>
+      <div><b>${esc(t('fDate'))}</b><span>${esc(fmtDate(f.date))}</span></div><div><b>${esc(t('fTarget'))}</b><span>${cls && tgt ? starStr(target) : '—'}</span></div>
       ${(() => { const fl = [['seasonal', 'flagSeasonal'], ['heritage', 'flagHeritage'], ['rural', 'flagRural'], ['naturalWater', 'flagNaturalWater'], ['sensorDoors', 'flagSensorDoors'], ['brand', 'flagBrand']].filter(x => f[x[0]]).map(x => t(x[1])); return fl.length ? `<div style="grid-column:1/-1"><b>${esc(t('fFlags'))}</b><span>${esc(fl.join('; '))}</span></div>` : ''; })()}
     </div>`;
     h += `<div class="rp-verdict">`;
     if (has958(a)) h += `<div class="big ${e958.compliant ? 'ok' : 'bad'}">${esc(t('genReqs'))}: ${esc(e958.compliant ? t('compliant') : (e958.no.length ? t('nonCompliant') : t('incomplete')))} (${e958.yes + e958.na.length}/${e958.applicable}${e958.no.length ? `, ✖ ${e958.no.length}` : ''}${e958.unanswered.length ? `, ${e958.unanswered.length} ${esc(t('unanswered'))}` : ''})</div>`;
-    if (cls) h += `<div class="big ${finalStar ? 'ok' : 'bad'}">${finalStar ? `${esc(t('achieved'))}: ${starStr(finalStar)} (${finalStar})` : esc(t('notAchieved'))}</div><div>${esc(t('fTarget'))} ${starStr(target)}: ${esc(eT.achieved && gate ? t('targetMet') : t('targetNotMet'))} — ${esc(t('pointsTotal'))} <b>${eT.points}</b> / ${esc(t('threshold'))} <b>${eT.threshold}</b>; ${esc(t('mandatoryMet'))} <b>${eT.mandatory.length - eT.missing.length}/${eT.mandatory.length}</b></div>`;
+    if (cls) h += `<div class="big ${finalStar ? 'ok' : 'bad'}">${finalStar ? `${esc(t('achieved'))}: ${starStr(finalStar)} (${finalStar})` : esc(t('notAchieved'))}</div><div>${tgt ? `${esc(t('fTarget'))} ${starStr(target)}: ${esc(eT.achieved && gate ? t('targetMet') : t('targetNotMet'))} — ` : ''}${esc(t('pointsTotal'))} <b>${eT.points}</b>; ${starStr(target)}: ${esc(t('threshold'))} <b>${eT.threshold}</b>, ${esc(t('mandatoryMet'))} <b>${eT.mandatory.length - eT.missing.length}/${eT.mandatory.length}</b></div>`;
     h += '</div>';
     if (cls) {
       h += `<h2>${esc(t('starTable'))} — ${esc(clsName(cls))}</h2><table><tr><th>${esc(t('star'))}</th><th class="c">${esc(t('mandatoryMet'))}</th><th class="c">${esc(t('points'))}</th><th class="c">${esc(t('threshold'))}</th><th>${esc(t('status'))}</th></tr>` +
         STARS.map(s => { const e = eval125(a, s); return `<tr><td>${starStr(s)}</td><td class="c">${e.mandatory.length - e.missing.length}/${e.mandatory.length}</td><td class="c">${e.points}</td><td class="c">${e.threshold}</td><td>${e.achieved ? `<span class="yes">${esc(t('achievedShort'))}</span>` : (e.missing.length ? `<span class="no">${esc(t('missingMandatory'))}: ${e.missing.length}</span>` : `<span class="none">${esc(t('shortfall'))}: ${e.shortfall}</span>`)}</td></tr>`; }).join('') + '</table>';
-      if (eT.missing.length) h += `<h2>${esc(t('gapMandatory'))} (${starStr(target)})</h2><table><tr><th>${esc(t('reqNo'))}</th><th>${esc(t('requirement'))}</th><th class="c">${esc(t('points'))}</th></tr>` + eT.missing.map(i => `<tr><td class="c">${esc(i.label)}</td><td>${esc(tr('125:' + i.id, i.text))}</td><td class="c">${i.points}</td></tr>`).join('') + '</table>';
+      if (eT.missing.length) h += `<h2>${tgt ? esc(t('gapMandatory')) : esc(t('nextGap', { s: starStr(target) }))} (${starStr(target)})</h2><table><tr><th>${esc(t('reqNo'))}</th><th>${esc(t('requirement'))}</th><th class="c">${esc(t('points'))}</th></tr>` + eT.missing.map(i => `<tr><td class="c">${esc(i.label)}</td><td>${esc(tr('125:' + i.id, i.text))}</td><td class="c">${i.points}</td></tr>`).join('') + '</table>';
     }
     if (ax && e958.no.length) h += `<h2>${esc(t('failed958'))}</h2><table><tr><th>${esc(t('reqNo'))}</th><th>${esc(t('requirement'))}</th><th>${esc(t('notesCol'))}</th></tr>` + e958.no.map(l => `<tr><td class="c">${esc(l.id)}</td><td>${esc(tr(`958${ax.key}:${l.id}`, l.leaf.title))}${photos(a.a958[l.id])}</td><td>${note(a.a958[l.id])}</td></tr>`).join('') + '</table>';
     if (ax && e958.na.length) h += `<h2>${esc(t('naFlagged'))}</h2><table><tr><th>${esc(t('reqNo'))}</th><th>${esc(t('requirement'))}</th><th>${esc(t('notesCol'))}</th></tr>` + e958.na.map(l => `<tr><td class="c">${esc(l.id)}</td><td>${esc(tr(`958${ax.key}:${l.id}`, l.leaf.title))}</td><td>${note(a.a958[l.id])}</td></tr>`).join('') + '</table>';
@@ -678,7 +680,7 @@
   $('#btnExcel').onclick = () => exportExcel(cur());
   $('#btnExcel2').onclick = () => exportExcel(cur());
   $('#btnShare').onclick = () => {
-    const a = cur(); const e958 = eval958(a); const cls = has125(a) ? clsOf(a) : null; const eT = cls ? eval125(a, a.facility.target) : null; const best = cls && (has958(a) ? e958.compliant : true) ? bestStar(a) : 0;
+    const a = cur(); const e958 = eval958(a); const cls = has125(a) ? clsOf(a) : null; const eT = cls ? eval125(a, goalStar(a)) : null; const best = cls && (has958(a) ? e958.compliant : true) ? bestStar(a) : 0;
     const text = t('shareText', { name: a.facility.name || t('untitled'), result: cls ? (best ? `${t('achieved')} ${starStr(best)}` : t('notAchieved')) : t('genReqs'), pts: eT ? eT.points : '—', thr: eT ? eT.threshold : '—', c: e958.compliant ? t('compliant') : t('nonCompliant') });
     if (navigator.share) navigator.share({ title: t('reportTitle'), text }).catch(() => { });
     else if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => toast(t('copied'), 'success'));
@@ -702,11 +704,11 @@
     r.readAsText(file);
   }
   function exportExcel(a) {
-    const e958 = eval958(a); const cls = has125(a) ? clsOf(a) : null; const ax = has958(a) ? annexFor(a) : null; const target = a.facility.target; const f = a.facility;
+    const e958 = eval958(a); const cls = has125(a) ? clsOf(a) : null; const ax = has958(a) ? annexFor(a) : null; const target = a.facility.target || null; const f = a.facility;
     const summary = [[t('reportTitle') + ' — ' + typeLabel(a)], [], [t('fName'), f.name], [t('fKind'), kindName(f.kind)], [t('fAddress'), [f.region, f.address].filter(Boolean).join(', ')], [t('fRooms'), f.rooms], [t('fBeds'), f.beds], [t('fDate'), f.date], [t('fInspector'), f.inspector], [t('fContact'), [f.contact, f.phone, f.email].filter(Boolean).join(', ')], [],
       ...(has958(a) ? [[t('genReqs'), e958.compliant ? t('compliant') : (e958.no.length ? t('nonCompliant') : t('incomplete')), `${e958.yes + e958.na.length}/${e958.applicable}`]] : [])];
     if (cls) {
-      const best = (has958(a) ? e958.compliant : true) ? bestStar(a) : 0; summary.push([t('achieved'), best || t('notAchieved')], [t('fTarget'), target], []);
+      const best = (has958(a) ? e958.compliant : true) ? bestStar(a) : 0; summary.push([t('achieved'), best || t('notAchieved')], [t('fTarget'), target || '—'], []);
       summary.push([t('star'), t('mandatoryMet'), t('points'), t('threshold'), t('status')]);
       STARS.forEach(s => { const e = eval125(a, s); summary.push([s, `${e.mandatory.length - e.missing.length}/${e.mandatory.length}`, e.points, e.threshold, e.achieved ? t('achievedShort') : (e.missing.length ? `${t('missingMandatory')}: ${e.missing.length}` : `${t('shortfall')}: ${e.shortfall}`)]); });
     }
