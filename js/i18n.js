@@ -72,6 +72,7 @@ window.UI = {
     myAssessments: "Mening baholashlarim", allInspectors: "Barcha baholovchilar", confirmDeleteRemote: "Reyestrdan o‘chirilsinmi? Bu amalni qaytarib bo‘lmaydi.",
     stdRefs: "Normativ hujjatlar va havolalar", stdGeneral: "958:2026 — 5–6-bo‘limlar (umumiy va qo‘shimcha talablar)", stdAnnexTables: "Ilovalar jadvallari va snoskalar", footnotes: "Izohlar (snoskalar)", bibliography: "Bibliografiya", normRefs: "Standartlarga havolalar", clauses125: "MSt 125 — 4.6, 4.7-bandlar", refNote: "[n] — bibliografiyadagi hujjat raqami. Ustunlardagi «+» — talab majburiy, «−» — talab qo‘yilmaydi, yuqori raqam — izoh.", noteRefBy: "Qo‘llaniladi:",
     new958: "958:2026 tekshiruvi", new125: "MSt 125 toifalash", new958D: "Umumiy talablarga muvofiqlik (barcha turdagi joylashtirish vositalari)", new125D: "Yulduzli toifa uchun balli baholash (mehmonxonalar, apartotellar, ixtisoslashtirilgan)", type958: "958:2026", type125: "MSt 125", assessType: "Baholash turi", chooseType: "Qaysi baholash o‘tkaziladi?",
+    modeMandatory: "Majburiy ({s})", modeOptional: "Ixtiyoriy", modeAll: "Barchasi", mandDone: "majburiy bajarildi", changeTarget: "Maqsad toifa:",
     annex: "Ilova", column: "Ustun", allStars: "barcha toifalar", none: "—",
   },
   ru: {
@@ -146,6 +147,7 @@ window.UI = {
     myAssessments: "Мои оценки", allInspectors: "Все эксперты", confirmDeleteRemote: "Удалить из реестра? Это действие нельзя отменить.",
     stdRefs: "Нормативные документы и ссылки", stdGeneral: "958:2026 — разделы 5–6 (общие и дополнительные требования)", stdAnnexTables: "Таблицы приложений и сноски", footnotes: "Примечания (сноски)", bibliography: "Библиография", normRefs: "Нормативные ссылки", clauses125: "MSt 125 — пункты 4.6, 4.7", refNote: "[n] — номер документа в библиографии. В столбцах «+» — требование обязательно, «−» — не предъявляется, верхний индекс — сноска.", noteRefBy: "Применяется к:",
     new958: "Проверка по 958:2026", new125: "Категория по MSt 125", new958D: "Соответствие общим требованиям (все виды средств размещения)", new125D: "Балльная оценка на категорию (гостиницы, апартотели, специализированные)", type958: "958:2026", type125: "MSt 125", assessType: "Тип оценки", chooseType: "Какая оценка проводится?",
+    modeMandatory: "Обязательные ({s})", modeOptional: "Необязательные", modeAll: "Все", mandDone: "обязательных выполнено", changeTarget: "Целевая категория:",
     annex: "Приложение", column: "Столбец", allStars: "все категории", none: "—",
   },
   en: {
@@ -220,6 +222,7 @@ window.UI = {
     myAssessments: "My assessments", allInspectors: "All inspectors", confirmDeleteRemote: "Delete from the registry? This cannot be undone.",
     stdRefs: "Normative documents and references", stdGeneral: "958:2026 — clauses 5–6 (general and additional requirements)", stdAnnexTables: "Annex tables and footnotes", footnotes: "Notes (footnotes)", bibliography: "Bibliography", normRefs: "Normative references", clauses125: "MSt 125 — clauses 4.6, 4.7", refNote: "[n] — document number in the bibliography. In columns “+” = required, “−” = not required, superscript = footnote.", noteRefBy: "Applies to:",
     new958: "958:2026 check", new125: "MSt 125 category", new958D: "Compliance with general requirements (all kinds of accommodation)", new125D: "Points assessment for a star category (hotels, aparthotels, specialized)", type958: "958:2026", type125: "MSt 125", assessType: "Assessment type", chooseType: "Which assessment is carried out?",
+    modeMandatory: "Mandatory ({s})", modeOptional: "Optional", modeAll: "All", mandDone: "mandatory met", changeTarget: "Target category:",
     annex: "Annex", column: "Column", allStars: "all categories", none: "—",
   }
 };

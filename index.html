@@ -128,9 +128,10 @@
         </div>
         <div class="progress" style="margin-bottom:8px"><span id="progress125Bar" style="width:0%"></span></div>
         <div class="row">
-          <input type="search" class="input" style="flex:1;min-width:160px;min-height:36px;padding:6px 10px" id="search125" data-ph="search">
+          <div class="seg mode" id="mode125"><button data-mode="mandatory"></button><button data-mode="optional"></button><button data-mode="all"></button></div>
+          <label class="small" style="display:flex;align-items:center;gap:6px"><span data-ui="changeTarget"></span><select id="target125" style="width:auto;min-height:36px;padding:4px 8px"></select></label>
+          <input type="search" class="input" style="flex:1;min-width:140px;min-height:36px;padding:6px 10px" id="search125" data-ph="search">
           <button class="chip" data-filter125="unanswered" data-ui="onlyUnanswered"></button>
-          <button class="chip" data-filter125="mandatory" data-ui="onlyMandatory"></button>
           <button class="chip" id="expand125" data-ui="expandAll"></button>
         </div>
       </div></div>

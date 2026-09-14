@@ -340,3 +340,5 @@ sup.fn { font-size: 10px; color: var(--primary-light); font-weight: 700; margin-
 .fn-row:target { background: var(--gold-soft); }
 a.ref { font-weight: 700; text-decoration: none; }
 table.tbl.annex td.num { font-weight: 700; color: var(--primary); }
+
+.seg.mode button.active { background: var(--primary); color: #fff; }

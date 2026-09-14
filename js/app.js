@@ -10,7 +10,7 @@
 
   // ---------------------------------------------------------------- state
   let state = { lang: 'uz', currentId: null, step: 1, assessments: [] };
-  let filters = { q958: '', f958: null, q125: '', f125: null };
+  let filters = { q958: '', f958: null, q125: '', f125: null, mode125: 'mandatory' };
   let open958 = new Set(), open125 = new Set();
   let saveTimer = null;
 
@@ -238,6 +238,7 @@
   function showStep(n) {
     const a = cur(); if (!a) return;
     if (n > 1 && !facilityValid(a).ok) { toast(t('stepLocked'), 'error'); n = 1; }
+    if (n === 3 && state.step !== 3) filters.mode125 = 'mandatory';
     state.step = n; save();
     if (!stepsOf(a).includes(n)) n = stepsOf(a)[0];
     $$('.step').forEach(el => el.classList.toggle('hidden', el.id !== 'step-' + n));
@@ -447,19 +448,24 @@
     $('#noPoints125').classList.toggle('hidden', !!cls);
     if (!cls) { box.innerHTML = ''; $('#progress125Text').textContent = ''; $('#progress125Bar').style.width = '0%'; $('#groupLabel125').textContent = ''; return; }
     $('#groupLabel125').textContent = `— ${clsName(cls)}`;
-    const q = filters.q125.trim().toLowerCase(); const target = a.facility.target;
+    const q = filters.q125.trim().toLowerCase(); const target = a.facility.target; const mode = filters.mode125;
+    const nM = leaves125().filter(i => isMandatory(i, target, a)).length;
+    $$('#mode125 button').forEach(b => { b.classList.toggle('active', b.dataset.mode === mode); b.textContent = b.dataset.mode === 'mandatory' ? t('modeMandatory', { s: starStr(target) }) + ` · ${nM}` : b.dataset.mode === 'optional' ? t('modeOptional') + ` · ${leaves125().length - nM}` : t('modeAll'); });
+    const tsel = $('#target125'); tsel.innerHTML = STARS.map(st => `<option value="${st}" ${st === target ? 'selected' : ''}>${starStr(st)} ${st}</option>`).join('');
     let html = '';
     S125.categories.forEach(c => {
       const leaves = c.items.filter(i => !i.header); const done = leaves.filter(i => a.a125[i.id] && a.a125[i.id].v).length;
-      const visible = c.items.filter(i => {
+      const leafOk = i => {
         if (q) { const txt = (tr('125:' + i.id, i.text) + ' ' + i.label).toLowerCase(); if (!txt.includes(q)) return false; }
-        if (i.header) return !filters.f125;
+        if (mode === 'mandatory' && !isMandatory(i, target, a)) return false;
+        if (mode === 'optional' && isMandatory(i, target, a)) return false;
         if (filters.f125 === 'unanswered') return !(a.a125[i.id] && a.a125[i.id].v);
-        if (filters.f125 === 'mandatory') return isMandatory(i, target, a);
         return true;
-      });
+      };
+      const visLeaves = new Set(c.items.filter(i => !i.header && leafOk(i)).map(i => i.id));
+      const visible = c.items.filter(i => i.header ? c.items.some(x => !x.header && visLeaves.has(x.id) && x.id.startsWith(i.id + '.')) : visLeaves.has(i.id));
       if (!visible.length) return;
-      const isOpen = open125.has(c.id) || !!q || !!filters.f125 || (open125.size === 0 && html === '');
+      const isOpen = open125.has(c.id) || !!q || !!filters.f125 || mode === 'mandatory' || (open125.size === 0 && html === '');
       const catPts = leaves.reduce((s, i) => s + earned125(i, a), 0);
       html += `<div class="section ${isOpen ? 'open' : ''}" data-sec="${c.id}"><div class="sec-head"><h3>${esc(c.id)}. ${esc(tr('125cat:' + c.id, c.name))}${c.ref ? ` <span class="badge info">${esc(c.ref)}</span>` : ''}</h3><span class="cnt mono"><span class="pts">${catPts} ${esc(t('pts'))}</span> · ${done}/${leaves.length}</span><span class="arrow">▾</span></div><div class="sec-progress"><span style="width:${leaves.length ? Math.round(100 * done / leaves.length) : 0}%"></span></div><div class="sec-body">`;
       visible.forEach(i => { html += i.header ? `<div class="item parent"><div><span class="id">${esc(i.label)}</span>${esc(tr('125:' + i.id, i.text))}${i.ann.length ? ' ' + i.ann.map(x => `<span class="badge info">${x}</span>`).join(' ') : ''}</div></div>` : renderRow125(a, i); });
@@ -495,7 +501,7 @@
   }
   function updateProgress125(a) {
     if (!has125(a)) return; const p = progress125(a); const e = eval125(a, a.facility.target); if (!e) return;
-    $('#progress125Text').innerHTML = `<strong>${e.points}</strong> / ${e.threshold} ${esc(t('pts'))} · ${p.answered}/${p.total}`;
+    $('#progress125Text').innerHTML = `<strong>${e.points}</strong> / ${e.threshold} ${esc(t('pts'))} · ${e.mandatory.length - e.missing.length}/${e.mandatory.length} ${esc(t('mandDone'))} · ${p.answered}/${p.total}`;
     const bar = $('#progress125Bar'); bar.style.width = Math.round(100 * p.answered / p.total) + '%'; bar.parentElement.className = 'progress ' + (e.points >= e.threshold ? 'ok' : '');
     $$('#list125 .section').forEach(secEl => {
       const c = S125.categories.find(x => x.id === secEl.dataset.sec); const leaves = c.items.filter(i => !i.header);
@@ -527,6 +533,8 @@
   });
   $('#list125').addEventListener('change', e => { if (e.target.dataset.photo) { const row = e.target.closest('.item[data-id]'); addPhoto(e.target, 'a125', row.dataset.id, row); } });
   $('#search125').oninput = e => { filters.q125 = e.target.value; renderStep3(cur()); };
+  $('#mode125').addEventListener('click', e => { const b = e.target.closest('button[data-mode]'); if (!b) return; filters.mode125 = b.dataset.mode; renderStep3(cur()); });
+  $('#target125').onchange = e => { const a = cur(); a.facility.target = +e.target.value; touch(a); renderStep3(a); };
   $$('[data-filter125]').forEach(b => b.onclick = () => { filters.f125 = filters.f125 === b.dataset.filter125 ? null : b.dataset.filter125; $$('[data-filter125]').forEach(x => x.classList.toggle('active', x.dataset.filter125 === filters.f125)); renderStep3(cur()); });
   $('#expand125').onclick = () => { const all = $$('#list125 .section'); const anyClosed = all.some(s => !s.classList.contains('open')); all.forEach(s => { s.classList.toggle('open', anyClosed); if (anyClosed) open125.add(s.dataset.sec); else open125.delete(s.dataset.sec); }); $('#expand125').textContent = anyClosed ? t('collapseAll') : t('expandAll'); };
 
