@@ -41,8 +41,13 @@
       <h1 data-ui="navList" style="margin:0">Baholashlar</h1>
       <div class="row">
         <label class="btn"><span>📥</span> <span data-ui="importJson">JSON import</span><input type="file" accept="application/json,.json" id="importFile" hidden></label>
-        <button class="btn primary" id="btnNew"><span>＋</span> <span data-ui="newAssessment">Yangi baholash</span></button>
+        <button class="btn primary" id="btnNew958"><span>＋</span> <span data-ui="new958"></span></button>
+        <button class="btn gold" id="btnNew125"><span>＋</span> <span data-ui="new125"></span></button>
       </div>
+    </div>
+    <div class="grid cols-2" style="margin-bottom:14px">
+      <div class="card tight" style="margin:0"><b data-ui="new958"></b><div class="small muted" data-ui="new958D"></div></div>
+      <div class="card tight" style="margin:0"><b data-ui="new125"></b><div class="small muted" data-ui="new125D"></div></div>
     </div>
     <div id="assessList"></div>
     <p class="small muted" data-ui="versionNote" style="margin-top:16px"></p>
@@ -60,7 +65,7 @@
     <!-- Step 1: facility -->
     <div class="step" id="step-1">
       <div class="card">
-        <div class="card-title"><h2 data-ui="facilityInfo"></h2></div>
+        <div class="card-title"><h2 data-ui="facilityInfo"></h2><span class="badge info" id="assessTypeBadge"></span></div>
         <div class="grid cols-2">
           <div class="form-group"><label class="field" data-ui="fName"></label><input type="text" data-f="name" autocomplete="organization"></div>
           <div class="form-group"><label class="field" data-ui="fRegion"></label><input type="text" data-f="region"></div>

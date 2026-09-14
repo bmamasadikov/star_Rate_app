@@ -36,6 +36,7 @@ create table if not exists public.assessments (
   points int,
   threshold int,
   assessed_on date,
+  assess_type text,
   data jsonb not null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -74,5 +75,8 @@ create policy "assessments delete" on public.assessments for delete using (owner
 -- Summary view without the heavy JSON payload (used by the registry list).
 create or replace view public.assessments_summary with (security_invoker = true) as
   select id, owner_id, owner_name, facility_name, facility_kind, region, target_star, result_star,
-         compliant_958, complete, points, threshold, assessed_on, created_at, updated_at
+         compliant_958, complete, points, threshold, assessed_on, assess_type, created_at, updated_at
   from public.assessments;
+
+-- If the schema was created before assess_type existed:
+alter table public.assessments add column if not exists assess_type text;

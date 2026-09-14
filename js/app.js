@@ -53,24 +53,32 @@
   const uid = () => 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
   // ---------------------------------------------------------------- model
-  function newAssessment() {
+  function newAssessment(type) {
     return {
-      id: uid(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      id: uid(), type: type || '958', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
       facility: { name: '', address: '', region: '', kind: '', rooms: '', beds: '', floors: '', contact: '', phone: '', email: '', inspector: '', date: todayIso(), target: 3,
         seasonal: false, heritage: false, rural: false, naturalWater: false, sensorDoors: false, brand: false },
       a958: {}, a125: {}
     };
   }
   const cur = () => state.assessments.find(a => a.id === state.currentId) || null;
+  const typeOf = a => a.type || 'both';
+  const has958 = a => typeOf(a) !== '125';
+  const has125 = a => typeOf(a) !== '958' && !!clsOf(a);
+  const typeLabel = a => typeOf(a) === '958' ? t('type958') : typeOf(a) === '125' ? t('type125') : t('type958') + ' + ' + t('type125');
+  // ordered visible steps for an assessment
+  const stepsOf = a => typeOf(a) === '958' ? [1, 2, 4] : typeOf(a) === '125' ? [1, 3, 4] : [1, 2, 3, 4];
+  const nextStep = (a, n) => { const st = stepsOf(a); const i = st.indexOf(n); return st[Math.min(st.length - 1, i + 1)]; };
+  const prevStep = (a, n) => { const st = stepsOf(a); const i = st.indexOf(n); return st[Math.max(0, i - 1)]; };
   function touch(a) { a.updatedAt = new Date().toISOString(); save(); schedulePush(a); }
   // ---------------------------------------------------------------- cloud sync
   const C = window.Cloud || { enabled: false };
   const pushTimers = {};
   function summaryOf(a) {
-    const e958 = eval958(a); const cls = clsOf(a); const eT = cls ? eval125(a, a.facility.target) : null; const best = cls && e958.compliant ? bestStar(a) : 0;
-    const complete = e958.hasAnnex && e958.unanswered.length === 0 && (!cls || progress125(a).answered === progress125(a).total);
+    const e958 = eval958(a); const cls = has125(a) ? clsOf(a) : null; const eT = cls ? eval125(a, a.facility.target) : null; const best = cls && (has958(a) ? e958.compliant : true) ? bestStar(a) : 0;
+    const complete = (!has958(a) || (e958.hasAnnex && e958.unanswered.length === 0)) && (!cls || progress125(a).answered === progress125(a).total);
     return { facility_name: a.facility.name || '', facility_kind: a.facility.kind || '', region: a.facility.region || '', target_star: cls ? a.facility.target : null,
-      result_star: best, compliant_958: e958.compliant, complete, points: eT ? eT.points : null, threshold: eT ? eT.threshold : null, assessed_on: a.facility.date || null };
+      result_star: best, compliant_958: has958(a) ? e958.compliant : null, complete, points: eT ? eT.points : null, threshold: eT ? eT.threshold : null, assessed_on: a.facility.date || null, assess_type: typeOf(a) };
   }
   function schedulePush(a) {
     if (!C.enabled || !C.user || !C.isActive()) return;
@@ -152,7 +160,7 @@
     return out;
   }
   function eval958(a) {
-    const all = leaves958(a); const app = all.filter(l => l.applies);
+    const all = has958(a) ? leaves958(a) : []; const app = all.filter(l => l.applies);
     const res = { total: all.length, applicable: app.length, yes: 0, no: [], na: [], unanswered: [], compliant: false, hasAnnex: all.length > 0 };
     app.forEach(l => {
       const ans = a.a958[l.id];
@@ -231,21 +239,26 @@
     const a = cur(); if (!a) return;
     if (n > 1 && !facilityValid(a).ok) { toast(t('stepLocked'), 'error'); n = 1; }
     state.step = n; save();
+    if (!stepsOf(a).includes(n)) n = stepsOf(a)[0];
     $$('.step').forEach(el => el.classList.toggle('hidden', el.id !== 'step-' + n));
-    $$('#stepper button').forEach(b => { const s = +b.dataset.step; b.classList.toggle('active', s === n); b.classList.toggle('done', stepDone(a, s)); b.disabled = s > 1 && !facilityValid(a).ok; });
+    $$('#stepper button').forEach(b => { const s = +b.dataset.step; b.classList.toggle('hidden', !stepsOf(a).includes(s)); b.classList.toggle('active', s === n); b.classList.toggle('done', stepDone(a, s)); b.disabled = s > 1 && !facilityValid(a).ok; });
+    $('#stepper').style.gridTemplateColumns = `repeat(${stepsOf(a).length}, minmax(0, 1fr))`;
+    stepsOf(a).forEach((s, i) => { const el = $(`#stepper button[data-step="${s}"] .n`); if (el) el.textContent = i + 1; });
+    $$('[data-goto]').forEach(b => { const from = +b.closest('.step').id.replace('step-', ''); b.dataset.gotoResolved = b.dataset.dir === 'back' ? prevStep(a, from) : nextStep(a, from); });
     if (n === 1) renderStep1(a); if (n === 2) renderStep2(a); if (n === 3) renderStep3(a); if (n === 4) renderStep4(a);
     window.scrollTo({ top: 0 });
   }
   function stepDone(a, s) {
     if (s === 1) return facilityValid(a).ok;
     if (s === 2) { const e = eval958(a); return e.hasAnnex && e.unanswered.length === 0; }
-    if (s === 3) { if (!clsOf(a)) return facilityValid(a).ok; const p = progress125(a); return p.answered === p.total; }
+    if (s === 3) { if (!has125(a)) return facilityValid(a).ok; const p = progress125(a); return p.answered === p.total; }
     return false;
   }
   function facilityValid(a) {
     const f = a.facility; const missing = [];
     if (!f.name.trim()) missing.push(t('fName'));
     if (!f.kind) missing.push(t('fKind'));
+    if (typeOf(a) === '125' && f.kind && !clsOf(a)) missing.push(t('pointsGroup'));
     if (!f.date) missing.push(t('fDate'));
     return { ok: missing.length === 0, missing };
   }
@@ -256,19 +269,19 @@
     if (!state.assessments.length) { box.innerHTML = `<div class="card empty"><div class="big">★</div><h3>${esc(t('noAssessments'))}</h3><p>${esc(t('noAssessmentsHint'))}</p></div>`; return; }
     const list = state.assessments.slice().sort((x, y) => (y.updatedAt || '').localeCompare(x.updatedAt || ''));
     box.innerHTML = list.map(a => {
-      const e958 = eval958(a); const cls = clsOf(a); const best = cls ? bestStar(a) : 0;
-      const p125 = cls ? progress125(a) : null;
-      let badge = '';
-      if (!e958.hasAnnex) badge = `<span class="badge">${esc(t('incomplete'))}</span>`;
-      else if (e958.unanswered.length || (p125 && p125.answered < p125.total)) badge = `<span class="badge warn">${esc(t('incomplete'))}</span>`;
-      else if (!e958.compliant) badge = `<span class="badge m">${esc(t('nonCompliant'))}</span>`;
-      else if (cls) badge = best ? `<span class="badge gold">${starStr(best)}</span>` : `<span class="badge m">${esc(t('notAchieved'))}</span>`;
-      else badge = `<span class="badge ok">${esc(t('compliant'))}</span>`;
-      const pct = e958.hasAnnex ? Math.round(100 * (e958.answered + (p125 ? p125.answered : 0)) / Math.max(1, e958.applicable + (p125 ? p125.total : 0))) : 0;
+      const e958 = eval958(a); const cls = has125(a) ? clsOf(a) : null; const best = cls ? bestStar(a) : 0;
+      const p125 = cls ? progress125(a) : null; const gate = has958(a) ? e958.compliant : true;
+      let badge = `<span class="badge info">${esc(typeLabel(a))}</span> `;
+      if (!e958.hasAnnex && !cls) badge += `<span class="badge">${esc(t('incomplete'))}</span>`;
+      else if (e958.unanswered.length || (p125 && p125.answered < p125.total)) badge += `<span class="badge warn">${esc(t('incomplete'))}</span>`;
+      else if (!gate) badge += `<span class="badge m">${esc(t('nonCompliant'))}</span>`;
+      else if (cls) badge += best ? `<span class="badge gold">${starStr(best)}</span>` : `<span class="badge m">${esc(t('notAchieved'))}</span>`;
+      else badge += `<span class="badge ok">${esc(t('compliant'))}</span>`;
+      const pct = Math.round(100 * (e958.answered + (p125 ? p125.answered : 0)) / Math.max(1, e958.applicable + (p125 ? p125.total : 0)));
       return `<div class="card assess-card" data-id="${a.id}">
         <div style="min-width:0">
           <div class="name">${esc(a.facility.name || t('untitled'))} ${badge}</div>
-          <div class="sub">${a.owner_name && C.enabled && C.isAdmin() && a.owner_id !== C.user.id ? esc(a.owner_name) + ' · ' : ''}${esc(kindName(a.facility.kind))}${a.facility.region ? ' · ' + esc(a.facility.region) : ''} · ${esc(fmtDate(a.facility.date))} · ${esc(t('fTarget'))}: ${starStr(a.facility.target)}${cls ? ' · ' + eval125(a, a.facility.target).points + ' ' + esc(t('pts')) : ''}</div>
+          <div class="sub">${a.owner_name && C.enabled && C.isAdmin() && a.owner_id !== C.user.id ? esc(a.owner_name) + ' · ' : ''}${esc(kindName(a.facility.kind))}${a.facility.region ? ' · ' + esc(a.facility.region) : ''} · ${esc(fmtDate(a.facility.date))} ${cls ? ' · ' + esc(t('fTarget')) + ': ' + starStr(a.facility.target) + ' · ' + eval125(a, a.facility.target).points + ' ' + esc(t('pts')) : ''}</div>
           <div class="progress" style="margin-top:8px;max-width:320px"><span style="width:${pct}%"></span></div>
         </div>
         <div class="actions">
@@ -287,7 +300,8 @@
     if (b.dataset.act === 'json') exportJson(a);
     if (b.dataset.act === 'del') { if (confirm(t('confirmDelete'))) { state.assessments = state.assessments.filter(x => x.id !== a.id); if (state.currentId === a.id) state.currentId = null; save(true); renderList(); if (C.enabled && C.user) C.remove(a.id).catch(e => console.warn(e)); } }
   });
-  $('#btnNew').onclick = () => { const a = newAssessment(); state.assessments.push(a); state.currentId = a.id; state.step = 1; save(); showPage('assess'); };
+  const startNew = type => { const a = newAssessment(type); state.assessments.push(a); state.currentId = a.id; state.step = 1; save(); showPage('assess'); };
+  $('#btnNew958').onclick = () => startNew('958'); $('#btnNew125').onclick = () => startNew('125');
   $('#importFile').onchange = e => { const f = e.target.files[0]; if (f) importJsonFile(f); e.target.value = ''; };
 
   // ---------------------------------------------------------------- step 1
@@ -295,8 +309,11 @@
     const f = a.facility;
     const sel = $('#kindSelect');
     const groups = ['hotel', 'bnb', 'specialized', 'individual', 'hostel', 'dormitory'];
-    sel.innerHTML = `<option value="">${esc(t('selectKind'))}</option>` + groups.map(g => `<optgroup label="${esc(groupName(g))}">` +
-      S958.kinds.filter(k => k.group === g).map(k => `<option value="${k.id}">${esc(kindName(k.id))}</option>`).join('') + '</optgroup>').join('');
+    const only125 = typeOf(a) === '125';
+    sel.innerHTML = `<option value="">${esc(t('selectKind'))}</option>` + groups.filter(g => !only125 || S958.kinds.some(k => k.group === g && k.cls)).map(g => `<optgroup label="${esc(groupName(g))}">` +
+      S958.kinds.filter(k => k.group === g && (!only125 || k.cls)).map(k => `<option value="${k.id}">${esc(kindName(k.id))}</option>`).join('') + '</optgroup>').join('');
+    $('#targetGroup').classList.toggle('hidden', typeOf(a) === '958');
+    $('#assessTypeBadge').textContent = typeLabel(a);
     $$('#step-1 [data-f]').forEach(el => { const k = el.dataset.f; el.value = f[k] == null ? '' : f[k]; el.classList.remove('invalid'); });
     updateKindDisplay(a);
     const sp = $('#starPicker'); sp.innerHTML = STARS.map(s => `<button type="button" data-star="${s}" class="${f.target === s ? 'active' : ''}"><span class="s">${starStr(s)}</span>${s}</button>`).join('');
@@ -322,9 +339,9 @@
   $('#btnStep1Next').onclick = () => {
     const a = cur(); const v = facilityValid(a);
     if (!v.ok) { toast(t('fillRequired', { fields: v.missing.join(', ') }), 'error'); ['name', 'kind', 'date'].forEach(k => { if (!String(a.facility[k] || '').trim()) $(`#step-1 [data-f="${k}"]`).classList.add('invalid'); }); return; }
-    showStep(2);
+    showStep(nextStep(a, 1));
   };
-  $$('[data-goto]').forEach(b => b.onclick = () => showStep(+b.dataset.goto));
+  $$('[data-goto]').forEach(b => { b.dataset.dir = b.textContent.includes('←') ? 'back' : 'next'; b.onclick = () => showStep(+(b.dataset.gotoResolved || b.dataset.goto)); });
   $('#stepper').addEventListener('click', e => { const b = e.target.closest('button[data-step]'); if (b && !b.disabled) showStep(+b.dataset.step); });
 
   // ---------------------------------------------------------------- step 2 (958)
@@ -426,7 +443,7 @@
 
   // ---------------------------------------------------------------- step 3 (125)
   function renderStep3(a) {
-    const cls = clsOf(a); const box = $('#list125');
+    const cls = has125(a) ? clsOf(a) : null; const box = $('#list125');
     $('#noPoints125').classList.toggle('hidden', !!cls);
     if (!cls) { box.innerHTML = ''; $('#progress125Text').textContent = ''; $('#progress125Bar').style.width = '0%'; $('#groupLabel125').textContent = ''; return; }
     $('#groupLabel125').textContent = `— ${clsName(cls)}`;
@@ -477,7 +494,7 @@
       </div></div>`;
   }
   function updateProgress125(a) {
-    const p = progress125(a); const e = eval125(a, a.facility.target); if (!e) return;
+    if (!has125(a)) return; const p = progress125(a); const e = eval125(a, a.facility.target); if (!e) return;
     $('#progress125Text').innerHTML = `<strong>${e.points}</strong> / ${e.threshold} ${esc(t('pts'))} · ${p.answered}/${p.total}`;
     const bar = $('#progress125Bar'); bar.style.width = Math.round(100 * p.answered / p.total) + '%'; bar.parentElement.className = 'progress ' + (e.points >= e.threshold ? 'ok' : '');
     $$('#list125 .section').forEach(secEl => {
@@ -515,23 +532,23 @@
 
   // ---------------------------------------------------------------- step 4 (result)
   function renderStep4(a) {
-    const e958 = eval958(a); const cls = clsOf(a); const target = a.facility.target; const ax = annexFor(a);
-    const eT = cls ? eval125(a, target) : null; const best = cls ? bestStar(a) : 0;
+    const e958 = eval958(a); const cls = has125(a) ? clsOf(a) : null; const target = a.facility.target; const ax = has958(a) ? annexFor(a) : null;
+    const eT = cls ? eval125(a, target) : null; const best = cls ? bestStar(a) : 0; const gate = has958(a) ? e958.compliant : true;
     const incomplete = e958.unanswered.length > 0 || (cls && progress125(a).answered < progress125(a).total);
     let hero;
     if (cls) {
-      const finalStar = e958.compliant ? best : 0;
+      const finalStar = gate ? best : 0;
       hero = `<div class="result-hero ${finalStar ? 'pass' : 'fail'}"><div class="stars ${finalStar ? '' : 'none'}">${starStr(finalStar)}</div>
         <h2>${finalStar ? `${esc(t('achieved'))}: ${finalStar}★` : esc(t('notAchieved'))}</h2>
-        <div>${e958.compliant ? `<span class="badge ok">${esc(t('genReqs'))}: ${esc(t('compliant'))}</span>` : `<span class="badge m">${esc(t('genReqs'))}: ${esc(incomplete && !e958.no.length ? t('incomplete') : t('nonCompliant'))}</span>`}
-        <span class="badge ${eT.achieved && e958.compliant ? 'ok' : 'warn'}">${esc(t('fTarget'))} ${starStr(target)}: ${esc(eT.achieved && e958.compliant ? t('targetMet') : t('targetNotMet'))}</span></div></div>`;
+        <div>${has958(a) ? (e958.compliant ? `<span class="badge ok">${esc(t('genReqs'))}: ${esc(t('compliant'))}</span>` : `<span class="badge m">${esc(t('genReqs'))}: ${esc(incomplete && !e958.no.length ? t('incomplete') : t('nonCompliant'))}</span>`) : ''}
+        <span class="badge ${eT.achieved && gate ? 'ok' : 'warn'}">${esc(t('fTarget'))} ${starStr(target)}: ${esc(eT.achieved && gate ? t('targetMet') : t('targetNotMet'))}</span></div></div>`;
     } else {
       hero = `<div class="result-hero ${e958.compliant ? 'pass' : 'fail'}"><div class="stars ${e958.compliant ? '' : 'none'}">${e958.compliant ? '✔' : '✖'}</div>
         <h2>${esc(t('genReqs'))}: ${esc(e958.compliant ? t('compliant') : (incomplete && !e958.no.length ? t('incomplete') : t('nonCompliant')))}</h2>
         <div class="small muted">${esc(kindName(a.facility.kind))} — ${esc(t('annex'))} ${ax ? ax.key : ''}</div></div>`;
     }
-    let kpis = `<div class="kpis">
-      <div class="kpi ${e958.no.length ? 'bad' : (e958.unanswered.length ? 'warn' : 'ok')}"><div class="l">${esc(t('genReqs'))}</div><div class="v">${e958.yes + e958.na.length}/${e958.applicable}</div><div class="small muted">${e958.no.length} ✖ · ${e958.unanswered.length} ${esc(t('unanswered'))}</div></div>`;
+    let kpis = `<div class="kpis">`;
+    if (has958(a)) kpis += `<div class="kpi ${e958.no.length ? 'bad' : (e958.unanswered.length ? 'warn' : 'ok')}"><div class="l">${esc(t('genReqs'))}</div><div class="v">${e958.yes + e958.na.length}/${e958.applicable}</div><div class="small muted">${e958.no.length} ✖ · ${e958.unanswered.length} ${esc(t('unanswered'))}</div></div>`;
     if (eT) kpis += `<div class="kpi ${eT.points >= eT.threshold ? 'ok' : 'bad'}"><div class="l">${esc(t('pointsTotal'))} (${starStr(target)})</div><div class="v">${eT.points} / ${eT.threshold}</div><div class="small muted">${esc(t('shortfall'))}: ${eT.shortfall}</div></div>
       <div class="kpi ${eT.missing.length ? 'bad' : 'ok'}"><div class="l">${esc(t('mandatoryMet'))} (${starStr(target)})</div><div class="v">${eT.mandatory.length - eT.missing.length}/${eT.mandatory.length}</div></div>
       <div class="kpi"><div class="l">${esc(t('progress'))}</div><div class="v">${progress125(a).answered}/${progress125(a).total}</div><div class="small muted">MSt 125</div></div>`;
@@ -543,7 +560,7 @@
           return `<tr class="${s === target ? 'hl' : ''}"><td>${starStr(s)}</td><td class="num">${e.mandatory.length - e.missing.length}/${e.mandatory.length}</td><td class="num">${e.points}</td><td class="num">${e.threshold}</td><td>${st}</td></tr>`; }).join('') + '</table></div></div>';
     }
     let gap = '';
-    if (eT && !(eT.achieved && e958.compliant)) {
+    if (eT && !(eT.achieved && gate)) {
       gap += `<div class="card"><div class="card-title"><h3>${esc(t('gapTitle'))} (${starStr(target)})</h3></div>`;
       if (eT.missing.length) gap += `<p class="small muted"><strong>${esc(t('gapMandatory'))}</strong></p>` + eT.missing.map(i => `<div class="list-item"><a href="#" data-jump125="${esc(i.id)}"><b>${esc(i.label)}</b> ${esc(tr('125:' + i.id, i.text))}</a><span class="pts">${i.points} ${esc(t('pts'))}</span></div>`).join('');
       if (eT.shortfall > 0) {
@@ -553,7 +570,7 @@
       gap += '</div>';
     }
     let g958 = '';
-    if (e958.no.length || e958.unanswered.length || e958.na.length) {
+    if (has958(a) && (e958.no.length || e958.unanswered.length || e958.na.length)) {
       g958 = `<div class="card"><div class="card-title"><h3>${esc(t('genReqs'))}</h3></div>`;
       if (e958.no.length) g958 += `<p class="small muted"><strong>${esc(t('failed958'))} (${e958.no.length})</strong></p>` + e958.no.map(l => `<div class="list-item"><a href="#" data-jump958="${esc(l.id)}"><b>${esc(l.id)}</b> ${esc(tr(`958${ax.key}:${l.id}`, l.leaf.title))}</a></div>`).join('');
       if (e958.unanswered.length) g958 += `<p class="small muted" style="margin-top:8px"><strong>${esc(t('unanswered958'))} (${e958.unanswered.length})</strong></p>` + e958.unanswered.slice(0, 30).map(l => `<div class="list-item warn"><a href="#" data-jump958="${esc(l.id)}"><b>${esc(l.id)}</b> ${esc(tr(`958${ax.key}:${l.id}`, l.leaf.title))}</a></div>`).join('') + (e958.unanswered.length > 30 ? `<div class="small muted">… +${e958.unanswered.length - 30}</div>` : '');
@@ -575,12 +592,13 @@
 
   // ---------------------------------------------------------------- report
   function buildReportHtml(a, opts) {
-    const e958 = eval958(a); const cls = clsOf(a); const target = a.facility.target; const ax = annexFor(a);
-    const eT = cls ? eval125(a, target) : null; const best = cls ? bestStar(a) : 0; const finalStar = e958.compliant ? best : 0; const f = a.facility;
+    const e958 = eval958(a); const cls = has125(a) ? clsOf(a) : null; const target = a.facility.target; const ax = has958(a) ? annexFor(a) : null;
+    const eT = cls ? eval125(a, target) : null; const best = cls ? bestStar(a) : 0; const gate = has958(a) ? e958.compliant : true; const finalStar = gate ? best : 0; const f = a.facility;
     const ansTxt = v => v === 'yes' ? `<span class="yes">${esc(t('yes'))}</span>` : v === 'no' ? `<span class="no">${esc(t('no'))}</span>` : v === 'na' ? `<span class="na">${esc(t('na'))}</span>` : `<span class="none">—</span>`;
     const photos = ans => opts.photos && ans && ans.photos && ans.photos.length ? `<div class="rp-photos">${ans.photos.map(p => `<img src="${p}" alt="">`).join('')}</div>` : '';
     const note = ans => opts.notes && ans && ans.note ? esc(ans.note) : '';
-    let h = `<div class="rp-head"><div><h1>${esc(t('reportTitle'))}</h1><div class="std">${esc(t('reportBasis'))}</div></div><div class="rp-stars">${cls ? starStr(finalStar) : (e958.compliant ? '✔' : '✖')}</div></div>`;
+    const basis = typeOf(a) === '958' ? `O‘zMSt 958:2026 «${esc(S958.title)}»` : typeOf(a) === '125' ? `O‘zMSt 125:2024 «${esc(S125.title)}» (${esc(S125.amendment)})` : esc(t('reportBasis'));
+    let h = `<div class="rp-head"><div><h1>${esc(t('reportTitle'))} — ${esc(typeLabel(a))}</h1><div class="std">${basis}</div></div><div class="rp-stars">${cls ? starStr(finalStar) : (e958.compliant ? '✔' : '✖')}</div></div>`;
     h += `<div class="rp-info">
       <div><b>${esc(t('fName'))}</b><span>${esc(f.name)}</span></div><div><b>${esc(t('fKind'))}</b><span>${esc(kindName(f.kind))}</span></div>
       <div><b>${esc(t('fAddress'))}</b><span>${esc([f.region, f.address].filter(Boolean).join(', '))}</span></div><div><b>${esc(t('fGroup'))}</b><span>${esc(groupName((kindInfo(f.kind) || {}).group))} (${esc(t('annex'))} ${ax ? ax.key : ''})</span></div>
@@ -589,16 +607,17 @@
       <div><b>${esc(t('fDate'))}</b><span>${esc(fmtDate(f.date))}</span></div><div><b>${esc(t('fTarget'))}</b><span>${cls ? starStr(target) : '—'}</span></div>
       ${(() => { const fl = [['seasonal', 'flagSeasonal'], ['heritage', 'flagHeritage'], ['rural', 'flagRural'], ['naturalWater', 'flagNaturalWater'], ['sensorDoors', 'flagSensorDoors'], ['brand', 'flagBrand']].filter(x => f[x[0]]).map(x => t(x[1])); return fl.length ? `<div style="grid-column:1/-1"><b>${esc(t('fFlags'))}</b><span>${esc(fl.join('; '))}</span></div>` : ''; })()}
     </div>`;
-    h += `<div class="rp-verdict"><div class="big ${e958.compliant ? 'ok' : 'bad'}">${esc(t('genReqs'))}: ${esc(e958.compliant ? t('compliant') : (e958.no.length ? t('nonCompliant') : t('incomplete')))} (${e958.yes + e958.na.length}/${e958.applicable}${e958.no.length ? `, ✖ ${e958.no.length}` : ''}${e958.unanswered.length ? `, ${e958.unanswered.length} ${esc(t('unanswered'))}` : ''})</div>`;
-    if (cls) h += `<div class="big ${finalStar ? 'ok' : 'bad'}">${finalStar ? `${esc(t('achieved'))}: ${starStr(finalStar)} (${finalStar})` : esc(t('notAchieved'))}</div><div>${esc(t('fTarget'))} ${starStr(target)}: ${esc(eT.achieved && e958.compliant ? t('targetMet') : t('targetNotMet'))} — ${esc(t('pointsTotal'))} <b>${eT.points}</b> / ${esc(t('threshold'))} <b>${eT.threshold}</b>; ${esc(t('mandatoryMet'))} <b>${eT.mandatory.length - eT.missing.length}/${eT.mandatory.length}</b></div>`;
+    h += `<div class="rp-verdict">`;
+    if (has958(a)) h += `<div class="big ${e958.compliant ? 'ok' : 'bad'}">${esc(t('genReqs'))}: ${esc(e958.compliant ? t('compliant') : (e958.no.length ? t('nonCompliant') : t('incomplete')))} (${e958.yes + e958.na.length}/${e958.applicable}${e958.no.length ? `, ✖ ${e958.no.length}` : ''}${e958.unanswered.length ? `, ${e958.unanswered.length} ${esc(t('unanswered'))}` : ''})</div>`;
+    if (cls) h += `<div class="big ${finalStar ? 'ok' : 'bad'}">${finalStar ? `${esc(t('achieved'))}: ${starStr(finalStar)} (${finalStar})` : esc(t('notAchieved'))}</div><div>${esc(t('fTarget'))} ${starStr(target)}: ${esc(eT.achieved && gate ? t('targetMet') : t('targetNotMet'))} — ${esc(t('pointsTotal'))} <b>${eT.points}</b> / ${esc(t('threshold'))} <b>${eT.threshold}</b>; ${esc(t('mandatoryMet'))} <b>${eT.mandatory.length - eT.missing.length}/${eT.mandatory.length}</b></div>`;
     h += '</div>';
     if (cls) {
       h += `<h2>${esc(t('starTable'))} — ${esc(clsName(cls))}</h2><table><tr><th>${esc(t('star'))}</th><th class="c">${esc(t('mandatoryMet'))}</th><th class="c">${esc(t('points'))}</th><th class="c">${esc(t('threshold'))}</th><th>${esc(t('status'))}</th></tr>` +
         STARS.map(s => { const e = eval125(a, s); return `<tr><td>${starStr(s)}</td><td class="c">${e.mandatory.length - e.missing.length}/${e.mandatory.length}</td><td class="c">${e.points}</td><td class="c">${e.threshold}</td><td>${e.achieved ? `<span class="yes">${esc(t('achievedShort'))}</span>` : (e.missing.length ? `<span class="no">${esc(t('missingMandatory'))}: ${e.missing.length}</span>` : `<span class="none">${esc(t('shortfall'))}: ${e.shortfall}</span>`)}</td></tr>`; }).join('') + '</table>';
       if (eT.missing.length) h += `<h2>${esc(t('gapMandatory'))} (${starStr(target)})</h2><table><tr><th>${esc(t('reqNo'))}</th><th>${esc(t('requirement'))}</th><th class="c">${esc(t('points'))}</th></tr>` + eT.missing.map(i => `<tr><td class="c">${esc(i.label)}</td><td>${esc(tr('125:' + i.id, i.text))}</td><td class="c">${i.points}</td></tr>`).join('') + '</table>';
     }
-    if (e958.no.length) h += `<h2>${esc(t('failed958'))}</h2><table><tr><th>${esc(t('reqNo'))}</th><th>${esc(t('requirement'))}</th><th>${esc(t('notesCol'))}</th></tr>` + e958.no.map(l => `<tr><td class="c">${esc(l.id)}</td><td>${esc(tr(`958${ax.key}:${l.id}`, l.leaf.title))}${photos(a.a958[l.id])}</td><td>${note(a.a958[l.id])}</td></tr>`).join('') + '</table>';
-    if (e958.na.length) h += `<h2>${esc(t('naFlagged'))}</h2><table><tr><th>${esc(t('reqNo'))}</th><th>${esc(t('requirement'))}</th><th>${esc(t('notesCol'))}</th></tr>` + e958.na.map(l => `<tr><td class="c">${esc(l.id)}</td><td>${esc(tr(`958${ax.key}:${l.id}`, l.leaf.title))}</td><td>${note(a.a958[l.id])}</td></tr>`).join('') + '</table>';
+    if (ax && e958.no.length) h += `<h2>${esc(t('failed958'))}</h2><table><tr><th>${esc(t('reqNo'))}</th><th>${esc(t('requirement'))}</th><th>${esc(t('notesCol'))}</th></tr>` + e958.no.map(l => `<tr><td class="c">${esc(l.id)}</td><td>${esc(tr(`958${ax.key}:${l.id}`, l.leaf.title))}${photos(a.a958[l.id])}</td><td>${note(a.a958[l.id])}</td></tr>`).join('') + '</table>';
+    if (ax && e958.na.length) h += `<h2>${esc(t('naFlagged'))}</h2><table><tr><th>${esc(t('reqNo'))}</th><th>${esc(t('requirement'))}</th><th>${esc(t('notesCol'))}</th></tr>` + e958.na.map(l => `<tr><td class="c">${esc(l.id)}</td><td>${esc(tr(`958${ax.key}:${l.id}`, l.leaf.title))}</td><td>${note(a.a958[l.id])}</td></tr>`).join('') + '</table>';
     if (opts.full && ax) {
       h += `<h2>${esc(t('detail958'))} — ${esc(tr('958' + ax.key + ':title', ax.annex.title))}</h2><table><tr><th style="width:44px">${esc(t('reqNo'))}</th><th>${esc(t('requirement'))}</th><th class="c" style="width:56px">${esc(t('answer'))}</th><th style="width:22%">${esc(t('notesCol'))}</th></tr>`;
       const leaves = leaves958(a); let lastSec = null, lastPar = null;
@@ -625,10 +644,13 @@
     // footnotes used in this report
     if (ax) {
       const used = new Set(); leaves958(a).forEach(l => { [].concat(l.sec.notes || [], l.item.notes || [], l.leaf === l.item ? [] : (l.leaf.notes || []), (ax.col != null && l.leaf.marks && l.leaf.marks[ax.col]) ? l.leaf.marks[ax.col].notes : []).forEach(n => used.add(n)); });
-      const usedAnn = new Set(); if (cls) leaves125().forEach(i => (i.ann || []).forEach(x => usedAnn.add(x)));
       h += `<h2>${esc(t('footnotes'))} — ${esc(tr('958' + ax.key + ':title', ax.annex.title))}</h2><div class="rp-note">` + [...used].sort((x, y) => x - y).map(n => `<div><b>${n}</b> — ${esc(tr(`958${ax.key}note:${n}`, ax.annex.notes[n] || ''))}</div>`).join('') + '</div>';
-      if (cls) h += `<h2>${esc(t('footnotes'))} — ${esc(S125.standard)}</h2><div class="rp-note">` + [...usedAnn].sort().map(x => `<div><b>${x}</b> — ${esc(tr('125ann:' + x, S125.annotations[x] || ''))}</div>`).join('') + '</div>';
-      h += `<h2>${esc(t('bibliography'))}</h2><div class="rp-note">` + (S958.references || []).map(r => `<div><b>${esc(r[0])}</b> ${esc(r[1])}</div>`).join('') + Object.keys(S958.bibliography || {}).map(n => `<div><b>[${n}]</b> ${esc(S958.bibliography[n])}</div>`).join('') + '</div>';
+      h += `<h2>${esc(t('bibliography'))} — ${esc(S958.standard)}</h2><div class="rp-note">` + (S958.references || []).map(r => `<div><b>${esc(r[0])}</b> ${esc(r[1])}</div>`).join('') + Object.keys(S958.bibliography || {}).map(n => `<div><b>[${n}]</b> ${esc(S958.bibliography[n])}</div>`).join('') + '</div>';
+    }
+    if (cls) {
+      const usedAnn = new Set(); leaves125().forEach(i => (i.ann || []).forEach(x => usedAnn.add(x)));
+      h += `<h2>${esc(t('footnotes'))} — ${esc(S125.standard)}</h2><div class="rp-note">` + [...usedAnn].sort().map(x => `<div><b>${x}</b> — ${esc(tr('125ann:' + x, S125.annotations[x] || ''))}</div>`).join('') + '</div>';
+      h += `<h2>${esc(t('bibliography'))} — ${esc(S125.standard)}</h2><div class="rp-note">` + Object.keys(S125.bibliography || {}).map(n => `<div><b>[${n}]</b> ${esc(S125.bibliography[n])}</div>`).join('') + '</div>';
     }
     h += `<div class="rp-sign"><div>${esc(t('signInspector'))}: ${esc(f.inspector || '')}<br><br>______________________</div><div>${esc(t('signFacility'))}: ${esc(f.contact || '')}<br><br>______________________</div></div>`;
     h += `<div class="rp-foot">${esc(t('generated'))}: ${new Date().toLocaleString()} · ${esc(t('versionNote'))}</div>`;
@@ -645,7 +667,7 @@
   $('#btnExcel').onclick = () => exportExcel(cur());
   $('#btnExcel2').onclick = () => exportExcel(cur());
   $('#btnShare').onclick = () => {
-    const a = cur(); const e958 = eval958(a); const cls = clsOf(a); const eT = cls ? eval125(a, a.facility.target) : null; const best = cls && e958.compliant ? bestStar(a) : 0;
+    const a = cur(); const e958 = eval958(a); const cls = has125(a) ? clsOf(a) : null; const eT = cls ? eval125(a, a.facility.target) : null; const best = cls && (has958(a) ? e958.compliant : true) ? bestStar(a) : 0;
     const text = t('shareText', { name: a.facility.name || t('untitled'), result: cls ? (best ? `${t('achieved')} ${starStr(best)}` : t('notAchieved')) : t('genReqs'), pts: eT ? eT.points : '—', thr: eT ? eT.threshold : '—', c: e958.compliant ? t('compliant') : t('nonCompliant') });
     if (navigator.share) navigator.share({ title: t('reportTitle'), text }).catch(() => { });
     else if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => toast(t('copied'), 'success'));
@@ -669,11 +691,11 @@
     r.readAsText(file);
   }
   function exportExcel(a) {
-    const e958 = eval958(a); const cls = clsOf(a); const ax = annexFor(a); const target = a.facility.target; const f = a.facility;
-    const summary = [[t('reportTitle')], [], [t('fName'), f.name], [t('fKind'), kindName(f.kind)], [t('fAddress'), [f.region, f.address].filter(Boolean).join(', ')], [t('fRooms'), f.rooms], [t('fBeds'), f.beds], [t('fDate'), f.date], [t('fInspector'), f.inspector], [t('fContact'), [f.contact, f.phone, f.email].filter(Boolean).join(', ')], [],
-      [t('genReqs'), e958.compliant ? t('compliant') : (e958.no.length ? t('nonCompliant') : t('incomplete')), `${e958.yes + e958.na.length}/${e958.applicable}`]];
+    const e958 = eval958(a); const cls = has125(a) ? clsOf(a) : null; const ax = has958(a) ? annexFor(a) : null; const target = a.facility.target; const f = a.facility;
+    const summary = [[t('reportTitle') + ' — ' + typeLabel(a)], [], [t('fName'), f.name], [t('fKind'), kindName(f.kind)], [t('fAddress'), [f.region, f.address].filter(Boolean).join(', ')], [t('fRooms'), f.rooms], [t('fBeds'), f.beds], [t('fDate'), f.date], [t('fInspector'), f.inspector], [t('fContact'), [f.contact, f.phone, f.email].filter(Boolean).join(', ')], [],
+      ...(has958(a) ? [[t('genReqs'), e958.compliant ? t('compliant') : (e958.no.length ? t('nonCompliant') : t('incomplete')), `${e958.yes + e958.na.length}/${e958.applicable}`]] : [])];
     if (cls) {
-      const best = e958.compliant ? bestStar(a) : 0; summary.push([t('achieved'), best || t('notAchieved')], [t('fTarget'), target], []);
+      const best = (has958(a) ? e958.compliant : true) ? bestStar(a) : 0; summary.push([t('achieved'), best || t('notAchieved')], [t('fTarget'), target], []);
       summary.push([t('star'), t('mandatoryMet'), t('points'), t('threshold'), t('status')]);
       STARS.forEach(s => { const e = eval125(a, s); summary.push([s, `${e.mandatory.length - e.missing.length}/${e.mandatory.length}`, e.points, e.threshold, e.achieved ? t('achievedShort') : (e.missing.length ? `${t('missingMandatory')}: ${e.missing.length}` : `${t('shortfall')}: ${e.shortfall}`)]); });
     }
@@ -684,7 +706,7 @@
     if (window.XLSX) {
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summary), t('excelSummary'));
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows958), t('excel958'));
+      if (ax) XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows958), t('excel958'));
       if (cls) XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows125), t('excel125'));
       const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
       download(fileBase(a) + '.xlsx', new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
@@ -799,7 +821,7 @@
   // ---------------------------------------------------------------- registry (admin)
   let registryRows = [];
   const starOf = n => n ? '★'.repeat(n) : '—';
-  function registryStatus(r) { if (!r.complete) return ['warn', t('inProgress')]; if (!r.compliant_958) return ['m', t('nonCompliant')]; if (r.threshold == null) return ['ok', t('compliant')]; return r.result_star ? ['gold', starOf(r.result_star)] : ['m', t('notAchieved')]; }
+  function registryStatus(r) { if (!r.complete) return ['warn', t('inProgress')]; if (r.compliant_958 === false) return ['m', t('nonCompliant')]; if (r.threshold == null) return ['ok', t('compliant')]; return r.result_star ? ['gold', starOf(r.result_star)] : ['m', t('notAchieved')]; }
   async function renderRegistry(refetch) {
     const box = $('#registryList');
     if (!C.enabled || !C.isAdmin()) { box.innerHTML = ''; return; }
@@ -823,9 +845,9 @@
       const latest = list[0]; const [cls, label] = registryStatus(latest);
       return `<div class="card tight"><div class="registry-row">
         <div><div class="fac" data-fac="${esc(latest.facility_name)}">${esc(latest.facility_name || t('untitled'))} <span class="badge ${cls}">${label}</span></div>
-          <div class="meta"><span>${esc(kindName(latest.facility_kind))}</span>${latest.region ? `<span>· ${esc(latest.region)}</span>` : ''}<span>· ${esc(fmtDate(latest.assessed_on))}</span><span>· ${esc(latest.owner_name || '')}</span>${latest.threshold != null ? `<span>· ${latest.points}/${latest.threshold} ${esc(t('pts'))}</span>` : ''}${list.length > 1 ? `<span class="badge info">${esc(t('history'))}: ${list.length}</span>` : ''}</div></div>
+          <div class="meta"><span class="badge info">${esc(latest.assess_type === '125' ? t('type125') : latest.assess_type === '958' ? t('type958') : t('type958') + '+' + t('type125'))}</span><span>${esc(kindName(latest.facility_kind))}</span>${latest.region ? `<span>· ${esc(latest.region)}</span>` : ''}<span>· ${esc(fmtDate(latest.assessed_on))}</span><span>· ${esc(latest.owner_name || '')}</span>${latest.threshold != null ? `<span>· ${latest.points}/${latest.threshold} ${esc(t('pts'))}</span>` : ''}${list.length > 1 ? `<span class="badge info">${esc(t('history'))}: ${list.length}</span>` : ''}</div></div>
         <div class="row"><button class="btn primary sm" data-open="${esc(latest.id)}">${esc(t('openRemote'))}</button><button class="btn danger sm" data-del="${esc(latest.id)}">${esc(t('delete'))}</button></div>
-        ${list.length > 1 ? `<div style="grid-column:1/-1" class="table-wrap"><table class="tbl"><tr><th>${esc(t('colDate'))}</th><th>${esc(t('colInspector'))}</th><th>${esc(t('col958'))}</th><th class="num">${esc(t('colPoints'))}</th><th>${esc(t('colStar'))}</th><th></th></tr>${list.map(r => { const [c2, l2] = registryStatus(r); return `<tr><td>${esc(fmtDate(r.assessed_on))}</td><td>${esc(r.owner_name || '')}</td><td>${r.complete ? (r.compliant_958 ? '✔' : '✖') : '…'}</td><td class="num">${r.threshold != null ? `${r.points}/${r.threshold}` : '—'}</td><td><span class="badge ${c2}">${l2}</span></td><td><button class="btn sm" data-open="${esc(r.id)}">${esc(t('openRemote'))}</button></td></tr>`; }).join('')}</table></div>` : ''}
+        ${list.length > 1 ? `<div style="grid-column:1/-1" class="table-wrap"><table class="tbl"><tr><th>${esc(t('colDate'))}</th><th>${esc(t('colInspector'))}</th><th>${esc(t('col958'))}</th><th class="num">${esc(t('colPoints'))}</th><th>${esc(t('colStar'))}</th><th></th></tr>${list.map(r => { const [c2, l2] = registryStatus(r); return `<tr><td>${esc(fmtDate(r.assessed_on))}</td><td>${esc(r.owner_name || '')}</td><td>${r.compliant_958 == null ? '—' : (r.complete ? (r.compliant_958 ? '✔' : '✖') : '…')}</td><td class="num">${r.threshold != null ? `${r.points}/${r.threshold}` : '—'}</td><td><span class="badge ${c2}">${l2}</span></td><td><button class="btn sm" data-open="${esc(r.id)}">${esc(t('openRemote'))}</button></td></tr>`; }).join('')}</table></div>` : ''}
       </div></div>`;
     }).join('');
   }
