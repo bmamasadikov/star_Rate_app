@@ -1,4474 +1,873 @@
-let COMPLIANCE_DATA_3220 = null;
-let CLASSIFICATION_DATA_3296 = null;
-const STAR_KEYS = ['1', '2', '3', '4', '5'];
+/* Accommodation classification app — O‘zMSt 958:2026 + O‘zMSt 125:2024 (amendment 1, 2026)
+   Single-page, offline-capable, no login. State is stored in localStorage and can be exported/imported as JSON. */
+(function () {
+  'use strict';
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+  const STARS = [1, 2, 3, 4, 5];
+  const KEY = 'hcs2_state_v1';
+  const S958 = window.STD958, S125 = window.STD125, TRS = window.TR || {};
 
-function normalizeMandatoryValue(value) {
-    return value === true;
-}
+  // ---------------------------------------------------------------- state
+  let state = { lang: 'uz', currentId: null, step: 1, assessments: [] };
+  let filters = { q958: '', f958: null, q125: '', f125: null };
+  let open958 = new Set(), open125 = new Set();
+  let saveTimer = null;
 
-function normalizeMandatoryKey(rawKey) {
-    const key = String(rawKey || '').trim().toLowerCase();
-    const starKeyMatch = key.match(/^([1-5])(?:_star)?$/);
-    if (starKeyMatch) return starKeyMatch[1];
-    if (/^\*{1,5}$/.test(key)) return String(key.length);
-    return null;
-}
-
-function createEmptyMandatoryMap() {
-    return { '1': false, '2': false, '3': false, '4': false, '5': false };
-}
-
-function normalizeMandatoryObject(rawMandatory) {
-    const normalized = createEmptyMandatoryMap();
-    if (!rawMandatory || typeof rawMandatory !== 'object') return normalized;
-
-    Object.entries(rawMandatory).forEach(([rawKey, rawValue]) => {
-        const starKey = normalizeMandatoryKey(rawKey);
-        if (!starKey) return;
-        normalized[starKey] = normalizeMandatoryValue(rawValue);
-    });
-
-    return normalized;
-}
-
-function normalizeOptionalObject(rawOptional) {
-    const normalized = createEmptyMandatoryMap();
-    if (!rawOptional || typeof rawOptional !== 'object') return normalized;
-
-    Object.entries(rawOptional).forEach(([rawKey, rawValue]) => {
-        const starKey = normalizeMandatoryKey(rawKey);
-        if (!starKey) return;
-        normalized[starKey] = normalizeMandatoryValue(rawValue);
-    });
-
-    return normalized;
-}
-
-function buildOptionalObject(mandatory) {
-    const optional = createEmptyMandatoryMap();
-    STAR_KEYS.forEach(starKey => {
-        optional[starKey] = mandatory[starKey] !== true;
-    });
-    return optional;
-}
-
-function normalizeReferenceCodes(rawReference) {
-    if (!rawReference) return [];
-    const normalized = String(rawReference)
-        .replaceAll('А', 'A')
-        .replaceAll('а', 'a');
-
-    const parts = normalized
-        .split(/[,\s;]+/)
-        .map(part => part.trim())
-        .filter(Boolean);
-
-    const codes = parts
-        .map(part => part.toUpperCase().replace(/[^A-Z0-9]/g, ''))
-        .filter(part => /^A\d+$/.test(part));
-
-    return Array.from(new Set(codes));
-}
-
-function normalizeQuantityValue(value) {
-    const numeric = Number(value);
-    if (!Number.isFinite(numeric) || numeric <= 0) return 0;
-    return Math.floor(numeric);
-}
-
-function normalizeQuantityMap(rawMap) {
-    const normalized = {};
-    if (!rawMap || typeof rawMap !== 'object') return normalized;
-    Object.entries(rawMap).forEach(([id, value]) => {
-        const quantity = normalizeQuantityValue(value);
-        if (quantity > 0) {
-            normalized[String(id)] = quantity;
-        }
-    });
-    return normalized;
-}
-
-function normalizeScoringRule(rawRule, fallbackMaxPoints) {
-    if (!rawRule || typeof rawRule !== 'object') return null;
-    if (rawRule.type !== 'per_unit') return null;
-
-    const pointsPerUnit = Number(rawRule.points_per_unit);
-    const maxPoints = Number(rawRule.max_points ?? fallbackMaxPoints);
-    if (!Number.isFinite(pointsPerUnit) || pointsPerUnit <= 0) return null;
-    if (!Number.isFinite(maxPoints) || maxPoints < 0) return null;
-
-    return {
-        type: 'per_unit',
-        pointsPerUnit,
-        maxPoints,
-        unit: {
-            uz: rawRule.unit_uz || '',
-            ru: rawRule.unit_ru || '',
-            en: rawRule.unit_en || ''
-        }
-    };
-}
-
-function normalizeComplianceData(rawData) {
-    if (!rawData || typeof rawData !== 'object') {
-        throw new Error('Invalid compliance dataset');
-    }
-
-    // Current app-native shape
-    if (Array.isArray(rawData.sections) && rawData.sections[0]?.requirements) {
-        if (rawData.facilityTypes && typeof rawData.facilityTypes === 'object') {
-            return rawData;
-        }
-        return {
-            ...rawData,
-            facilityTypes: {
-                hotels_and_similar: {
-                    uz: "Mehmonxonalar va shunga o'xshash joylashtirish vositalari",
-                    ru: 'Гостиницы и аналогичные средства размещения',
-                    en: 'Hotels and similar accommodation facilities'
-                }
-            },
-            defaultFacilityType: 'hotels_and_similar'
-        };
-    }
-
-    // New shape:
-    // { facility_types, sections:[{section_id, name_*, items:[...]}] }
-    if (!Array.isArray(rawData.sections)) {
-        throw new Error('Unsupported compliance dataset format');
-    }
-
-    const facilityTypes = {};
-    const sourceTypes = rawData.facility_types && typeof rawData.facility_types === 'object'
-        ? rawData.facility_types
-        : {};
-    Object.entries(sourceTypes).forEach(([key, value]) => {
-        facilityTypes[key] = {
-            uz: value?.uz || key,
-            ru: value?.ru || key,
-            en: value?.en || key
-        };
-    });
-    if (!Object.keys(facilityTypes).length) {
-        facilityTypes.hotels_and_similar = {
-            uz: "Mehmonxonalar va shunga o'xshash joylashtirish vositalari",
-            ru: 'Гостиницы и аналогичные средства размещения',
-            en: 'Hotels and similar accommodation facilities'
-        };
-    }
-    const defaultFacilityType = facilityTypes.hotels_and_similar
-        ? 'hotels_and_similar'
-        : Object.keys(facilityTypes)[0];
-
-    const sections = rawData.sections.map(section => {
-        const rawItems = Array.isArray(section.items) ? section.items : [];
-        const requirements = rawItems
-            .filter(item => (item.type || 'requirement') === 'requirement')
-            .map(item => {
-                const applicability = item.applicability && typeof item.applicability === 'object'
-                    ? item.applicability
-                    : null;
-                return {
-                    id: String(item.id),
-                    title: {
-                        uz: item.criterion_uz || item.name_uz || '',
-                        ru: item.criterion_ru || item.name_ru || '',
-                        en: item.criterion_en || item.name_en || ''
-                    },
-                    mandatory: applicability
-                        ? applicability[defaultFacilityType] === '+'
-                        : true,
-                    applicability,
-                    notes: item.notes || ''
-                };
-            });
-
-        return {
-            id: String(section.section_id || section.id || ''),
-            name: {
-                uz: section.name_uz || '',
-                ru: section.name_ru || '',
-                en: section.name_en || ''
-            },
-            requirements
-        };
-    });
-
-    return {
-        standard: rawData.standard || "O'z DSt 3220:2023",
-        title_uz: rawData.title_uz || '',
-        title_ru: rawData.title_ru || '',
-        title_en: rawData.title_en || '',
-        sections,
-        facilityTypes,
-        defaultFacilityType,
-        applicabilityLegend: rawData.applicability_legend || null
-    };
-}
-
-function normalizeClassificationData(rawData) {
-    if (!rawData || typeof rawData !== 'object') {
-        throw new Error('Invalid classification dataset');
-    }
-
-    // Current app-native shape
-    if (Array.isArray(rawData.sections) && Array.isArray(rawData.starLevels)) {
-        const mandatoryById = new Map();
-        (rawData.starLevels || []).forEach(level => {
-            const star = String(Number(level.star));
-            if (!/^[1-5]$/.test(star)) return;
-            (level.mandatoryIds || []).forEach(rawId => {
-                const id = String(rawId);
-                if (!mandatoryById.has(id)) mandatoryById.set(id, createEmptyMandatoryMap());
-                mandatoryById.get(id)[star] = true;
-            });
-        });
-
-        const sections = (rawData.sections || []).map(section => {
-            const sectionReferenceCodes = normalizeReferenceCodes(section.reference || section.references || '');
-            return {
-                ...section,
-                criteria: (section.criteria || []).map(item => {
-                    const id = String(item.id);
-                    const derivedMandatory = mandatoryById.get(id);
-                    const mergedMandatory = normalizeMandatoryObject(item.mandatory || derivedMandatory || {});
-                    const strictOptional = normalizeOptionalObject(item.optional || {});
-                    const mergedOptional = buildOptionalObject(mergedMandatory);
-                    STAR_KEYS.forEach(starKey => {
-                        if (mergedMandatory[starKey] === true) {
-                            mergedOptional[starKey] = false;
-                        } else if (strictOptional[starKey] === true) {
-                            mergedOptional[starKey] = true;
-                        }
-                    });
-                    const isGroupHeader = Boolean(item.isGroupHeader || item.is_group_header);
-                    const referenceCodes = Array.from(new Set([
-                        ...sectionReferenceCodes,
-                        ...normalizeReferenceCodes(item.reference || item.references || '')
-                    ]));
-                    const rawMaxPoints = Number(item.max_points);
-                    const scoringRule = normalizeScoringRule(item.scoring_rule || item.scoringRule, rawMaxPoints);
-                    const maxPoints = Number.isFinite(rawMaxPoints) && rawMaxPoints >= 0
-                        ? rawMaxPoints
-                        : (scoringRule ? scoringRule.maxPoints : (Number(item.points) || 0));
-                    return {
-                        ...item,
-                        id,
-                        points: Number(item.points) || 0,
-                        maxPoints,
-                        scoringRule,
-                        mandatory: mergedMandatory,
-                        optional: mergedOptional,
-                        referenceCodes,
-                        assessable: typeof item.assessable === 'boolean' ? item.assessable : !isGroupHeader,
-                        isGroupHeader
-                    };
-                })
-            };
-        });
-
-        const starLevels = (rawData.starLevels || []).map(level => {
-            const star = Number(level.star);
-            const starKey = String(star);
-            const mandatoryIds = [];
-            sections.forEach(section => {
-                (section.criteria || []).forEach(criterion => {
-                    if (!criterion.assessable) return;
-                    if (criterion.mandatory && criterion.mandatory[starKey] === true) {
-                        mandatoryIds.push(String(criterion.id));
-                    }
-                });
-            });
-
-            return {
-                ...level,
-                star,
-                label: level.label || '★'.repeat(star),
-                minTotalPoints: Number(level.minTotalPoints) || 0,
-                mandatoryIds: Array.from(new Set(mandatoryIds))
-            };
-        });
-
-        let accommodationTypes = rawData.accommodationTypes && typeof rawData.accommodationTypes === 'object'
-            ? rawData.accommodationTypes
-            : null;
-        let defaultAccommodationType = rawData.defaultAccommodationType || null;
-
-        if (!accommodationTypes) {
-            const defaultTypeKey = 'hotels_and_similar';
-            const defaultType = {
-                key: defaultTypeKey,
-                name: {
-                    uz: "Mehmonxonalar va o'xshash joylashtirish vositalari",
-                    ru: 'Гостиницы и аналогичные средства размещения',
-                    en: 'Hotels and similar accommodation facilities'
-                },
-                minScores: {}
-            };
-            starLevels.forEach(level => {
-                defaultType.minScores[Number(level.star)] = Number(level.minTotalPoints) || 0;
-            });
-            accommodationTypes = { [defaultTypeKey]: defaultType };
-            defaultAccommodationType = defaultTypeKey;
-        }
-
-        return {
-            ...rawData,
-            sections,
-            starLevels,
-            accommodationTypes,
-            defaultAccommodationType: defaultAccommodationType || Object.keys(accommodationTypes)[0]
-        };
-    }
-
-    // New shape provided by user:
-    // { categories: [...], minimum_scores: {...}, max_points: ... }
-    if (!Array.isArray(rawData.categories)) {
-        throw new Error('Unsupported classification dataset format');
-    }
-
-    const categories = rawData.categories;
-    const minimumScores = rawData.minimum_scores && typeof rawData.minimum_scores === 'object'
-        ? rawData.minimum_scores
-        : {};
-    const accommodationTypes = {};
-    Object.entries(minimumScores).forEach(([key, config]) => {
-        if (!config || typeof config !== 'object') return;
-        accommodationTypes[key] = {
-            key,
-            name: {
-                uz: config.name_uz || key,
-                ru: config.name_ru || key,
-                en: config.name_en || key
-            },
-            minScores: {
-                1: Number(config['1_star']) || 0,
-                2: Number(config['2_star']) || 0,
-                3: Number(config['3_star']) || 0,
-                4: Number(config['4_star']) || 0,
-                5: Number(config['5_star']) || 0
-            }
-        };
-    });
-    const defaultAccommodationType = accommodationTypes.hotels_and_similar
-        ? 'hotels_and_similar'
-        : (Object.keys(accommodationTypes)[0] || 'hotels_and_similar');
-    const defaultMinimumScores = accommodationTypes[defaultAccommodationType]?.minScores || {};
-
-    const sections = categories.map(category => {
-        const sectionReferenceCodes = normalizeReferenceCodes(category.reference || '');
-        return {
-            id: category.id,
-            name: {
-                uz: category.name_uz || '',
-                ru: category.name_ru || '',
-                en: category.name_en || ''
-            },
-            criteria: (category.items || []).map(item => {
-                const mandatory = normalizeMandatoryObject(item.mandatory || {});
-                const referenceCodes = Array.from(new Set([
-                    ...sectionReferenceCodes,
-                    ...normalizeReferenceCodes(item.reference || '')
-                ]));
-                const rawMaxPoints = Number(item.max_points);
-                const scoringRule = normalizeScoringRule(item.scoring_rule, rawMaxPoints);
-                const maxPoints = Number.isFinite(rawMaxPoints) && rawMaxPoints >= 0
-                    ? rawMaxPoints
-                    : (scoringRule ? scoringRule.maxPoints : (Number(item.points) || 0));
-                return {
-                    id: String(item.id),
-                    title: {
-                        uz: item.criterion_uz || '',
-                        ru: item.criterion_ru || '',
-                        en: item.criterion_en || ''
-                    },
-                    points: Number(item.points) || 0,
-                    maxPoints,
-                    scoringRule,
-                    reference: item.reference || '',
-                    referenceCodes,
-                    mandatory,
-                    optional: buildOptionalObject(mandatory),
-                    assessable: !Boolean(item.is_group_header),
-                    isGroupHeader: Boolean(item.is_group_header)
-                };
-            })
-        };
-    });
-
-    const starLevels = [1, 2, 3, 4, 5].map(star => {
-        const starKey = String(star);
-        const mandatoryIds = [];
-        sections.forEach(section => {
-            (section.criteria || []).forEach(criterion => {
-                if (!criterion.assessable) return;
-                if (criterion.mandatory && criterion.mandatory[starKey] === true) {
-                    mandatoryIds.push(String(criterion.id));
-                }
-            });
-        });
-
-        return {
-            star,
-            label: '★'.repeat(star),
-            minTotalPoints: Number(defaultMinimumScores[star]) || 0,
-            mandatoryIds: Array.from(new Set(mandatoryIds))
-        };
-    });
-
-    const totalPoints = sections.reduce((sum, section) => {
-        return sum + section.criteria.reduce((inner, criterion) => {
-            if (!isAssessableClassificationCriterion(criterion)) return inner;
-            return inner + (Number(criterion.maxPoints) || Number(criterion.points) || 0);
-        }, 0);
-    }, 0);
-
-    return {
-        standard: rawData.standard || 'MST 125',
-        maxPoints: Number(rawData.max_points) || totalPoints,
-        starLevels,
-        sections,
-        annotations: Array.isArray(rawData.annotations) ? rawData.annotations : [],
-        accommodationTypes,
-        defaultAccommodationType
-    };
-}
-
-async function loadData() {
+  function load() {
     try {
-        const [complianceRes, classificationRes] = await Promise.all([
-            fetch('data/3220_annex_a.json'),
-            fetch('data/3296_star_classification.json')
-        ]);
-        if (!complianceRes.ok || !classificationRes.ok) {
-            throw new Error('Failed to load data');
-        }
-        const complianceRawData = await complianceRes.json();
-        COMPLIANCE_DATA_3220 = normalizeComplianceData(complianceRawData);
-        const classificationRawData = await classificationRes.json();
-        CLASSIFICATION_DATA_3296 = normalizeClassificationData(classificationRawData);
-    } catch (err) {
-        console.error('Data loading failed:', err);
-        throw err;
-    }
-}
+      const raw = localStorage.getItem(KEY);
+      if (raw) { const s = JSON.parse(raw); if (s && Array.isArray(s.assessments)) state = Object.assign(state, s); }
+    } catch (e) { console.warn('load failed', e); }
+    if (!['uz', 'ru', 'en'].includes(state.lang)) state.lang = 'uz';
+  }
+  function save(immediate) {
+    setSaveState('saving');
+    clearTimeout(saveTimer);
+    const doSave = () => {
+      try { localStorage.setItem(KEY, JSON.stringify(state)); setSaveState('saved'); }
+      catch (e) { console.error(e); toast(t('storageFull'), 'error'); setSaveState(''); }
+    };
+    if (immediate) doSave(); else saveTimer = setTimeout(doSave, 350);
+  }
+  function setSaveState(k) { const el = $('#saveState'); if (el) el.textContent = k ? t(k) : ''; }
 
-// =====================================================
-// CONSTANTS
-// =====================================================
+  // ---------------------------------------------------------------- i18n
+  function t(key, vars) {
+    const pack = window.UI[state.lang] || window.UI.uz;
+    let s = pack[key] != null ? pack[key] : (window.UI.uz[key] != null ? window.UI.uz[key] : key);
+    if (vars) Object.keys(vars).forEach(k => { s = s.replace(new RegExp('\\{' + k + '\\}', 'g'), vars[k]); });
+    return s;
+  }
+  function tr(key, uz) { if (state.lang !== 'uz' && TRS[state.lang] && TRS[state.lang][key]) return TRS[state.lang][key]; return uz; }
+  function applyUiText() {
+    $$('[data-ui]').forEach(el => { el.textContent = t(el.dataset.ui); });
+    $$('[data-ph]').forEach(el => { el.placeholder = t(el.dataset.ph); });
+    $$('#langSwitch button').forEach(b => b.classList.toggle('active', b.dataset.lang === state.lang));
+    document.documentElement.lang = state.lang;
+  }
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const starStr = n => n > 0 ? '★'.repeat(n) : '—';
+  const fmtDate = iso => { if (!iso) return ''; const d = new Date(iso); return isNaN(d) ? iso : d.toLocaleDateString(state.lang === 'en' ? 'en-GB' : 'ru-RU'); };
+  const todayIso = () => new Date().toISOString().slice(0, 10);
+  const uid = () => 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
-const MASTER_ACCOUNT = { username: 'master', password: 'master', fullName: 'Master Account', role: 'master' };
-
-const STORAGE_KEYS = {
-    users: 'hcs_users',
-    assessments: 'hcs_assessments',
-    reports: 'hcs_reports'
-};
-const INVITE_TOKEN_PARAM = 'invite';
-const INVITE_PAYLOAD_PARAM = 'invite_data';
-const DASHBOARD_VISUAL_TOTAL_CRITERIA = 170;
-const UI_TEXT = {
-    en: {
-        loginTitle: 'Hotel Classification System',
-        loginSubtitle: '',
-        usernameLabel: 'Username',
-        passwordLabel: 'Password',
-        usernamePlaceholder: 'Enter username',
-        passwordPlaceholder: 'Enter password',
-        loginButton: 'Login',
-        loginHint: '',
-        loadingData: 'Loading standards...',
-        headerTitle: 'Hotel Classification System',
-        navDashboard: 'Dashboard',
-        navAssessment: 'Assessment',
-        navCompare: 'Compare',
-        navReports: 'Reports',
-        logout: 'Sign Out',
-        dashboardTitle: 'Classification Dashboard',
-        accommodationTypeLabel: 'Accommodation Type',
-        complianceFacilityTypeLabel: 'Facility Type',
-        allCategories: 'All Categories',
-        compareTitle: 'Star-Level Comparison',
-        compareSubtitle: 'Compare mandatory requirements across all star levels',
-        complianceTitle: "O'z DSt 3220:2023 - Compliance",
-        classificationTitle: 'MST 125',
-        complete3220: 'Complete 3220 Assessment',
-        complete3296: 'Complete MST 125 Assessment',
-        generateReport: 'Generate Report',
-        openCompliance: 'Open 3220 Compliance',
-        openHotelInfo: 'Hotel Information',
-        assessmentsTitle: 'Assessments',
-        reportsTitle: 'Reports',
-        usersTitle: 'Users',
-        fullNameLabel: 'Full Name',
-        fullNamePlaceholder: 'Full name',
-        newUsernameLabel: 'Username',
-        newUsernamePlaceholder: 'Username',
-        newPasswordLabel: 'Password',
-        newPasswordPlaceholder: 'Password',
-        createUser: 'Create User',
-        starLabel: 'Star',
-        minPts: 'Min',
-        mandatory: 'Mandatory',
-        optional: 'Optional',
-        criterionLabel: 'Criterion',
-        yes: 'Yes',
-        no: 'No',
-        na: 'N/A',
-        assessmentTitle: 'Assessment',
-        assessmentPanelTitle: 'Hotel Assessment',
-        assessmentPanelSubtitle: 'Check criteria your hotel meets',
-        assessPointsLabel: 'Points',
-        assessCountLabel: 'Criteria',
-        assessMandatoryLabel: '5★ Mandatory',
-        assessEligibleLabel: 'Eligible Star Rating',
-        resetAssessment: 'Reset Assessment',
-        resetConfirm: 'Do you want to clear all assessment answers?',
-        assessmentRequiredFields: 'Please complete all required Hotel Information and Contact Details fields.',
-        hotelInfo: 'Hotel Information',
-        contactDetails: 'Contact Details',
-        hotelName: 'Hotel Name',
-        address: 'Address',
-        roomCount: 'Number of Rooms',
-        assessmentDate: 'Assessment Date',
-        contactPerson: 'Contact Person',
-        phone: 'Phone',
-        email: 'Email',
-        start3220: '3220',
-        start3296: 'MST 125',
-        reportTitle: 'Hotel Classification Assessment Report',
-        reportStandard: "O'z DSt 3220:2023 & MST 125",
-        reportToolsTitle: 'Report Center',
-        reportToolsSubtitle: 'Generate and export classification reports',
-        reportCardFullTitle: 'Full Assessment Report',
-        reportCardFullDesc: 'Complete report with points breakdown',
-        reportCardGapTitle: 'Gap Analysis',
-        reportCardGapDesc: 'Missing criteria for each star level',
-        reportCardMandatoryTitle: 'Mandatory Checklist',
-        reportCardMandatoryDesc: 'Required criteria for target star',
-        reportCardExportTitle: 'Export Data',
-        reportCardExportDesc: 'Download assessment as JSON',
-        reportCardExportPdfTitle: 'Export Data PDF',
-        reportCardExportPdfDesc: 'Download assessment data as PDF',
-        gapReportTitle: 'Gap Analysis',
-        mandatoryReportTitle: 'Mandatory Checklist',
-        exportFileName: 'hotel-assessment',
-        reportPlaceholder: 'Complete assessments to generate a report',
-        reportHotelName: 'Hotel Name',
-        reportAddress: 'Address',
-        reportRooms: 'Number of Rooms',
-        reportDate: 'Assessment Date',
-        reportInspector: 'Inspector',
-        reportTarget: 'Target Classification',
-        roleMaster: 'Administrator',
-        roleAdmin: 'Admin',
-        roleUser: 'User',
-        roleInspector: 'Inspector',
-        reportCompliant: 'COMPLIANT',
-        reportNotCompliant: 'NOT COMPLIANT',
-        reportAllMandatoryMet: 'All mandatory compliance requirements are met.',
-        reportFailedRequirements: '{count} mandatory requirement(s) not met.',
-        legalStatusTitle: 'Legal Status',
-        legalStatusText: "This hotel is NOT in compliance with O'z DSt 3220:2023. Any classification result from MST 125 is NOT legally valid until compliance is achieved.",
-        reportClassificationAchieved: '{star}-Star Classification',
-        reportClassificationNotAchieved: 'Classification Not Achieved',
-        reportImportant: 'Important',
-        reportTechnicalOnly: "This classification result is for technical review only and is not legally valid because O'z DSt 3220:2023 is not compliant.",
-        reportFailedMandatoryTitle: 'Failed Mandatory Criteria for {star}-Star',
-        reportInsufficientPoints: 'Insufficient Points',
-        reportTotalPoints: 'Total points:',
-        reportRequired: 'Required:',
-        reportShortfall: 'Shortfall:',
-        pointsLabel: 'points',
-        quantityLabel: 'Quantity',
-        scoreLabel: 'Score',
-        maxLabel: 'Max',
-        unitLabel: 'unit',
-        mandatoryPointsAchieved: 'Mandatory Points Achieved',
-        optionalPointsAchieved: 'Optional Points Achieved',
-        mandatoryPointsRequired: 'Required Mandatory Points',
-        optionalPointsRequired: 'Required Optional Points',
-        statTotalLabel: 'Total Criteria',
-        statCategoriesLabel: 'Categories',
-        statMaxPointsLabel: 'Max Points',
-        statMandatoryLabel: 'Mandatory 5★',
-        emailAction: 'Email',
-        printAction: 'Print',
-        savePdfAction: 'Save PDF',
-        closeAction: 'Close',
-        deleteAction: 'Delete',
-        viewAction: 'View',
-        noAssessments: 'No assessments available.',
-        noReports: 'No reports available.',
-        noUsers: 'No users available.',
-        noItems: 'No items found.',
-        popupBlocked: 'Popup was blocked by the browser',
-        dataLoadError: 'Failed to load standards data files',
-        invalidCredentials: 'Invalid username or password',
-        userCreated: 'User has been created',
-        fillAllFields: 'Please complete all user fields',
-        usernameReserved: 'This username is reserved',
-        usernameExists: 'Username already exists',
-        progressTitle: 'Assessment Progress',
-        assessedLabel: 'assessed',
-        fulfilledLabel: 'Fulfilled',
-        fulfilledSub: 'Criteria met',
-        missingLabel: 'Missing',
-        missingSub: 'Criteria not met',
-        mandatoryLabel: 'Mandatory',
-        mandatorySub: 'For selected star',
-        evidenceLabel: 'Evidence',
-        evidenceSub: 'Files uploaded',
-        filterMandatory: 'Show Mandatory Only',
-        filterMissing: 'Show Missing Only',
-        classificationSearchPlaceholder: 'Search...',
-        classificationHideCheckedLabel: 'Unchecked only',
-        notificationTitle: 'Notifications',
-        notificationClear: 'Clear All',
-        notificationEmpty: 'No notifications',
-        resolutionTitle: 'Resolution',
-        resolutionHeaderTitle: 'Resolution Portal',
-        resolutionHeaderSubtitle: 'Submit evidence for missing criteria to resolve deficiencies',
-        resolutionEmpty: 'No items pending resolution',
-        sendToResolution: 'Send to Resolution',
-        resolutionRequiredTitle: 'Resolution Required',
-        resolutionRequiredMessage: '{count} criteria sent to resolution',
-        resolutionSubmittedTitle: 'Resolution Submitted',
-        resolutionSubmit: 'Submit for Review',
-        resolutionStatusPending: 'PENDING',
-        resolutionStatusSubmitted: 'SUBMITTED',
-        evidenceTitle: 'Evidence',
-        photoLabel: 'Photo',
-        videoLabel: 'Video',
-        documentLabel: 'Document',
-        adminUsersTitle: 'User Management',
-        addUserTitle: 'Add User',
-        addUserSubtitle: 'Create account invitation',
-        addUserOpen: '+ Add User',
-        addUserCancel: 'Cancel',
-        addUserSubmit: 'Send Invite',
-        userTableUsername: 'Login / Email',
-        userTableName: 'Full Name',
-        userTableRole: 'Role',
-        userTableStatus: 'Status',
-        userTableActions: 'Actions',
-        statusActive: 'Active',
-        statusInvited: 'Invited',
-        newFirstNameLabel: 'Name',
-        newFirstNamePlaceholder: 'Name',
-        newLastNameLabel: 'Last Name',
-        newLastNamePlaceholder: 'Last name',
-        newEmailLabel: 'Email',
-        newEmailPlaceholder: 'email@example.com',
-        newRoleLabel: 'Role',
-        inviteSetupTitle: 'Create Login Access',
-        inviteSetupSubtitle: 'Set username and password for your account',
-        inviteUsernameLabel: 'Username',
-        inviteUsernamePlaceholder: 'Username',
-        invitePasswordLabel: 'Password',
-        invitePasswordPlaceholder: 'Password',
-        invitePasswordConfirmLabel: 'Confirm Password',
-        invitePasswordConfirmPlaceholder: 'Confirm password',
-        inviteSetupSubmitBtn: 'Create Access',
-        invitePageTitle: 'Create Username & Password',
-        invitePageSubtitle: 'Create your account access',
-        invitePageUsernameLabel: 'Username',
-        invitePagePasswordLabel: 'Create Password',
-        invitePagePasswordConfirmLabel: 'Rewrite Password',
-        invitePageSubmitBtn: 'Submit',
-        invitePageBackBtn: 'Back to Login',
-        invalidEmail: 'Please enter a valid email address',
-        emailExists: 'Email already exists',
-        invitePrepared: 'Invitation link prepared',
-        inviteInvalid: 'Invalid or expired invitation link',
-        inviteSetupSuccess: 'Login created successfully. You can now sign in.',
-        passwordMismatch: 'Passwords do not match'
-    },
-    uz: {
-        loginTitle: 'Hotel Classification System',
-        loginSubtitle: '',
-        usernameLabel: 'Foydalanuvchi nomi',
-        passwordLabel: 'Parol',
-        usernamePlaceholder: 'Foydalanuvchi nomini kiriting',
-        passwordPlaceholder: 'Parolni kiriting',
-        loginButton: 'Kirish',
-        loginHint: '',
-        loadingData: "Standartlar yuklanmoqda...",
-        headerTitle: 'Hotel Classification System',
-        navDashboard: 'Bosh sahifa',
-        navAssessment: 'Baholash',
-        navCompare: 'Taqqoslash',
-        navReports: 'Hisobotlar',
-        logout: 'Chiqish',
-        dashboardTitle: 'Yulduz reytingi maʼlumoti',
-        accommodationTypeLabel: 'Joylashtirish turi',
-        complianceFacilityTypeLabel: 'Joylashtirish turi',
-        allCategories: 'Barcha bo‘limlar',
-        compareTitle: 'Yulduz darajalarini taqqoslash',
-        compareSubtitle: 'Yulduzlar bo‘yicha majburiy talablarni taqqoslang',
-        complianceTitle: "O'z DSt 3220:2023 - Muvofiqlik",
-        classificationTitle: 'MST 125',
-        complete3220: '3220 Yakunlash',
-        complete3296: 'MST 125 Yakunlash',
-        generateReport: 'Hisobot yaratish',
-        openCompliance: '3220 Muvofiqlik',
-        openHotelInfo: 'Mehmonxona maʼlumoti',
-        assessmentsTitle: 'Baholashlar',
-        reportsTitle: 'Hisobotlar',
-        usersTitle: 'Foydalanuvchilar',
-        fullNameLabel: 'To‘liq ism',
-        fullNamePlaceholder: 'To‘liq ism',
-        newUsernameLabel: 'Foydalanuvchi nomi',
-        newUsernamePlaceholder: 'Foydalanuvchi nomi',
-        newPasswordLabel: 'Parol',
-        newPasswordPlaceholder: 'Parol',
-        createUser: 'Foydalanuvchi yaratish',
-        starLabel: 'Yulduz',
-        minPts: 'Min',
-        mandatory: 'Majburiy',
-        optional: 'Ixtiyoriy',
-        criterionLabel: 'Mezon',
-        yes: 'Ha',
-        no: 'Yo‘q',
-        na: 'N/A',
-        assessmentTitle: 'Baholash',
-        assessmentPanelTitle: 'Mehmonxona baholash',
-        assessmentPanelSubtitle: 'Mehmonxona bajargan mezonlarni belgilang',
-        assessPointsLabel: 'Ballar',
-        assessCountLabel: 'Mezonlar',
-        assessMandatoryLabel: '5★ Majburiy',
-        assessEligibleLabel: 'Mos keladigan reyting',
-        resetAssessment: 'Qayta tiklash',
-        resetConfirm: 'Baholash javoblarini tozalaysizmi?',
-        assessmentRequiredFields: "Mehmonxona ma'lumoti va aloqa ma'lumotlari bo'yicha barcha majburiy maydonlarni to'ldiring.",
-        hotelInfo: 'Mehmonxona maʼlumoti',
-        contactDetails: 'Aloqa maʼlumotlari',
-        hotelName: 'Mehmonxona nomi',
-        address: 'Manzil',
-        roomCount: 'Xonalar soni',
-        assessmentDate: 'Baholash sanasi',
-        contactPerson: 'Aloqa shaxsi',
-        phone: 'Telefon',
-        email: 'Email',
-        start3220: '3220',
-        start3296: 'MST 125',
-        reportTitle: 'Mehmonxona baholash hisobotı',
-        reportStandard: "O'z DSt 3220:2023 & MST 125",
-        reportToolsTitle: 'Hisobot yaratish',
-        reportToolsSubtitle: 'Tasniflash bo‘yicha batafsil hisobotlar',
-        reportCardFullTitle: 'To‘liq baholash',
-        reportCardFullDesc: 'Ballar bo‘yicha batafsil hisobot',
-        reportCardGapTitle: 'Farq tahlili',
-        reportCardGapDesc: 'Har bir yulduz uchun yetishmaydigan mezonlar',
-        reportCardMandatoryTitle: 'Majburiy ro‘yxat',
-        reportCardMandatoryDesc: 'Tanlangan yulduz uchun majburiy mezonlar',
-        reportCardExportTitle: 'Maʼlumot eksporti',
-        reportCardExportDesc: 'Baholashni JSON ko‘rinishda yuklab olish',
-        reportCardExportPdfTitle: 'PDF eksport',
-        reportCardExportPdfDesc: 'Baholash maʼlumotlarini PDF ko‘rinishda yuklab olish',
-        gapReportTitle: 'Farq tahlili',
-        mandatoryReportTitle: 'Majburiy ro‘yxat',
-        exportFileName: 'hotel-baholash',
-        reportPlaceholder: 'Hisobot yaratish uchun baholashni yakunlang',
-        reportHotelName: 'Mehmonxona nomi',
-        reportAddress: 'Manzil',
-        reportRooms: 'Xonalar soni',
-        reportDate: 'Baholash sanasi',
-        reportInspector: 'Inspektor',
-        reportTarget: 'Maqsadli tasnif',
-        roleMaster: 'Master',
-        roleAdmin: 'Admin',
-        roleUser: 'Foydalanuvchi',
-        roleInspector: 'Inspektor',
-        reportCompliant: 'MUVOFIQ',
-        reportNotCompliant: 'MUVOFIQ EMAS',
-        reportAllMandatoryMet: 'Barcha majburiy talablar bajarilgan.',
-        reportFailedRequirements: '{count} ta talab bajarilmadi.',
-        legalStatusTitle: 'Yuridik holat',
-        legalStatusText: "Ushbu mehmonxona O'z DSt 3220:2023 ga MUVOFIQ EMAS. MST 125 bo‘yicha tasniflash natijasi muvofiqlik taʼminlanguncha yuridik kuchga ega emas.",
-        reportClassificationAchieved: '{star}-Yulduzli tasnif',
-        reportClassificationNotAchieved: 'Tasniflashga erishilmadi',
-        reportImportant: 'Muhim:',
-        reportTechnicalOnly: "Bu tasniflash natijasi FAQAT texnik bo‘lib, O'z DSt 3220:2023 talablariga muvofiq bo‘lmagani sababli yuridik kuchga ega emas.",
-        reportFailedMandatoryTitle: '{star}-Yulduz uchun majburiy talablar bajarilmadi',
-        reportInsufficientPoints: 'Ball yetarli emas',
-        reportTotalPoints: 'Jami ball:',
-        reportRequired: 'Kerakli:',
-        reportShortfall: 'Kamchilik:',
-        pointsLabel: 'ball',
-        quantityLabel: 'Miqdor',
-        scoreLabel: 'Ball',
-        maxLabel: 'Maks',
-        unitLabel: 'birlik',
-        mandatoryPointsAchieved: 'Majburiy ballar (olingan)',
-        optionalPointsAchieved: 'Ixtiyoriy ballar (olingan)',
-        mandatoryPointsRequired: 'Majburiy ballar (kerakli)',
-        optionalPointsRequired: 'Ixtiyoriy ballar (kerakli)',
-        statTotalLabel: 'Jami mezonlar',
-        statCategoriesLabel: 'Bo‘limlar',
-        statMaxPointsLabel: 'Maks ball',
-        statMandatoryLabel: 'Majburiy 5★',
-        emailAction: 'Email',
-        printAction: 'Chop etish',
-        savePdfAction: 'PDF saqlash',
-        closeAction: 'Yopish',
-        deleteAction: 'O‘chirish',
-        viewAction: 'Ko‘rish',
-        noAssessments: 'Baholashlar mavjud emas.',
-        noReports: 'Hisobotlar mavjud emas.',
-        noUsers: 'Foydalanuvchilar mavjud emas.',
-        noItems: 'Maʼlumot topilmadi.',
-        popupBlocked: 'Popup bloklangan',
-        dataLoadError: 'Maʼlumotlar yuklanmadi',
-        invalidCredentials: 'Login yoki parol noto‘g‘ri',
-        userCreated: 'Foydalanuvchi yaratildi',
-        fillAllFields: 'Barcha maydonlarni to‘ldiring',
-        usernameReserved: 'Bu nom band',
-        usernameExists: 'Foydalanuvchi nomi mavjud',
-        progressTitle: 'Baholash jarayoni',
-        assessedLabel: 'baholangan',
-        fulfilledLabel: 'Bajarilgan',
-        fulfilledSub: 'Mezonlar bajarildi',
-        missingLabel: 'Bajarilmagan',
-        missingSub: 'Mezonlar bajarilmadi',
-        mandatoryLabel: 'Majburiy',
-        mandatorySub: 'Tanlangan yulduz uchun',
-        evidenceLabel: 'Dalillar',
-        evidenceSub: 'Yuklangan fayllar',
-        filterMandatory: 'Faqat majburiy',
-        filterMissing: 'Bajarilmaganlarni ko‘rsatish',
-        classificationSearchPlaceholder: 'Qidirish...',
-        classificationHideCheckedLabel: 'Bajarilmaganlar',
-        notificationTitle: 'Bildirishnomalar',
-        notificationClear: 'Tozalash',
-        notificationEmpty: 'Bildirishnomalar yo‘q',
-        resolutionTitle: 'Yechim',
-        resolutionHeaderTitle: 'Yechim portali',
-        resolutionHeaderSubtitle: 'Yetishmayotgan mezonlar bo‘yicha dalillarni yuboring',
-        resolutionEmpty: 'Yechim uchun elementlar yo‘q',
-        sendToResolution: 'Yechimga yuborish',
-        resolutionRequiredTitle: 'Yechim talab qilinadi',
-        resolutionRequiredMessage: '{count} ta mezon yechimga yuborildi',
-        resolutionSubmittedTitle: 'Yechim yuborildi',
-        resolutionSubmit: 'Ko‘rib chiqishga yuborish',
-        resolutionStatusPending: 'KUTILMOQDA',
-        resolutionStatusSubmitted: 'YUBORILDI',
-        evidenceTitle: 'Dalillar',
-        photoLabel: 'Foto',
-        videoLabel: 'Video',
-        documentLabel: 'Hujjat',
-        adminUsersTitle: 'Foydalanuvchilar boshqaruvi',
-        addUserTitle: 'Foydalanuvchi qo‘shish',
-        addUserSubtitle: 'Hisob uchun taklif yaratish',
-        addUserOpen: '+ Foydalanuvchi qo‘shish',
-        addUserCancel: 'Bekor qilish',
-        addUserSubmit: 'Taklif yuborish',
-        userTableUsername: 'Login / Email',
-        userTableName: 'To‘liq ism',
-        userTableRole: 'Rol',
-        userTableStatus: 'Holat',
-        userTableActions: 'Amallar',
-        statusActive: 'Faol',
-        statusInvited: 'Taklif yuborilgan',
-        newFirstNameLabel: 'Ism',
-        newFirstNamePlaceholder: 'Ism',
-        newLastNameLabel: 'Familiya',
-        newLastNamePlaceholder: 'Familiya',
-        newEmailLabel: 'Email',
-        newEmailPlaceholder: 'email@example.com',
-        newRoleLabel: 'Rol',
-        inviteSetupTitle: 'Kirish maʼlumotlarini yaratish',
-        inviteSetupSubtitle: 'Hisob uchun login va parolni kiriting',
-        inviteUsernameLabel: 'Foydalanuvchi nomi',
-        inviteUsernamePlaceholder: 'Foydalanuvchi nomi',
-        invitePasswordLabel: 'Parol',
-        invitePasswordPlaceholder: 'Parol',
-        invitePasswordConfirmLabel: 'Parolni tasdiqlang',
-        invitePasswordConfirmPlaceholder: 'Parolni tasdiqlang',
-        inviteSetupSubmitBtn: 'Kirishni yaratish',
-        invitePageTitle: 'Username va parol yarating',
-        invitePageSubtitle: 'Hisobingiz uchun kirish maʼlumotlarini yarating',
-        invitePageUsernameLabel: 'Foydalanuvchi nomi',
-        invitePagePasswordLabel: 'Parol yarating',
-        invitePagePasswordConfirmLabel: 'Parolni qayta kiriting',
-        invitePageSubmitBtn: 'Yuborish',
-        invitePageBackBtn: 'Login sahifasiga qaytish',
-        invalidEmail: 'To‘g‘ri email manzil kiriting',
-        emailExists: 'Bunday email allaqachon mavjud',
-        invitePrepared: 'Taklif havolasi tayyorlandi',
-        inviteInvalid: 'Taklif havolasi yaroqsiz yoki muddati tugagan',
-        inviteSetupSuccess: 'Login muvaffaqiyatli yaratildi. Endi tizimga kiring.',
-        passwordMismatch: 'Parollar mos kelmadi'
-    },
-    ru: {
-        loginTitle: 'Hotel Classification System',
-        loginSubtitle: '',
-        usernameLabel: 'Имя пользователя',
-        passwordLabel: 'Пароль',
-        usernamePlaceholder: 'Введите имя пользователя',
-        passwordPlaceholder: 'Введите пароль',
-        loginButton: 'Войти',
-        loginHint: '',
-        loadingData: 'Загрузка стандартов...',
-        headerTitle: 'Hotel Classification System',
-        navDashboard: 'Панель',
-        navAssessment: 'Оценка',
-        navCompare: 'Сравнение',
-        navReports: 'Отчеты',
-        logout: 'Выйти',
-        dashboardTitle: 'Информация о рейтинге',
-        accommodationTypeLabel: 'Тип размещения',
-        complianceFacilityTypeLabel: 'Тип средства размещения',
-        allCategories: 'Все категории',
-        compareTitle: 'Сравнение уровней',
-        compareSubtitle: 'Сравнение обязательных требований по звездам',
-        complianceTitle: "O'z DSt 3220:2023 - Соответствие",
-        classificationTitle: 'MST 125',
-        complete3220: 'Завершить 3220',
-        complete3296: 'Завершить MST 125',
-        generateReport: 'Сформировать отчет',
-        openCompliance: 'Соответствие 3220',
-        openHotelInfo: 'Информация об отеле',
-        assessmentsTitle: 'Оценки',
-        reportsTitle: 'Отчеты',
-        usersTitle: 'Пользователи',
-        fullNameLabel: 'Полное имя',
-        fullNamePlaceholder: 'Полное имя',
-        newUsernameLabel: 'Имя пользователя',
-        newUsernamePlaceholder: 'Имя пользователя',
-        newPasswordLabel: 'Пароль',
-        newPasswordPlaceholder: 'Пароль',
-        createUser: 'Создать пользователя',
-        starLabel: 'Звезда',
-        minPts: 'Мин',
-        mandatory: 'Обязательные',
-        optional: 'Дополнительные',
-        criterionLabel: 'Критерий',
-        yes: 'Да',
-        no: 'Нет',
-        na: 'Н/Д',
-        assessmentTitle: 'Оценка',
-        assessmentPanelTitle: 'Оценка отеля',
-        assessmentPanelSubtitle: 'Отметьте критерии, которые выполнены',
-        assessPointsLabel: 'Баллы',
-        assessCountLabel: 'Критерии',
-        assessMandatoryLabel: '5★ Обязательные',
-        assessEligibleLabel: 'Допустимый рейтинг',
-        resetAssessment: 'Сбросить',
-        resetConfirm: 'Сбросить ответы оценки?',
-        assessmentRequiredFields: 'Заполните все обязательные поля в разделах информации об отеле и контактных данных.',
-        hotelInfo: 'Информация о гостинице',
-        contactDetails: 'Контактные данные',
-        hotelName: 'Название гостиницы',
-        address: 'Адрес',
-        roomCount: 'Количество номеров',
-        assessmentDate: 'Дата оценки',
-        contactPerson: 'Контактное лицо',
-        phone: 'Телефон',
-        email: 'Email',
-        start3220: '3220',
-        start3296: 'MST 125',
-        reportTitle: 'Отчет об оценке гостиницы',
-        reportStandard: "O'z DSt 3220:2023 & MST 125",
-        reportToolsTitle: 'Генерация отчетов',
-        reportToolsSubtitle: 'Детальные отчеты по классификации',
-        reportCardFullTitle: 'Полная оценка',
-        reportCardFullDesc: 'Полный отчет с баллами',
-        reportCardGapTitle: 'Анализ разрывов',
-        reportCardGapDesc: 'Недостающие критерии по звездам',
-        reportCardMandatoryTitle: 'Обязательный список',
-        reportCardMandatoryDesc: 'Обязательные критерии для выбранной звезды',
-        reportCardExportTitle: 'Экспорт данных',
-        reportCardExportDesc: 'Скачать оценку в JSON',
-        reportCardExportPdfTitle: 'Экспорт PDF',
-        reportCardExportPdfDesc: 'Скачать данные оценки в PDF',
-        gapReportTitle: 'Анализ разрывов',
-        mandatoryReportTitle: 'Обязательный список',
-        exportFileName: 'hotel-otsenka',
-        reportPlaceholder: 'Завершите оценку для формирования отчета',
-        reportHotelName: 'Название гостиницы',
-        reportAddress: 'Адрес',
-        reportRooms: 'Количество номеров',
-        reportDate: 'Дата оценки',
-        reportInspector: 'Инспектор',
-        reportTarget: 'Целевая классификация',
-        roleMaster: 'Мастер',
-        roleAdmin: 'Администратор',
-        roleUser: 'Пользователь',
-        roleInspector: 'Инспектор',
-        reportCompliant: 'СООТВЕТСТВУЕТ',
-        reportNotCompliant: 'НЕ СООТВЕТСТВУЕТ',
-        reportAllMandatoryMet: 'Все обязательные требования выполнены.',
-        reportFailedRequirements: 'Не выполнено требований: {count}.',
-        legalStatusTitle: 'Юридический статус',
-        legalStatusText: "Эта гостиница НЕ соответствует O'z DSt 3220:2023. Результат классификации по MST 125 не имеет юридической силы до достижения соответствия.",
-        reportClassificationAchieved: 'Классификация {star} звезды',
-        reportClassificationNotAchieved: 'Классификация не достигнута',
-        reportImportant: 'Важно:',
-        reportTechnicalOnly: "Этот результат классификации является ТЕХНИЧЕСКИМ и не имеет юридической силы из-за несоответствия O'z DSt 3220:2023.",
-        reportFailedMandatoryTitle: 'Не выполнены обязательные требования для {star} звезд',
-        reportInsufficientPoints: 'Недостаточно баллов',
-        reportTotalPoints: 'Всего баллов:',
-        reportRequired: 'Требуется:',
-        reportShortfall: 'Недобор:',
-        pointsLabel: 'баллов',
-        quantityLabel: 'Количество',
-        scoreLabel: 'Баллы',
-        maxLabel: 'Макс',
-        unitLabel: 'единица',
-        mandatoryPointsAchieved: 'Обязательные баллы (получено)',
-        optionalPointsAchieved: 'Доп. баллы (получено)',
-        mandatoryPointsRequired: 'Обязательные баллы (нужно)',
-        optionalPointsRequired: 'Доп. баллы (нужно)',
-        statTotalLabel: 'Всего критериев',
-        statCategoriesLabel: 'Категории',
-        statMaxPointsLabel: 'Макс баллы',
-        statMandatoryLabel: 'Обязательные 5★',
-        emailAction: 'Email',
-        printAction: 'Печать',
-        savePdfAction: 'Сохранить PDF',
-        closeAction: 'Закрыть',
-        deleteAction: 'Удалить',
-        viewAction: 'Просмотр',
-        noAssessments: 'Оценок пока нет.',
-        noReports: 'Отчетов пока нет.',
-        noUsers: 'Пользователей пока нет.',
-        noItems: 'Нет данных.',
-        popupBlocked: 'Всплывающее окно заблокировано',
-        dataLoadError: 'Не удалось загрузить данные',
-        invalidCredentials: 'Неверный логин или пароль',
-        userCreated: 'Пользователь создан',
-        fillAllFields: 'Заполните все поля',
-        usernameReserved: 'Имя занято',
-        usernameExists: 'Имя пользователя уже существует',
-        progressTitle: 'Прогресс оценки',
-        assessedLabel: 'оценено',
-        fulfilledLabel: 'Выполнено',
-        fulfilledSub: 'Критерии выполнены',
-        missingLabel: 'Не выполнено',
-        missingSub: 'Критерии не выполнены',
-        mandatoryLabel: 'Обязательные',
-        mandatorySub: 'Для выбранной звезды',
-        evidenceLabel: 'Доказательства',
-        evidenceSub: 'Файлов загружено',
-        filterMandatory: 'Только обязательные',
-        filterMissing: 'Показать пропуски',
-        classificationSearchPlaceholder: 'Поиск...',
-        classificationHideCheckedLabel: 'Только непроверенные',
-        notificationTitle: 'Уведомления',
-        notificationClear: 'Очистить',
-        notificationEmpty: 'Уведомлений нет',
-        resolutionTitle: 'Устранение',
-        resolutionHeaderTitle: 'Портал устранения',
-        resolutionHeaderSubtitle: 'Загрузите доказательства по отсутствующим критериям',
-        resolutionEmpty: 'Нет элементов для устранения',
-        sendToResolution: 'Отправить на устранение',
-        resolutionRequiredTitle: 'Требуется устранение',
-        resolutionRequiredMessage: '{count} критериев отправлено на устранение',
-        resolutionSubmittedTitle: 'Устранение отправлено',
-        resolutionSubmit: 'Отправить на проверку',
-        resolutionStatusPending: 'ОЖИДАЕТСЯ',
-        resolutionStatusSubmitted: 'ОТПРАВЛЕНО',
-        evidenceTitle: 'Доказательства',
-        photoLabel: 'Фото',
-        videoLabel: 'Видео',
-        documentLabel: 'Документ',
-        adminUsersTitle: 'Управление пользователями',
-        addUserTitle: 'Добавить пользователя',
-        addUserSubtitle: 'Создать приглашение для аккаунта',
-        addUserOpen: '+ Добавить пользователя',
-        addUserCancel: 'Отмена',
-        addUserSubmit: 'Отправить приглашение',
-        userTableUsername: 'Логин / Email',
-        userTableName: 'Полное имя',
-        userTableRole: 'Роль',
-        userTableStatus: 'Статус',
-        userTableActions: 'Действия',
-        statusActive: 'Активен',
-        statusInvited: 'Приглашён',
-        newFirstNameLabel: 'Имя',
-        newFirstNamePlaceholder: 'Имя',
-        newLastNameLabel: 'Фамилия',
-        newLastNamePlaceholder: 'Фамилия',
-        newEmailLabel: 'Email',
-        newEmailPlaceholder: 'email@example.com',
-        newRoleLabel: 'Роль',
-        inviteSetupTitle: 'Создание входа',
-        inviteSetupSubtitle: 'Установите логин и пароль для вашей учётной записи',
-        inviteUsernameLabel: 'Имя пользователя',
-        inviteUsernamePlaceholder: 'Имя пользователя',
-        invitePasswordLabel: 'Пароль',
-        invitePasswordPlaceholder: 'Пароль',
-        invitePasswordConfirmLabel: 'Подтверждение пароля',
-        invitePasswordConfirmPlaceholder: 'Подтвердите пароль',
-        inviteSetupSubmitBtn: 'Создать доступ',
-        invitePageTitle: 'Создайте логин и пароль',
-        invitePageSubtitle: 'Создайте данные входа для вашего аккаунта',
-        invitePageUsernameLabel: 'Имя пользователя',
-        invitePagePasswordLabel: 'Создайте пароль',
-        invitePagePasswordConfirmLabel: 'Повторите пароль',
-        invitePageSubmitBtn: 'Отправить',
-        invitePageBackBtn: 'Назад ко входу',
-        invalidEmail: 'Введите корректный email',
-        emailExists: 'Email уже существует',
-        invitePrepared: 'Ссылка-приглашение подготовлена',
-        inviteInvalid: 'Недействительная или просроченная ссылка приглашения',
-        inviteSetupSuccess: 'Доступ создан. Теперь можно войти.',
-        passwordMismatch: 'Пароли не совпадают'
-    }
-};
-
-// =====================================================
-// STATE VARIABLES
-// =====================================================
-
-let currentLang = 'en';
-let currentUser = null;
-let selectedStar = 3;
-let selectedAccommodationType = 'hotels_and_similar';
-let selectedComplianceFacilityType = 'hotels_and_similar';
-let complianceAnswers = {};
-let classificationAnswers = {};
-let classificationQuantities = {};
-let assessmentData = {
-    hotelName: '',
-    hotelAddress: '',
-    roomCount: '',
-    assessmentDate: '',
-    contactName: '',
-    contactPhone: '',
-    contactEmail: ''
-};
-let assessments = [];
-let reports = [];
-let evidenceData = {};
-let notifications = [];
-let resolutions = [];
-let currentUpload = null;
-let pendingInviteToken = null;
-const WORKING_STATE_KEY = 'hcs_working_state';
-let toastTimerId = null;
-
-// =====================================================
-// I18N + STORAGE
-// =====================================================
-
-function t(key) {
-    const langTable = UI_TEXT[currentLang] || UI_TEXT.en;
-    return langTable[key] ?? UI_TEXT.en[key] ?? key;
-}
-
-function safeJsonParse(value, fallback) {
+  // ---------------------------------------------------------------- model
+  function newAssessment() {
+    return {
+      id: uid(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      facility: { name: '', address: '', region: '', kind: '', rooms: '', beds: '', floors: '', contact: '', phone: '', email: '', inspector: '', date: todayIso(), target: 3,
+        seasonal: false, heritage: false, rural: false, naturalWater: false, sensorDoors: false, brand: false },
+      a958: {}, a125: {}
+    };
+  }
+  const cur = () => state.assessments.find(a => a.id === state.currentId) || null;
+  function touch(a) { a.updatedAt = new Date().toISOString(); save(); schedulePush(a); }
+  // ---------------------------------------------------------------- cloud sync
+  const C = window.Cloud || { enabled: false };
+  const pushTimers = {};
+  function summaryOf(a) {
+    const e958 = eval958(a); const cls = clsOf(a); const eT = cls ? eval125(a, a.facility.target) : null; const best = cls && e958.compliant ? bestStar(a) : 0;
+    const complete = e958.hasAnnex && e958.unanswered.length === 0 && (!cls || progress125(a).answered === progress125(a).total);
+    return { facility_name: a.facility.name || '', facility_kind: a.facility.kind || '', region: a.facility.region || '', target_star: cls ? a.facility.target : null,
+      result_star: best, compliant_958: e958.compliant, complete, points: eT ? eT.points : null, threshold: eT ? eT.threshold : null, assessed_on: a.facility.date || null };
+  }
+  function schedulePush(a) {
+    if (!C.enabled || !C.user || !C.isActive()) return;
+    clearTimeout(pushTimers[a.id]);
+    pushTimers[a.id] = setTimeout(() => pushNow(a), 1500);
+  }
+  async function pushNow(a) {
+    if (!C.enabled || !C.user || !C.isActive()) return;
+    setSaveState('syncing');
+    try { await C.push(a, summaryOf(a)); a.cloudSyncedAt = a.updatedAt; setSaveState('cloudSynced'); }
+    catch (e) { console.warn('push failed', e); setSaveState(navigator.onLine ? 'cloudError' : 'cloudOffline'); }
+  }
+  async function pushPending() { for (const a of state.assessments) { if (a.cloudSyncedAt !== a.updatedAt) await pushNow(a); } }
+  async function pullFromCloud() {
+    if (!C.enabled || !C.user || !C.isActive()) return;
     try {
-        if (!value) return fallback;
-        const parsed = JSON.parse(value);
-        return parsed ?? fallback;
-    } catch (err) {
-        return fallback;
-    }
-}
+      const remote = await C.pullMine(); let changed = false;
+      remote.forEach(r => {
+        const local = state.assessments.find(x => x.id === r.id);
+        if (!local) { r.cloudSyncedAt = r.updatedAt; state.assessments.push(r); changed = true; }
+        else if ((r.updatedAt || '') > (local.updatedAt || '')) { Object.assign(local, r, { cloudSyncedAt: r.updatedAt }); changed = true; }
+      });
+      // assessments created before sign-in belong to this user now
+      state.assessments.forEach(a => { if (!a.owner_id) { a.owner_id = C.user.id; a.owner_name = C.profile.full_name || C.profile.email; } });
+      if (changed) save(true);
+    } catch (e) { console.warn('pull failed', e); }
+    await pushPending();
+  }
+  window.addEventListener('online', () => { if (C.enabled) pushPending(); });
+  const kindInfo = kind => S958.kinds.find(k => k.id === kind) || null;
+  const kindName = kind => { const k = kindInfo(kind); return k ? tr('958kind:' + k.id, k.name) : ''; };
+  const groupName = g => S958.groups[g] ? tr('958grp:' + g, S958.groups[g].name) : '';
+  const clsName = c => S125.thresholds[c] ? tr('125thr:' + c, S125.thresholds[c].name) : '';
+  function annexFor(a) {
+    const k = kindInfo(a.facility.kind); if (!k) return null;
+    const g = S958.groups[k.group]; const ax = S958['annex' + g.annex];
+    return { key: g.annex, col: g.col, annex: ax, group: k.group };
+  }
+  function facilityFlags(a) {
+    const f = a.facility; const rooms = parseInt(f.rooms, 10);
+    return { seasonal: !!f.seasonal, heritage: !!f.heritage, rural: !!f.rural, naturalWater: !!f.naturalWater, small15: Number.isFinite(rooms) && rooms > 0 && rooms <= 15, sensorDoors: !!f.sensorDoors };
+  }
+  function ruleMatches(rule, a) {
+    const flags = facilityFlags(a);
+    if (rule.kinds && rule.kinds.includes(a.facility.kind)) return true;
+    if (rule.flags && rule.flags.some(fl => flags[fl])) return true;
+    return false;
+  }
 
-function getStoredArray(key) {
-    const parsed = safeJsonParse(localStorage.getItem(key), []);
-    return Array.isArray(parsed) ? parsed : [];
-}
-
-function setStoredArray(key, value) {
-    localStorage.setItem(key, JSON.stringify(Array.isArray(value) ? value : []));
-}
-
-function normalizeUserRole(rawRole) {
-    const role = String(rawRole || '').trim().toLowerCase();
-    if (role === 'master') return 'master';
-    if (role === 'admin') return 'admin';
-    if (role === 'inspector') return 'user';
-    return 'user';
-}
-
-function getUserFullName(user) {
-    if (!user || typeof user !== 'object') return '';
-    const firstName = String(user.firstName || '').trim();
-    const lastName = String(user.lastName || '').trim();
-    const composed = `${firstName} ${lastName}`.trim();
-    if (composed) return composed;
-    if (String(user.fullName || '').trim()) return String(user.fullName).trim();
-    if (String(user.username || '').trim()) return String(user.username).trim();
-    if (String(user.email || '').trim()) return String(user.email).trim();
-    return '';
-}
-
-function normalizeStoredUser(rawUser) {
-    if (!rawUser || typeof rawUser !== 'object') return null;
-    const explicitStatus = String(rawUser.status || '').trim().toLowerCase();
-    const normalized = {
-        id: rawUser.id || createId('user'),
-        firstName: String(rawUser.firstName || '').trim(),
-        lastName: String(rawUser.lastName || '').trim(),
-        email: String(rawUser.email || '').trim().toLowerCase(),
-        username: String(rawUser.username || '').trim(),
-        password: String(rawUser.password || '').trim(),
-        role: normalizeUserRole(rawUser.role),
-        status: 'invited',
-        inviteToken: String(rawUser.inviteToken || '').trim(),
-        invitedAt: rawUser.invitedAt || '',
-        activatedAt: rawUser.activatedAt || ''
-    };
-    const inferredFullName = getUserFullName({ ...rawUser, ...normalized });
-    normalized.fullName = inferredFullName || '';
-    if (explicitStatus === 'active') {
-        normalized.status = 'active';
-    } else if (explicitStatus === 'invited') {
-        normalized.status = 'invited';
-    } else {
-        normalized.status = normalized.username && normalized.password ? 'active' : 'invited';
-    }
-    return normalized;
-}
-
-function getUserRoleLabel(role) {
-    const normalizedRole = normalizeUserRole(role);
-    if (normalizedRole === 'master') return t('roleMaster');
-    if (normalizedRole === 'admin') return t('roleAdmin');
-    return t('roleUser');
-}
-
-function getStoredUsers() {
-    return getStoredArray(STORAGE_KEYS.users)
-        .map(normalizeStoredUser)
-        .filter(Boolean);
-}
-
-function setStoredUsers(users) {
-    setStoredArray(STORAGE_KEYS.users, (users || []).map(normalizeStoredUser).filter(Boolean));
-}
-
-function loadStoredData() {
-    assessments = getStoredArray(STORAGE_KEYS.assessments);
-    reports = getStoredArray(STORAGE_KEYS.reports);
-
-    const workingState = safeJsonParse(localStorage.getItem(WORKING_STATE_KEY), {});
-    if (workingState && typeof workingState === 'object') {
-        if (['en', 'uz', 'ru'].includes(workingState.currentLang)) {
-            currentLang = workingState.currentLang;
-        }
-        if (typeof workingState.selectedStar !== 'undefined') {
-            const star = Number(workingState.selectedStar);
-            if (Number.isFinite(star) && star >= 1 && star <= 5) selectedStar = star;
-        }
-        if (typeof workingState.selectedAccommodationType === 'string' && workingState.selectedAccommodationType.trim()) {
-            selectedAccommodationType = workingState.selectedAccommodationType;
-        }
-        if (typeof workingState.selectedComplianceFacilityType === 'string' && workingState.selectedComplianceFacilityType.trim()) {
-            selectedComplianceFacilityType = workingState.selectedComplianceFacilityType;
-        }
-        if (workingState.complianceAnswers && typeof workingState.complianceAnswers === 'object') {
-            complianceAnswers = { ...workingState.complianceAnswers };
-        }
-        if (workingState.classificationAnswers && typeof workingState.classificationAnswers === 'object') {
-            classificationAnswers = { ...workingState.classificationAnswers };
-        }
-        if (workingState.classificationQuantities && typeof workingState.classificationQuantities === 'object') {
-            classificationQuantities = normalizeQuantityMap(workingState.classificationQuantities);
-        }
-        if (workingState.assessmentData && typeof workingState.assessmentData === 'object') {
-            assessmentData = { ...assessmentData, ...workingState.assessmentData };
-        }
-        if (workingState.evidenceData && typeof workingState.evidenceData === 'object') {
-            evidenceData = { ...workingState.evidenceData };
-        }
-        if (Array.isArray(workingState.notifications)) {
-            notifications = workingState.notifications.slice();
-        }
-        if (Array.isArray(workingState.resolutions)) {
-            resolutions = workingState.resolutions.slice();
-        }
-    }
-
-    if (!assessmentData.assessmentDate) {
-        assessmentData.assessmentDate = new Date().toISOString().split('T')[0];
-    }
-}
-
-function persistWorkingState() {
-    localStorage.setItem(WORKING_STATE_KEY, JSON.stringify({
-        currentLang,
-        selectedStar,
-        selectedAccommodationType,
-        selectedComplianceFacilityType,
-        complianceAnswers,
-        classificationAnswers,
-        classificationQuantities,
-        assessmentData,
-        evidenceData,
-        notifications,
-        resolutions
-    }));
-}
-
-// =====================================================
-// INITIALIZATION
-// =====================================================
-
-document.addEventListener('DOMContentLoaded', async () => {
-    const loginButton = document.getElementById('loginButton');
-    const loginHint = document.getElementById('loginHint');
-    if (loginButton) loginButton.disabled = true;
-    if (loginHint) loginHint.textContent = t('loadingData');
-
-    if (!assessmentData.assessmentDate) {
-        assessmentData.assessmentDate = new Date().toISOString().split('T')[0];
-    }
-    loadStoredData();
-    try {
-        await loadData();
-    } catch (err) {
-        console.error('Failed to initialize:', err);
-        showToast(t('dataLoadError'), 'error');
-        if (loginHint) loginHint.textContent = t('dataLoadError');
-        return;
-    }
-    initEventListeners();
-    applyLanguage();
-    processInviteLinkFromUrl();
-    if (loginButton) loginButton.disabled = false;
-    if (loginHint) loginHint.textContent = t('loginHint');
-});
-
-// =====================================================
-// STAR CARDS
-// =====================================================
-
-function initStarCards() {
-    const container = document.getElementById('starCards');
-    const totalCriteriaCount = getDashboardVisualTotalCriteriaCount();
-    container.innerHTML = '';
-    ensureAccommodationTypeSelection();
-
-    CLASSIFICATION_DATA_3296.starLevels.forEach(level => {
-        const mandatoryCount = getMandatoryIdsForLevel(level).length;
-        const optionalCount = Math.max(0, totalCriteriaCount - mandatoryCount);
-        const minPoints = getMinPointsForStar(level.star);
-        const card = document.createElement('div');
-        card.className = 'star-card' + (level.star === selectedStar ? ' selected' : '');
-        card.innerHTML = `
-            <div class="stars">${level.label}</div>
-            <div class="label">${level.star} ${t('starLabel')}</div>
-            <div class="points">${t('minPts')}: ${minPoints} ${t('pointsLabel')}</div>
-            <div class="points">${t('mandatory')}: ${mandatoryCount}</div>
-            <div class="points">${t('optional')}: ${optionalCount}</div>
-        `;
-        card.onclick = () => openStarModal(level.star);
-        container.appendChild(card);
+  // ---------------------------------------------------------------- 958 logic
+  // Returns flat list of leaves with applicability for the current facility
+  function leaves958(a) {
+    const ax = annexFor(a); if (!ax) return [];
+    const out = [];
+    ax.annex.sections.forEach(sec => {
+      sec.items.forEach(item => {
+        const leaves = item.sub ? item.sub : [item];
+        leaves.forEach(leaf => {
+          const notes = [].concat(sec.notes || [], item.notes || [], leaf === item ? [] : (leaf.notes || []));
+          let applies = true, reasons = [], info = [];
+          if (ax.col != null) {
+            const mark = leaf.marks && leaf.marks[ax.col];
+            if (!mark || !mark.req) { applies = false; reasons.push(t('notApplicable')); }
+            else notes.push(...(mark.notes || []));
+          }
+          const rules = ax.annex.rules || {};
+          const secNotes = new Set(sec.notes || []);
+          [...new Set(notes)].forEach(n => {
+            const r = rules[n];
+            if (!r) { if (!secNotes.has(n)) info.push(n); return; }
+            if (r.type === 'exempt' && ruleMatches(r, a)) { if (applies) reasons.push(t('exemptBy', { n })); applies = false; info.push(n); }
+            else if (r.type === 'only' && !ruleMatches(r, a)) { if (applies) reasons.push(t('onlyFor', { n })); applies = false; info.push(n); }
+            else if (!secNotes.has(n)) info.push(n);
+          });
+          out.push({ sec, item, leaf, key: ax.key, id: leaf.id, applies, reasons, info: [...new Set(info)], parent: leaf === item ? null : item });
+        });
+      });
     });
-}
-
-function selectStar(star) {
-    selectedStar = star;
-    document.querySelectorAll('.star-card').forEach((c, i) => {
-        c.classList.toggle('selected', CLASSIFICATION_DATA_3296.starLevels[i].star === star);
+    return out;
+  }
+  function eval958(a) {
+    const all = leaves958(a); const app = all.filter(l => l.applies);
+    const res = { total: all.length, applicable: app.length, yes: 0, no: [], na: [], unanswered: [], compliant: false, hasAnnex: all.length > 0 };
+    app.forEach(l => {
+      const ans = a.a958[l.id];
+      if (!ans || !ans.v) res.unanswered.push(l);
+      else if (ans.v === 'yes') res.yes++;
+      else if (ans.v === 'no') res.no.push(l);
+      else res.na.push(l);
     });
-    renderClassificationCriteria();
-    updateStats();
-}
+    res.answered = res.yes + res.no.length + res.na.length;
+    res.compliant = res.hasAnnex && res.unanswered.length === 0 && res.no.length === 0;
+    return res;
+  }
 
-function openStarModal(star) {
-    selectStar(star);
-    const modal = document.getElementById('starModal');
-    const title = document.getElementById('starModalTitle');
-    const subtitle = document.getElementById('starModalSubtitle');
-    const totalCriteriaCount = getDashboardVisualTotalCriteriaCount();
-    const starLevel = CLASSIFICATION_DATA_3296.starLevels.find(l => l.star === star);
-    const mandatoryCount = starLevel ? getMandatoryIdsForLevel(starLevel).length : 0;
-    const optionalCount = Math.max(0, totalCriteriaCount - mandatoryCount);
+  // ---------------------------------------------------------------- 125 logic
+  const clsOf = a => { const k = kindInfo(a.facility.kind); return k ? k.cls : null; };
+  const items125 = () => { const out = []; S125.categories.forEach(c => c.items.forEach(it => out.push(Object.assign({ cat: c }, it)))); return out; };
+  const ITEMS125 = items125(); const ITEM125 = {}; ITEMS125.forEach(i => ITEM125[i.id] = i);
+  const leaves125 = () => ITEMS125.filter(i => !i.header);
+  function isMandatory(item, star, a) {
+    if (item.header) return false;
+    const cls = clsOf(a); const ann = item.ann || []; const flags = facilityFlags(a);
+    let m = item.m.includes(star);
+    if (cls === 'aparthotel') { if (ann.includes('A8')) m = false; if (ann.includes('A9')) m = true; }
+    if (cls === 'specialized') { if (ann.includes('A10')) m = false; if (ann.includes('A11')) m = true; }
+    if (flags.heritage && ann.includes('A7')) m = false;
+    if (flags.sensorDoors && ann.includes('A3')) m = false;
+    return m;
+  }
+  function mandatoryStars(item, a) { return STARS.filter(s => isMandatory(item, s, a)); }
+  function selectedTierRank(tier, a) {
+    const ids = S125.tiers[tier] || []; let best = -1;
+    ids.forEach(id => { const ans = a.a125[id]; if (ans && ans.v === 'yes') { const r = ITEM125[id].rank; if (r > best) best = r; } });
+    return best;
+  }
+  function satisfied125(item, a) {
+    const ans = a.a125[item.id];
+    if (item.rule) return !!(ans && ans.v === 'yes' && Number(ans.qty) > 0);
+    if (item.tier != null) return selectedTierRank(item.tier, a) >= item.rank;
+    return !!(ans && ans.v === 'yes');
+  }
+  function earned125(item, a) {
+    const ans = a.a125[item.id]; if (!ans || ans.v !== 'yes') return 0;
+    if (item.rule) return Math.min(item.rule.max, item.rule.per_unit * Math.max(0, Number(ans.qty) || 0));
+    return item.points;
+  }
+  function threshold(a, star) { const cls = clsOf(a); return cls ? S125.thresholds[cls].min[String(star)] : null; }
+  function eval125(a, star) {
+    const cls = clsOf(a); if (!cls) return null;
+    const leaves = leaves125(); let points = 0; const byCat = {};
+    leaves.forEach(it => { const e = earned125(it, a); points += e; byCat[it.cat.id] = (byCat[it.cat.id] || 0) + e; });
+    const mandatory = leaves.filter(it => isMandatory(it, star, a));
+    const missing = mandatory.filter(it => !satisfied125(it, a));
+    const thr = threshold(a, star);
+    return { star, cls, points, byCat, mandatory, missing, threshold: thr, shortfall: Math.max(0, thr - points), achieved: missing.length === 0 && points >= thr };
+  }
+  function bestStar(a) { let best = 0; STARS.forEach(s => { const e = eval125(a, s); if (e && e.achieved) best = s; }); return best; }
+  function progress125(a) { const leaves = leaves125(); const answered = leaves.filter(it => a.a125[it.id] && a.a125[it.id].v).length; return { answered, total: leaves.length }; }
+  function maxPoints125() { // max counting only the top tier of each tier group
+    let sum = 0; const tierMax = {};
+    leaves125().forEach(it => { if (it.tier != null) tierMax[it.tier] = Math.max(tierMax[it.tier] || 0, it.points); else sum += it.points; });
+    return sum + Object.values(tierMax).reduce((x, y) => x + y, 0);
+  }
 
-    if (title) title.textContent = `${star} ${t('starLabel')}`;
-    if (subtitle) subtitle.textContent = `${t('mandatory')}: ${mandatoryCount} | ${t('optional')}: ${optionalCount}`;
-    if (modal) {
-        modal.dataset.star = String(star);
-        modal.classList.add('active');
-        modal.setAttribute('aria-hidden', 'false');
-    }
-}
+  // ---------------------------------------------------------------- navigation
+  function showPage(p) {
+    $$('.page').forEach(el => el.classList.toggle('active', el.id === 'page-' + p));
+    $$('#mainTabs button').forEach(b => b.classList.toggle('active', b.dataset.page === p));
+    if (p === 'list') renderList();
+    if (p === 'assess') { if (!cur()) { showPage('list'); return; } showStep(state.step || 1); }
+    if (p === 'standards') renderStandards();
+    if (p === 'registry') renderRegistry();
+    if (p === 'users') renderUsers();
+    window.scrollTo({ top: 0 });
+  }
+  function showStep(n) {
+    const a = cur(); if (!a) return;
+    if (n > 1 && !facilityValid(a).ok) { toast(t('stepLocked'), 'error'); n = 1; }
+    state.step = n; save();
+    $$('.step').forEach(el => el.classList.toggle('hidden', el.id !== 'step-' + n));
+    $$('#stepper button').forEach(b => { const s = +b.dataset.step; b.classList.toggle('active', s === n); b.classList.toggle('done', stepDone(a, s)); b.disabled = s > 1 && !facilityValid(a).ok; });
+    if (n === 1) renderStep1(a); if (n === 2) renderStep2(a); if (n === 3) renderStep3(a); if (n === 4) renderStep4(a);
+    window.scrollTo({ top: 0 });
+  }
+  function stepDone(a, s) {
+    if (s === 1) return facilityValid(a).ok;
+    if (s === 2) { const e = eval958(a); return e.hasAnnex && e.unanswered.length === 0; }
+    if (s === 3) { if (!clsOf(a)) return facilityValid(a).ok; const p = progress125(a); return p.answered === p.total; }
+    return false;
+  }
+  function facilityValid(a) {
+    const f = a.facility; const missing = [];
+    if (!f.name.trim()) missing.push(t('fName'));
+    if (!f.kind) missing.push(t('fKind'));
+    if (!f.date) missing.push(t('fDate'));
+    return { ok: missing.length === 0, missing };
+  }
 
-function closeStarModal() {
-    const modal = document.getElementById('starModal');
-    if (!modal) return;
-    modal.classList.remove('active');
-    modal.setAttribute('aria-hidden', 'true');
-}
-
-function openStarListing(type) {
-    const modal = document.getElementById('starModal');
-    const star = modal ? Number(modal.dataset.star || selectedStar) : selectedStar;
-    const starLevel = CLASSIFICATION_DATA_3296.starLevels.find(l => l.star === star);
-    if (!starLevel) return;
-
-    const listingHtml = buildStarListingHtml(starLevel, type);
-    const win = window.open('', '_blank');
-    if (!win) {
-        showToast(t('popupBlocked'), 'error');
-        return;
-    }
-    win.document.write(listingHtml);
-    win.document.close();
-    closeStarModal();
-}
-
-function openAssessmentWindow() {
-    const win = window.open('', '_blank', 'width=900,height=700');
-    if (!win) {
-        showToast(t('popupBlocked'), 'error');
-        return;
-    }
-    const html = buildAssessmentWindowHtml(getAssessmentData());
-    win.document.write(html);
-    win.document.close();
-}
-
-function enterAppAsUser(user, targetPage = 'dashboard') {
-    currentUser = user ? { ...user, role: normalizeUserRole(user.role) } : null;
-    if (!currentUser) return;
-    const invitePage = document.getElementById('invitePage');
-    if (invitePage) invitePage.style.display = 'none';
-    document.getElementById('loginPage').style.display = 'none';
-    document.getElementById('appContainer').style.display = 'block';
-    const fullName = getUserFullName(currentUser) || 'User';
-    document.getElementById('displayUserName').textContent = fullName;
-    document.getElementById('displayUserRole').textContent = getUserRoleLabel(currentUser.role);
-    document.getElementById('userAvatar').textContent = fullName.charAt(0).toUpperCase();
-
-    applyMasterVisibility();
-    renderComplianceSections();
-    renderClassificationCriteria();
-    updateStats();
-    renderManagementLists();
-    updateNotifications();
-    renderResolutions();
-    showPage(targetPage);
-}
-
-// =====================================================
-// EVENT LISTENERS
-// =====================================================
-
-function initEventListeners() {
-    // Login
-    document.getElementById('loginForm').onsubmit = (e) => {
-        e.preventDefault();
-        const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('password').value.trim();
-
-        let matchedUser = null;
-        if (username === MASTER_ACCOUNT.username && password === MASTER_ACCOUNT.password) {
-            matchedUser = { ...MASTER_ACCOUNT };
-        } else {
-            const users = getStoredUsers();
-            const match = users.find(u => u.status === 'active' && u.username === username && u.password === password);
-            if (!match) {
-                showToast(t('invalidCredentials'), 'error');
-                return;
-            }
-            matchedUser = { ...match, role: normalizeUserRole(match.role) };
-        }
-        enterAppAsUser(matchedUser, 'dashboard');
-    };
-
-    // Logout
-    document.getElementById('logoutBtn').onclick = () => {
-        currentUser = null;
-        const invitePage = document.getElementById('invitePage');
-        if (invitePage) invitePage.style.display = 'none';
-        document.getElementById('loginPage').style.display = '';
-        document.getElementById('appContainer').style.display = 'none';
-    };
-
-    // Navigation
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.onclick = () => {
-            showPage(btn.dataset.page);
-        };
-    });
-
-    // Language
-    document.querySelectorAll('.lang-btn').forEach(btn => {
-        btn.onclick = () => {
-            currentLang = btn.dataset.lang;
-            document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b === btn));
-            applyLanguage();
-        };
-    });
-
-    const accommodationTypeSelect = document.getElementById('accommodationTypeSelect');
-    if (accommodationTypeSelect) {
-        accommodationTypeSelect.addEventListener('change', () => {
-            selectedAccommodationType = accommodationTypeSelect.value;
-            initStarCards();
-            renderClassificationCriteria();
-            renderCompareTable();
-            updateStats();
-        });
-    }
-
-    const complianceFacilityTypeSelect = document.getElementById('complianceFacilityTypeSelect');
-    if (complianceFacilityTypeSelect) {
-        complianceFacilityTypeSelect.addEventListener('change', () => {
-            selectedComplianceFacilityType = complianceFacilityTypeSelect.value;
-            renderComplianceSections();
-            updateStats();
-        });
-    }
-
-    const starModal = document.getElementById('starModal');
-    const starModalCloseBtn = document.getElementById('starModalCloseBtn');
-    const starModalMandatoryBtn = document.getElementById('starModalMandatoryBtn');
-    const starModalOptionalBtn = document.getElementById('starModalOptionalBtn');
-
-    if (starModal) {
-        starModal.addEventListener('click', (e) => {
-            if (e.target === starModal) closeStarModal();
-        });
-    }
-    if (starModalCloseBtn) starModalCloseBtn.onclick = closeStarModal;
-    if (starModalMandatoryBtn) starModalMandatoryBtn.onclick = () => openStarListing('mandatory');
-    if (starModalOptionalBtn) starModalOptionalBtn.onclick = () => openStarListing('optional');
-
-    const filterMandatoryBtn = document.getElementById('filterMandatoryBtn');
-    if (filterMandatoryBtn) {
-        filterMandatoryBtn.addEventListener('click', () => {
-            filterMandatoryBtn.classList.toggle('active');
-            renderClassificationCriteria();
-        });
-    }
-
-    const filterMissingBtn = document.getElementById('filterMissingBtn');
-    if (filterMissingBtn) {
-        filterMissingBtn.addEventListener('click', () => {
-            filterMissingBtn.classList.toggle('active');
-            renderClassificationCriteria();
-        });
-    }
-
-    const classificationSearch = document.getElementById('classificationSearch');
-    if (classificationSearch) {
-        classificationSearch.addEventListener('input', () => renderClassificationCriteria());
-    }
-
-    const classificationCategoryFilter = document.getElementById('classificationCategoryFilter');
-    if (classificationCategoryFilter) {
-        classificationCategoryFilter.addEventListener('change', () => renderClassificationCriteria());
-    }
-
-    const classificationHideChecked = document.getElementById('classificationHideChecked');
-    if (classificationHideChecked) {
-        classificationHideChecked.addEventListener('change', () => renderClassificationCriteria());
-    }
-
-    const compareCategoryFilter = document.getElementById('compareCategoryFilter');
-    if (compareCategoryFilter) compareCategoryFilter.addEventListener('change', renderCompareTable);
-
-    const openHotelInfoBtn = document.getElementById('openHotelInfoBtn');
-    if (openHotelInfoBtn) {
-        openHotelInfoBtn.addEventListener('click', () => openAssessmentWindow());
-    }
-
-    const openComplianceBtn = document.getElementById('openComplianceBtn');
-    if (openComplianceBtn) {
-        openComplianceBtn.addEventListener('click', () => showPage('compliance'));
-    }
-
-    const resetAssessmentBtn = document.getElementById('resetAssessmentBtn');
-    if (resetAssessmentBtn) {
-        resetAssessmentBtn.addEventListener('click', resetClassification);
-    }
-
-    const openFullReportBtn = document.getElementById('openFullReportBtn');
-    if (openFullReportBtn) {
-        openFullReportBtn.addEventListener('click', () => generateReport());
-    }
-
-    const reportCardFull = document.getElementById('reportCardFull');
-    if (reportCardFull) reportCardFull.addEventListener('click', () => generateReport());
-    const reportCardGap = document.getElementById('reportCardGap');
-    if (reportCardGap) reportCardGap.addEventListener('click', showGapReport);
-    const reportCardMandatory = document.getElementById('reportCardMandatory');
-    if (reportCardMandatory) reportCardMandatory.addEventListener('click', showMandatoryChecklist);
-    const reportCardExport = document.getElementById('reportCardExport');
-    if (reportCardExport) reportCardExport.addEventListener('click', exportAssessmentData);
-    const reportCardExportPdf = document.getElementById('reportCardExportPdf');
-    if (reportCardExportPdf) reportCardExportPdf.addEventListener('click', exportAssessmentDataPdf);
-
-    const notificationBtn = document.getElementById('notificationBtn');
-    const notificationPanel = document.getElementById('notificationPanel');
-    if (notificationBtn && notificationPanel) {
-        notificationBtn.onclick = (e) => {
-            e.stopPropagation();
-            notificationPanel.classList.toggle('active');
-        };
-    }
-
-    const clearNotificationsBtn = document.getElementById('clearNotificationsBtn');
-    if (clearNotificationsBtn) {
-        clearNotificationsBtn.onclick = () => {
-            notifications = [];
-            updateNotifications();
-        };
-    }
-
-    const openAddUserBtn = document.getElementById('openAddUserBtn');
-    if (openAddUserBtn) {
-        openAddUserBtn.onclick = () => openModal('addUserModal');
-    }
-
-    const addUserCancelBtn = document.getElementById('addUserCancelBtn');
-    if (addUserCancelBtn) {
-        addUserCancelBtn.onclick = () => closeModal('addUserModal');
-    }
-
-    const addUserModal = document.getElementById('addUserModal');
-    if (addUserModal) {
-        addUserModal.addEventListener('click', (e) => {
-            if (e.target === addUserModal) closeModal('addUserModal');
-        });
-    }
-
-    const addUserForm = document.getElementById('addUserForm');
-    if (addUserForm) {
-        addUserForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            if (!isMasterUser()) return;
-            const firstNameInput = document.getElementById('newFirstName');
-            const lastNameInput = document.getElementById('newLastName');
-            const emailInput = document.getElementById('newEmail');
-            const roleInput = document.getElementById('newRole');
-
-            const firstNameVal = firstNameInput ? firstNameInput.value.trim() : '';
-            const lastNameVal = lastNameInput ? lastNameInput.value.trim() : '';
-            const emailVal = emailInput ? emailInput.value.trim().toLowerCase() : '';
-            const roleVal = roleInput ? normalizeUserRole(roleInput.value) : 'user';
-            const fullNameVal = `${firstNameVal} ${lastNameVal}`.trim();
-
-            if (!firstNameVal || !lastNameVal || !emailVal || !roleVal) {
-                showToast(t('fillAllFields'), 'error');
-                return;
-            }
-            if (!isValidEmail(emailVal)) {
-                showToast(t('invalidEmail'), 'error');
-                return;
-            }
-            const users = getStoredUsers();
-            if (users.some(u => String(u.email || '').toLowerCase() === emailVal)) {
-                showToast(t('emailExists'), 'error');
-                return;
-            }
-            const inviteToken = createId('invite');
-            const newUser = {
-                id: createId('user'),
-                firstName: firstNameVal,
-                lastName: lastNameVal,
-                fullName: fullNameVal,
-                email: emailVal,
-                role: roleVal === 'admin' ? 'admin' : 'user',
-                username: '',
-                password: '',
-                status: 'invited',
-                inviteToken,
-                invitedAt: new Date().toISOString(),
-                activatedAt: ''
-            };
-            users.push(newUser);
-            setStoredUsers(users);
-            if (firstNameInput) firstNameInput.value = '';
-            if (lastNameInput) lastNameInput.value = '';
-            if (emailInput) emailInput.value = '';
-            if (roleInput) roleInput.value = 'user';
-            closeModal('addUserModal');
-            sendUserInvite(newUser);
-            showToast(t('invitePrepared'), 'success');
-            renderManagementLists();
-        });
-    }
-
-    const inviteSetupModal = document.getElementById('inviteSetupModal');
-    if (inviteSetupModal) {
-        inviteSetupModal.addEventListener('click', (e) => {
-            if (e.target === inviteSetupModal) {
-                // Invitation modal should not be dismissed accidentally
-                e.preventDefault();
-            }
-        });
-    }
-
-    const inviteSetupForm = document.getElementById('inviteSetupForm');
-    if (inviteSetupForm) {
-        inviteSetupForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            completeInviteSetup();
-        });
-    }
-
-    const invitePageForm = document.getElementById('invitePageForm');
-    if (invitePageForm) {
-        invitePageForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            completeInviteSetup();
-        });
-    }
-
-    const invitePageBackBtn = document.getElementById('invitePageBackBtn');
-    if (invitePageBackBtn) {
-        invitePageBackBtn.addEventListener('click', () => {
-            pendingInviteToken = null;
-            clearInviteTokenFromUrl();
-            const invitePage = document.getElementById('invitePage');
-            if (invitePage) invitePage.style.display = 'none';
-            document.getElementById('appContainer').style.display = 'none';
-            document.getElementById('loginPage').style.display = '';
-        });
-    }
-
-    const photoInput = document.getElementById('photoInput');
-    const videoInput = document.getElementById('videoInput');
-    const documentInput = document.getElementById('documentInput');
-    if (photoInput) photoInput.onchange = handleFileUpload;
-    if (videoInput) videoInput.onchange = handleFileUpload;
-    if (documentInput) documentInput.onchange = handleFileUpload;
-
-    document.addEventListener('click', (e) => {
-        if (notificationPanel && notificationPanel.classList.contains('active')) {
-            if (!notificationPanel.contains(e.target) && (!notificationBtn || !notificationBtn.contains(e.target))) {
-                notificationPanel.classList.remove('active');
-            }
-        }
-    });
-}
-
-// =====================================================
-// PAGE NAVIGATION
-// =====================================================
-
-function showPage(page) {
-    const targetPage = document.getElementById(page + 'Page');
-    if (!targetPage) return;
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    targetPage.classList.add('active');
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === page));
-    if (page === 'report') renderManagementLists();
-    if (page === 'compare') renderCompareTable();
-}
-
-function toggleSection(header) {
-    const content = header.nextElementSibling;
-    const toggle = header.querySelector('.toggle');
-    content.classList.toggle('open');
-    toggle.classList.toggle('open');
-}
-
-// =====================================================
-// 3220 COMPLIANCE RENDERING
-// =====================================================
-
-function renderComplianceSections() {
-    const container = document.getElementById('complianceSections');
-    ensureComplianceFacilityTypeSelection();
-    const openSectionIds = getOpenSectionIds('complianceSections');
-    const scrollY = window.scrollY;
-    container.innerHTML = '';
-
-    COMPLIANCE_DATA_3220.sections.forEach(section => {
-        const sectionId = String(section.id);
-        const sectionCard = document.createElement('div');
-        sectionCard.className = 'section-card';
-        sectionCard.dataset.sectionId = sectionId;
-
-        const sectionHeader = document.createElement('div');
-        sectionHeader.className = 'section-header';
-        sectionHeader.onclick = () => toggleSection(sectionHeader);
-        sectionHeader.innerHTML = `
-            <h3>${section.name[currentLang]}</h3>
-            <span class="toggle">▼</span>
-        `;
-
-        const sectionContent = document.createElement('div');
-        sectionContent.className = 'section-content';
-        if (openSectionIds.has(sectionId)) {
-            sectionContent.classList.add('open');
-            sectionHeader.querySelector('.toggle').classList.add('open');
-        }
-
-        section.requirements.forEach(req => {
-            const item = renderComplianceRequirement(req);
-            sectionContent.appendChild(item);
-        });
-
-        sectionCard.appendChild(sectionHeader);
-        sectionCard.appendChild(sectionContent);
-        container.appendChild(sectionCard);
-    });
-
-    window.scrollTo(0, scrollY);
-}
-
-function renderComplianceRequirement(req) {
-    const div = document.createElement('div');
-    const status = complianceAnswers[req.id] || '';
-    const isMandatory = isComplianceRequirementMandatory(req);
-    const titleText = (req.title && (req.title[currentLang] || req.title.en)) || '';
-
-    let itemClass = 'criterion-item';
-    if (isMandatory) itemClass += ' mandatory';
-    if (status === 'yes') itemClass += ' fulfilled';
-    if (status === 'no') itemClass += ' not-fulfilled';
-
-    div.className = itemClass;
-
-    // Prevent click propagation on the entire item
-    div.onclick = (e) => e.stopPropagation();
-
-    div.innerHTML = `
-        <div class="criterion-header">
-            <div class="criterion-info">
-                <span class="criterion-id">${req.id}</span>
-                ${isMandatory ? `<span class="mandatory-badge">${t('mandatory').toUpperCase()}</span>` : `<span class="optional-badge">${t('optional').toUpperCase()}</span>`}
-                <div class="criterion-title">${titleText}</div>
-            </div>
+  // ---------------------------------------------------------------- list page
+  function renderList() {
+    const box = $('#assessList');
+    if (!state.assessments.length) { box.innerHTML = `<div class="card empty"><div class="big">★</div><h3>${esc(t('noAssessments'))}</h3><p>${esc(t('noAssessmentsHint'))}</p></div>`; return; }
+    const list = state.assessments.slice().sort((x, y) => (y.updatedAt || '').localeCompare(x.updatedAt || ''));
+    box.innerHTML = list.map(a => {
+      const e958 = eval958(a); const cls = clsOf(a); const best = cls ? bestStar(a) : 0;
+      const p125 = cls ? progress125(a) : null;
+      let badge = '';
+      if (!e958.hasAnnex) badge = `<span class="badge">${esc(t('incomplete'))}</span>`;
+      else if (e958.unanswered.length || (p125 && p125.answered < p125.total)) badge = `<span class="badge warn">${esc(t('incomplete'))}</span>`;
+      else if (!e958.compliant) badge = `<span class="badge m">${esc(t('nonCompliant'))}</span>`;
+      else if (cls) badge = best ? `<span class="badge gold">${starStr(best)}</span>` : `<span class="badge m">${esc(t('notAchieved'))}</span>`;
+      else badge = `<span class="badge ok">${esc(t('compliant'))}</span>`;
+      const pct = e958.hasAnnex ? Math.round(100 * (e958.answered + (p125 ? p125.answered : 0)) / Math.max(1, e958.applicable + (p125 ? p125.total : 0))) : 0;
+      return `<div class="card assess-card" data-id="${a.id}">
+        <div style="min-width:0">
+          <div class="name">${esc(a.facility.name || t('untitled'))} ${badge}</div>
+          <div class="sub">${a.owner_name && C.enabled && C.isAdmin() && a.owner_id !== C.user.id ? esc(a.owner_name) + ' · ' : ''}${esc(kindName(a.facility.kind))}${a.facility.region ? ' · ' + esc(a.facility.region) : ''} · ${esc(fmtDate(a.facility.date))} · ${esc(t('fTarget'))}: ${starStr(a.facility.target)}${cls ? ' · ' + eval125(a, a.facility.target).points + ' ' + esc(t('pts')) : ''}</div>
+          <div class="progress" style="margin-top:8px;max-width:320px"><span style="width:${pct}%"></span></div>
         </div>
-        <div class="assessment-controls">
-            <button class="status-btn yes ${status === 'yes' ? 'active' : ''}" data-req-id="${req.id}" data-status="yes">✓ ${t('yes')}</button>
-            <button class="status-btn no ${status === 'no' ? 'active' : ''}" data-req-id="${req.id}" data-status="no">✗ ${t('no')}</button>
-            <button class="status-btn na ${status === 'na' ? 'active' : ''}" data-req-id="${req.id}" data-status="na">${t('na')}</button>
-        </div>
-    `;
-
-    // Add event listeners to buttons
-    const buttons = div.querySelectorAll('.status-btn');
-    buttons.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const reqId = btn.getAttribute('data-req-id');
-            const newStatus = btn.getAttribute('data-status');
-            setComplianceStatus(reqId, newStatus);
-        });
-    });
-
-    return div;
-}
-
-function setComplianceStatus(id, status) {
-    if (complianceAnswers[id] === status) {
-        delete complianceAnswers[id];
-    } else {
-        complianceAnswers[id] = status;
-    }
-    renderComplianceSections();
-    updateStats();
-}
-
-// =====================================================
-// 3296 CLASSIFICATION RENDERING
-// =====================================================
-
-function renderClassificationCriteria() {
-    const container = document.getElementById('classificationSections');
-    const openSectionIds = getOpenSectionIds('classificationSections');
-    const scrollY = window.scrollY;
-    container.innerHTML = '';
-
-    const currentStarLevel = getStarLevel(selectedStar) || CLASSIFICATION_DATA_3296.starLevels[0];
-    const mandatorySet = new Set(getMandatoryIdsForLevel(currentStarLevel));
-    const activeCriteriaIds = getAssessableCriterionIdSet(currentStarLevel.star);
-    const showMandatoryOnly = isFilterActive('filterMandatoryBtn');
-    const showMissingOnly = isFilterActive('filterMissingBtn');
-    const searchTerm = (document.getElementById('classificationSearch')?.value || '').trim().toLowerCase();
-    const categoryFilter = document.getElementById('classificationCategoryFilter')?.value || '';
-    const hideChecked = Boolean(document.getElementById('classificationHideChecked')?.checked);
-
-    CLASSIFICATION_DATA_3296.sections.forEach(section => {
-        if (categoryFilter && String(section.id) !== String(categoryFilter)) return;
-
-        const sectionId = String(section.id);
-        const sectionCard = document.createElement('div');
-        sectionCard.className = 'section-card';
-        sectionCard.dataset.sectionId = sectionId;
-
-        const sectionHeader = document.createElement('div');
-        sectionHeader.className = 'section-header';
-        sectionHeader.onclick = () => toggleSection(sectionHeader);
-        sectionHeader.innerHTML = `
-            <h3>${section.name[currentLang]}</h3>
-            <span class="toggle">▼</span>
-        `;
-
-        const sectionContent = document.createElement('div');
-        sectionContent.className = 'section-content';
-        if (openSectionIds.has(sectionId)) {
-            sectionContent.classList.add('open');
-            sectionHeader.querySelector('.toggle').classList.add('open');
-        }
-
-        const rows = [];
-        let currentGroupHeader = null;
-        (section.criteria || []).forEach(criterion => {
-            if (!isAssessableClassificationCriterion(criterion)) {
-                if (criterion.isGroupHeader) {
-                    currentGroupHeader = criterion;
-                }
-                return;
-            }
-            if (!activeCriteriaIds.has(String(criterion.id))) return;
-            const title = (criterion.title && (criterion.title[currentLang] || criterion.title.en)) || '';
-            if (searchTerm && !title.toLowerCase().includes(searchTerm) && !String(criterion.id).toLowerCase().includes(searchTerm)) {
-                return;
-            }
-            if (hideChecked && classificationAnswers[criterion.id]) return;
-            if (showMandatoryOnly && !mandatorySet.has(String(criterion.id))) return;
-            if (showMissingOnly) {
-                const status = classificationAnswers[criterion.id];
-                if (status !== 'no' && status) return;
-            }
-            rows.push({
-                criterion,
-                groupHeader: currentGroupHeader
-            });
-        });
-        if (!rows.length) return;
-
-        let lastHeaderId = null;
-        rows.forEach(row => {
-            const criterion = row.criterion;
-            const header = row.groupHeader;
-            const headerId = header ? String(header.id) : null;
-
-            if (header && headerId !== lastHeaderId) {
-                const headerTitle = (header.title && (header.title[currentLang] || header.title.en)) || '';
-                const headerNode = document.createElement('div');
-                headerNode.className = 'criterion-group-header';
-                headerNode.innerHTML = `
-                    <div style="font-size:11px;color:var(--gray-600);font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:8px 2px 4px;border-bottom:1px solid var(--gray-200);margin:4px 0 8px">
-                        #${escapeHtml(header.id)} ${escapeHtml(headerTitle)}
-                    </div>
-                `;
-                sectionContent.appendChild(headerNode);
-                lastHeaderId = headerId;
-            }
-
-            const isMandatory = mandatorySet.has(String(criterion.id));
-            const item = renderClassificationCriterion(criterion, isMandatory);
-            sectionContent.appendChild(item);
-        });
-
-        sectionCard.appendChild(sectionHeader);
-        sectionCard.appendChild(sectionContent);
-        container.appendChild(sectionCard);
-    });
-
-    if (!container.innerHTML) {
-        container.innerHTML = `<p style="color:var(--gray-500);font-size:12px">${t('noItems')}</p>`;
-    }
-
-    window.scrollTo(0, scrollY);
-}
-
-function renderClassificationCriterion(criterion, isMandatory) {
-    const div = document.createElement('div');
-    const status = classificationAnswers[criterion.id] || '';
-    const evidence = evidenceData[criterion.id] || [];
-    const titleText = (criterion.title && (criterion.title[currentLang] || criterion.title.en)) || '';
-    const isPerUnit = isPerUnitCriterion(criterion);
-    const quantity = getCriterionQuantity(criterion.id);
-    const maxPoints = getCriterionMaxPoints(criterion);
-    const earnedPoints = getCriterionEarnedPoints(criterion);
-    const pointsBadgeText = isPerUnit
-        ? `${earnedPoints}/${maxPoints} ${t('pointsLabel')}`
-        : `${criterion.points} ${t('pointsLabel')}`;
-    const referenceCodes = Array.isArray(criterion.referenceCodes)
-        ? criterion.referenceCodes
-        : normalizeReferenceCodes(criterion.reference || '');
-    const referencesHtml = referenceCodes.length
-        ? `
-            <div class="criterion-reference" style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
-                ${referenceCodes.map(code => {
-                    const annotationText = getAnnotationText(code);
-                    const tooltip = annotationText ? escapeHtml(`${code}: ${annotationText}`) : escapeHtml(code);
-                    return `<span title="${tooltip}" style="font-size:10px;padding:2px 6px;border:1px solid var(--gray-300);border-radius:999px;background:var(--gray-50);color:var(--gray-600);cursor:help">${escapeHtml(code)}</span>`;
-                }).join('')}
-            </div>
-        `
-        : '';
-    const perUnitDetails = isPerUnit
-        ? `
-            <div class="per-unit-box" style="margin-top:10px;padding:8px 10px;border:1px solid var(--gray-200);border-radius:8px;background:var(--gray-50)">
-                <div style="font-size:11px;color:var(--gray-600);margin-bottom:6px">
-                    ${criterion.scoringRule.pointsPerUnit} × ${escapeHtml(criterion.scoringRule.unit?.[currentLang] || criterion.scoringRule.unit?.en || t('unitLabel'))}
-                    (${t('maxLabel')}: ${maxPoints} ${t('pointsLabel')})
-                </div>
-                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                    <label for="qty-${criterion.id}" style="font-size:12px;color:var(--gray-700)">${t('quantityLabel')}</label>
-                    <input
-                        id="qty-${criterion.id}"
-                        class="quantity-input"
-                        data-crit-id="${criterion.id}"
-                        type="number"
-                        min="0"
-                        step="1"
-                        value="${quantity}"
-                        ${status === 'yes' ? '' : 'disabled'}
-                        style="width:90px;padding:6px 8px;border:1px solid var(--gray-300);border-radius:6px;font-size:12px;background:#fff"
-                    />
-                    <span style="font-size:12px;color:var(--gray-700)">
-                        ${t('scoreLabel')}: <strong>${earnedPoints}</strong> / ${maxPoints}
-                    </span>
-                </div>
-            </div>
-        `
-        : '';
-
-    let itemClass = 'criterion-item';
-    if (isMandatory) itemClass += ' mandatory';
-    if (status === 'yes') itemClass += ' fulfilled';
-    if (status === 'no') itemClass += ' not-fulfilled';
-
-    div.className = itemClass;
-
-    // Prevent click propagation on the entire item
-    div.onclick = (e) => e.stopPropagation();
-
-    div.innerHTML = `
-        <div class="criterion-header">
-            <div class="criterion-info">
-                <span class="criterion-id">#${criterion.id}</span>
-                ${isMandatory ? `<span class="mandatory-badge">${t('mandatory').toUpperCase()}</span>` : ''}
-                <div class="criterion-title">${titleText}</div>
-                ${referencesHtml}
-            </div>
-            <div class="criterion-badges">
-                <span class="points-badge">${pointsBadgeText}</span>
-            </div>
-        </div>
-        <div class="assessment-controls">
-            <button class="status-btn yes ${status === 'yes' ? 'active' : ''}" data-crit-id="${criterion.id}" data-status="yes">✓ ${t('yes')}</button>
-            <button class="status-btn no ${status === 'no' ? 'active' : ''}" data-crit-id="${criterion.id}" data-status="no">✗ ${t('no')}</button>
-            <button class="status-btn na ${status === 'na' ? 'active' : ''}" data-crit-id="${criterion.id}" data-status="na">${t('na')}</button>
-        </div>
-        ${perUnitDetails}
-        <div class="evidence-section">
-            <div class="evidence-title">📎 ${t('evidenceTitle')}</div>
-            <div class="evidence-buttons">
-                <button class="evidence-btn ${evidence.some(e => e.type === 'photo') ? 'has-file' : ''}" data-crit-id="${criterion.id}" data-evidence="photo">📷 ${t('photoLabel')}</button>
-                <button class="evidence-btn ${evidence.some(e => e.type === 'video') ? 'has-file' : ''}" data-crit-id="${criterion.id}" data-evidence="video">🎥 ${t('videoLabel')}</button>
-                <button class="evidence-btn ${evidence.some(e => e.type === 'document') ? 'has-file' : ''}" data-crit-id="${criterion.id}" data-evidence="document">📄 ${t('documentLabel')}</button>
-            </div>
-            ${evidence.length ? `
-                <div class="evidence-list">
-                    ${evidence.map((item, index) => `
-                        <span class="evidence-item">
-                            ${item.name}
-                            <span class="remove" data-crit-id="${criterion.id}" data-index="${index}">×</span>
-                        </span>
-                    `).join('')}
-                </div>
-            ` : ''}
-        </div>
-    `;
-
-    // Add event listeners to buttons
-    const buttons = div.querySelectorAll('.status-btn');
-    buttons.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const critId = btn.getAttribute('data-crit-id');
-            const newStatus = btn.getAttribute('data-status');
-            setClassificationStatus(critId, newStatus);
-        });
-    });
-
-    const evidenceButtons = div.querySelectorAll('.evidence-btn');
-    evidenceButtons.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const critId = btn.getAttribute('data-crit-id');
-            const type = btn.getAttribute('data-evidence');
-            uploadEvidence(critId, type);
-        });
-    });
-
-    const removeButtons = div.querySelectorAll('.evidence-item .remove');
-    removeButtons.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const critId = btn.getAttribute('data-crit-id');
-            const index = Number(btn.getAttribute('data-index'));
-            removeEvidence(critId, index);
-        });
-    });
-
-    const quantityInput = div.querySelector('.quantity-input');
-    if (quantityInput) {
-        quantityInput.addEventListener('input', (e) => {
-            e.stopPropagation();
-            const critId = quantityInput.getAttribute('data-crit-id');
-            setClassificationQuantity(critId, quantityInput.value);
-        });
-    }
-
-    return div;
-}
-
-function setClassificationStatus(id, status) {
-    const criterionId = String(id);
-    const criterion = getCriterionById(criterionId);
-    if (classificationAnswers[criterionId] === status) {
-        delete classificationAnswers[criterionId];
-    } else {
-        classificationAnswers[criterionId] = status;
-    }
-
-    if (criterion && isPerUnitCriterion(criterion)) {
-        const currentQuantity = getCriterionQuantity(criterionId);
-        if (classificationAnswers[criterionId] === 'yes' && currentQuantity <= 0) {
-            classificationQuantities[criterionId] = 1;
-        } else if (classificationAnswers[criterionId] !== 'yes' && currentQuantity <= 0) {
-            delete classificationQuantities[criterionId];
-        }
-    }
-    renderClassificationCriteria();
-    updateStats();
-}
-
-function uploadEvidence(criterionId, type) {
-    currentUpload = { mode: 'criterion', id: criterionId, type };
-    const input = document.getElementById(type + 'Input');
-    if (input) input.click();
-}
-
-function removeEvidence(criterionId, index) {
-    if (!evidenceData[criterionId]) return;
-    evidenceData[criterionId].splice(index, 1);
-    if (evidenceData[criterionId].length === 0) {
-        delete evidenceData[criterionId];
-    }
-    renderClassificationCriteria();
-    updateStats();
-}
-
-// =====================================================
-// STATISTICS UPDATE
-// =====================================================
-
-function updateStats() {
-    // 3220 Compliance
-    const complianceResult = evaluate3220();
-    const complianceStatusEl = document.getElementById('complianceStatus');
-    if (complianceStatusEl) {
-        complianceStatusEl.textContent = complianceResult.compliant ? t('reportCompliant') : t('reportNotCompliant');
-        complianceStatusEl.style.color = complianceResult.compliant ? 'var(--success)' : 'var(--danger)';
-    }
-
-    // 3296 Classification
-    let totalPoints = 0;
-    let fulfilled = 0;
-    let missing = 0;
-    let assessed = 0;
-    const activeCriteriaIds = getAssessableCriterionIdSet(selectedStar);
-
-    CLASSIFICATION_DATA_3296.sections.forEach(section => {
-        section.criteria.forEach(criterion => {
-            if (!isAssessableClassificationCriterion(criterion)) return;
-            if (!activeCriteriaIds.has(String(criterion.id))) return;
-            const status = classificationAnswers[criterion.id];
-            if (status === 'yes') {
-                totalPoints += getCriterionEarnedPoints(criterion);
-                fulfilled++;
-                assessed++;
-            } else if (status === 'no') {
-                missing++;
-                assessed++;
-            } else if (status === 'na') {
-                assessed++;
-            }
-        });
-    });
-
-    const totalPointsEl = document.getElementById('totalPoints');
-    const fulfilledCountEl = document.getElementById('fulfilledCount');
-    const missingCountEl = document.getElementById('missingCount');
-    if (totalPointsEl) totalPointsEl.textContent = totalPoints;
-    if (fulfilledCountEl) fulfilledCountEl.textContent = fulfilled;
-    if (missingCountEl) missingCountEl.textContent = missing;
-
-    const totalCriteriaCount = getDashboardVisualTotalCriteriaCount();
-    const maxPointsForSelectedStar = getMaxPointsForStar(selectedStar);
-    const assessedCountEl = document.getElementById('assessedCount');
-    const totalCriteriaEl = document.getElementById('totalCriteria');
-    const currentPointsEl = document.getElementById('currentPoints');
-    const maxPointsEl = document.getElementById('maxPoints');
-    const progressFillEl = document.getElementById('progressFill');
-    if (assessedCountEl) assessedCountEl.textContent = assessed;
-    if (totalCriteriaEl) totalCriteriaEl.textContent = totalCriteriaCount;
-    if (currentPointsEl) currentPointsEl.textContent = totalPoints;
-    if (maxPointsEl) maxPointsEl.textContent = maxPointsForSelectedStar;
-    if (progressFillEl) {
-        const pct = totalCriteriaCount ? (assessed / totalCriteriaCount) * 100 : 0;
-        progressFillEl.style.width = `${Math.min(100, pct).toFixed(1)}%`;
-    }
-
-    const currentStarLevel = CLASSIFICATION_DATA_3296.starLevels.find(l => l.star === selectedStar);
-    const mandatoryStatusEl = document.getElementById('mandatoryStatus');
-    if (currentStarLevel && mandatoryStatusEl) {
-        const mandatoryIds = getMandatoryIdsForLevel(currentStarLevel);
-        const fulfilledMandatory = mandatoryIds.filter(id => {
-            return isMandatoryCriterionIdSatisfied(id);
-        }).length;
-        mandatoryStatusEl.textContent = `${fulfilledMandatory}/${mandatoryIds.length}`;
-    }
-
-    const evidenceCountEl = document.getElementById('evidenceCount');
-    if (evidenceCountEl) evidenceCountEl.textContent = getEvidenceCount();
-
-    updateAssessmentPanel();
-    updateDashboardStats();
-    persistWorkingState();
-}
-
-function handleFileUpload(event) {
-    if (!currentUpload) return;
-    const files = Array.from(event.target.files || []);
-    if (!files.length) {
-        event.target.value = '';
-        currentUpload = null;
-        return;
-    }
-
-    if (currentUpload.mode === 'criterion') {
-        if (!evidenceData[currentUpload.id]) evidenceData[currentUpload.id] = [];
-        files.forEach(file => {
-            evidenceData[currentUpload.id].push({ name: file.name, type: currentUpload.type });
-        });
-        renderClassificationCriteria();
-        updateStats();
-    } else if (currentUpload.mode === 'resolution') {
-        const resolution = resolutions.find(r => r.id === currentUpload.id);
-        if (resolution) {
-            if (!resolution.evidence) resolution.evidence = [];
-            files.forEach(file => {
-                resolution.evidence.push({ name: file.name, type: currentUpload.type });
-            });
-            renderResolutions();
-        }
-    }
-
-    event.target.value = '';
-    currentUpload = null;
-    persistWorkingState();
-}
-
-// =====================================================
-// EVALUATION ALGORITHMS
-// =====================================================
-
-function evaluate3220() {
-    ensureComplianceFacilityTypeSelection();
-    let compliant = true;
-    const failedRequirements = [];
-
-    COMPLIANCE_DATA_3220.sections.forEach(section => {
-        section.requirements.forEach(req => {
-            if (!isComplianceRequirementMandatory(req)) return;
-            const status = complianceAnswers[req.id];
-            // For mandatory requirements: must be 'yes' or 'na' (if not applicable)
-            // If no answer or 'no', it fails
-            if (status !== 'yes' && status !== 'na') {
-                compliant = false;
-                failedRequirements.push(req);
-            }
-        });
-    });
-
-    return {
-        compliant,
-        failedRequirements
-    };
-}
-
-function evaluate3296() {
-    const currentStarLevel = getStarLevel(selectedStar);
-    if (!currentStarLevel) {
-        return { achieved: false, reason: 'invalid_star', star: 0, points: 0, required: 0 };
-    }
-    const requiredPoints = getMinPointsForStar(selectedStar);
-    const activeCriteriaIds = getAssessableCriterionIdSet(selectedStar);
-
-    // Step 1: Calculate total points
-    let totalPoints = 0;
-    CLASSIFICATION_DATA_3296.sections.forEach(section => {
-        section.criteria.forEach(criterion => {
-            if (!isAssessableClassificationCriterion(criterion)) return;
-            if (!activeCriteriaIds.has(String(criterion.id))) return;
-            totalPoints += getCriterionEarnedPoints(criterion);
-        });
-    });
-
-    // Step 2: Check all mandatory criteria
-    const failedMandatory = [];
-    for (const mandatoryId of getMandatoryIdsForLevel(currentStarLevel)) {
-        if (!isMandatoryCriterionIdSatisfied(mandatoryId)) {
-            failedMandatory.push(mandatoryId);
-        }
-    }
-
-    if (failedMandatory.length > 0) {
-        return {
-            achieved: false,
-            reason: 'mandatory_failure',
-            failedMandatory,
-            star: 0,
-            points: totalPoints
-        };
-    }
-
-    // Step 3: Check threshold
-    if (totalPoints >= requiredPoints) {
-        return {
-            achieved: true,
-            star: selectedStar,
-            points: totalPoints
-        };
-    }
-
-    return {
-        achieved: false,
-        reason: 'insufficient_points',
-        star: 0,
-        points: totalPoints,
-        required: requiredPoints
-    };
-}
-
-function getClassificationPointsBreakdown() {
-    const currentStarLevel = getStarLevel(selectedStar);
-    if (!currentStarLevel) {
-        return {
-            mandatoryPointsAchieved: 0,
-            optionalPointsAchieved: 0,
-            mandatoryPointsRequired: 0,
-            optionalPointsRequired: 0
-        };
-    }
-    const mandatorySet = new Set(getMandatoryIdsForLevel(currentStarLevel));
-    const activeCriteriaIds = getAssessableCriterionIdSet(selectedStar);
-    let mandatoryPointsAchieved = 0;
-    let optionalPointsAchieved = 0;
-    let mandatoryPointsRequired = 0;
-
-    CLASSIFICATION_DATA_3296.sections.forEach(section => {
-        section.criteria.forEach(criterion => {
-            if (!isAssessableClassificationCriterion(criterion)) return;
-            if (!activeCriteriaIds.has(String(criterion.id))) return;
-            const earnedPoints = getCriterionEarnedPoints(criterion);
-            if (mandatorySet.has(criterion.id)) {
-                mandatoryPointsRequired += getCriterionMaxPoints(criterion);
-                mandatoryPointsAchieved += earnedPoints;
-            } else {
-                optionalPointsAchieved += earnedPoints;
-            }
-        });
-    });
-
-    const optionalPointsRequired = Math.max(0, getMinPointsForStar(selectedStar) - mandatoryPointsRequired);
-    return {
-        mandatoryPointsAchieved,
-        optionalPointsAchieved,
-        mandatoryPointsRequired,
-        optionalPointsRequired
-    };
-}
-
-function hasRequiredAssessmentData() {
-    const requiredFields = ['hotelName', 'hotelAddress', 'roomCount', 'assessmentDate', 'contactName', 'contactPhone', 'contactEmail'];
-    return requiredFields.every(field => {
-        const value = assessmentData[field];
-        return typeof value === 'string' ? value.trim() !== '' : Boolean(value);
-    });
-}
-
-// =====================================================
-// REPORT GENERATION
-// =====================================================
-
-function generateReport() {
-    if (!hasRequiredAssessmentData()) {
-        showToast(t('assessmentRequiredFields'), 'error');
-        openAssessmentWindow();
-        return;
-    }
-
-    const hotelName = assessmentData.hotelName || 'Hotel Name';
-    const address = assessmentData.hotelAddress || 'Address';
-    const rooms = assessmentData.roomCount || '0';
-    const date = assessmentData.assessmentDate || new Date().toISOString().split('T')[0];
-    const contactName = assessmentData.contactName || '—';
-    const contactPhone = assessmentData.contactPhone || '—';
-    const contactEmail = assessmentData.contactEmail || '—';
-
-    const complianceResult = evaluate3220();
-    const classificationResult = evaluate3296();
-    const pointsBreakdown = getClassificationPointsBreakdown();
-    const classificationMaxPoints = getMaxPointsForStar(selectedStar);
-    const mailTo = contactEmail ? `mailto:${contactEmail}` : 'mailto:';
-    const assessmentRecord = createAssessmentRecord();
-    const reportId = createId('report');
-    const complianceStatusText = complianceResult.compliant ? t('reportCompliant') : t('reportNotCompliant');
-    const complianceMessage = complianceResult.compliant
-        ? t('reportAllMandatoryMet')
-        : t('reportFailedRequirements').replace('{count}', complianceResult.failedRequirements.length);
-    const classificationTitle = classificationResult.achieved
-        ? t('reportClassificationAchieved').replace('{star}', classificationResult.star)
-        : t('reportClassificationNotAchieved');
-    const resolutionButtonHtml = isMasterUser()
-        ? `<button class="btn btn-warning" onclick="if (window.opener && window.opener.sendToResolution) { window.opener.sendToResolution(); } else if (typeof sendToResolution === 'function') { sendToResolution(); }">📝 ${t('sendToResolution')}</button>`
-        : '';
-
-    let reportHTML = `
-        <div class="report-header">
-            <h1>${t('reportTitle')}</h1>
-            <p class="standard">${t('reportStandard')}</p>
-        </div>
-
-        <div class="report-hotel-info">
-            <div class="info-item">
-                <label>${t('reportHotelName')}</label>
-                <span>${hotelName}</span>
-            </div>
-            <div class="info-item">
-                <label>${t('reportAddress')}</label>
-                <span>${address}</span>
-            </div>
-            <div class="info-item">
-                <label>${t('reportRooms')}</label>
-                <span>${rooms}</span>
-            </div>
-            <div class="info-item">
-                <label>${t('reportDate')}</label>
-                <span>${date}</span>
-            </div>
-            <div class="info-item">
-                <label>${t('contactPerson')}</label>
-                <span>${contactName}</span>
-            </div>
-            <div class="info-item">
-                <label>${t('phone')}</label>
-                <span>${contactPhone}</span>
-            </div>
-            <div class="info-item">
-                <label>${t('email')}</label>
-                <span>${contactEmail}</span>
-            </div>
-            <div class="info-item">
-                <label>${t('reportInspector')}</label>
-                <span>${currentUser ? getUserFullName(currentUser) : t('roleUser')}</span>
-            </div>
-            <div class="info-item">
-                <label>${t('reportTarget')}</label>
-                <span>${'★'.repeat(selectedStar)}</span>
-            </div>
-        </div>
-
-        <div class="compliance-status ${complianceResult.compliant ? 'compliant' : 'non-compliant'}">
-            <h3>O'z DSt 3220:2023 - ${complianceStatusText}</h3>
-            <p>${complianceMessage}</p>
-            ${!complianceResult.compliant && complianceResult.failedRequirements.length > 0 ? `
-                <div class="legal-warning">
-                    <strong>⚠️ ${t('legalStatusTitle')}:</strong> ${t('legalStatusText')}
-                </div>
-            ` : ''}
-        </div>
-
-        <div class="report-result">
-            <div class="stars">${classificationResult.achieved ? '★'.repeat(classificationResult.star) : '—'}</div>
-            <h2>${classificationTitle}</h2>
-            <p class="score">${classificationResult.points} / ${classificationMaxPoints} ${t('pointsLabel')}</p>
-        </div>
-
-        <div class="report-summary">
-            <div class="summary-item blue">
-                <div class="label">${t('mandatoryPointsAchieved')}</div>
-                <div class="value">${pointsBreakdown.mandatoryPointsAchieved}</div>
-            </div>
-            <div class="summary-item green">
-                <div class="label">${t('optionalPointsAchieved')}</div>
-                <div class="value">${pointsBreakdown.optionalPointsAchieved}</div>
-            </div>
-            <div class="summary-item orange">
-                <div class="label">${t('mandatoryPointsRequired')}</div>
-                <div class="value">${pointsBreakdown.mandatoryPointsRequired}</div>
-            </div>
-            <div class="summary-item red">
-                <div class="label">${t('optionalPointsRequired')}</div>
-                <div class="value">${pointsBreakdown.optionalPointsRequired}</div>
-            </div>
-        </div>
-
-        ${!complianceResult.compliant ? `
-            <div class="legal-warning">
-                <strong>⚠️ ${t('reportImportant')}</strong> ${t('reportTechnicalOnly')}
-            </div>
-        ` : ''}
-
-        ${!classificationResult.achieved && classificationResult.reason === 'mandatory_failure' ? `
-            <div class="missing-section">
-                <h3>❌ ${t('reportFailedMandatoryTitle').replace('{star}', selectedStar)}</h3>
-                ${classificationResult.failedMandatory.map(id => {
-                    let criterion = null;
-                    CLASSIFICATION_DATA_3296.sections.forEach(s => {
-                        const found = s.criteria.find(c => c.id === id);
-                        if (found) criterion = found;
-                    });
-                    return criterion ? `
-                        <div class="missing-item">
-                            <span class="name">#${criterion.id} - ${criterion.title[currentLang]}</span>
-                            <span class="pts">${getCriterionMaxPoints(criterion)} pts</span>
-                        </div>
-                    ` : '';
-                }).join('')}
-            </div>
-        ` : ''}
-
-        ${!classificationResult.achieved && classificationResult.reason === 'insufficient_points' ? `
-            <div class="missing-section">
-                <h3>⚠️ ${t('reportInsufficientPoints')}</h3>
-                <p style="padding:15px;background:var(--gray-50);border-radius:8px">
-                    ${t('reportTotalPoints')} <strong>${classificationResult.points}</strong><br>
-                    ${t('reportRequired')} <strong>${classificationResult.required}</strong><br>
-                    ${t('reportShortfall')} <strong>${classificationResult.required - classificationResult.points}</strong> ${t('pointsLabel')}
-                </p>
-            </div>
-        ` : ''}
-
-        <div class="report-actions">
-            <a class="btn btn-secondary" href="${mailTo}?subject=Hotel%20Assessment%20Report">📧 ${t('emailAction')}</a>
-            <button class="btn btn-primary" onclick="window.print()">🖨️ ${t('printAction')}</button>
-            <button class="btn btn-success" onclick="window.print()">💾 ${t('savePdfAction')}</button>
-            ${resolutionButtonHtml}
-        </div>
-    `;
-
-    const reportContent = document.getElementById('reportContent');
-    if (reportContent) reportContent.innerHTML = reportHTML;
-    showPage('report');
-
-    saveAssessmentRecord(assessmentRecord);
-    saveReportRecord({
-        id: reportId,
-        html: reportHTML,
-        hotelName,
-        createdAt: new Date().toISOString(),
-        createdBy: currentUser ? currentUser.username : 'unknown'
-    });
-    renderManagementLists();
-
-    const reportWin = window.open('', '_blank', 'width=1000,height=750');
-    if (!reportWin) {
-        showToast(t('popupBlocked'), 'error');
-        return;
-    }
-    reportWin.document.write(buildReportWindowHtml(reportHTML));
-    reportWin.document.close();
-}
-
-function buildReportWindowHtml(reportBodyHtml) {
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${t('reportTitle')}</title>
-<style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: "Segoe UI", Tahoma, sans-serif; background: #f8fafc; color: #111827; }
-    .report-container { background: #fff; border-radius: 15px; padding: 32px; max-width: 900px; margin: 30px auto; box-shadow: 0 8px 30px rgba(0,0,0,.08); }
-    .report-header { text-align: center; padding-bottom: 20px; border-bottom: 2px solid #e5e7eb; margin-bottom: 20px; }
-    .report-header h1 { font-size: 22px; color: #1f2937; margin-bottom: 5px; }
-    .report-header .standard { color: #6b7280; font-size: 12px; }
-    .report-hotel-info { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 16px; background: #f9fafb; border-radius: 10px; margin-bottom: 20px; }
-    .info-item label { font-size: 11px; color: #6b7280; display: block; margin-bottom: 4px; }
-    .info-item span { font-size: 13px; font-weight: 600; color: #1f2937; }
-    .report-result { text-align: center; padding: 24px; background: linear-gradient(135deg, #fef3c7, #fde68a); border-radius: 12px; margin-bottom: 20px; }
-    .report-result .stars { font-size: 36px; color: #f59e0b; margin-bottom: 8px; }
-    .report-result h2 { font-size: 20px; color: #1f2937; margin-bottom: 6px; }
-    .report-result .score { font-size: 14px; color: #4b5563; }
-    .compliance-status { padding: 16px; border-radius: 10px; margin-bottom: 20px; border: 2px solid; }
-    .compliance-status.compliant { background: #f0fdf4; border-color: #16a34a; }
-    .compliance-status.non-compliant { background: #fef2f2; border-color: #dc2626; }
-    .compliance-status h3 { font-size: 14px; margin-bottom: 8px; }
-    .compliance-status.compliant h3 { color: #16a34a; }
-    .compliance-status.non-compliant h3 { color: #dc2626; }
-    .legal-warning { background: #fff3cd; border: 2px solid #d97706; padding: 12px; border-radius: 8px; margin-top: 12px; font-size: 12px; color: #1f2937; }
-    .report-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
-    .summary-item { background: #f9fafb; padding: 12px; border-radius: 10px; text-align: center; }
-    .summary-item .label { font-size: 10px; color: #6b7280; margin-bottom: 4px; }
-    .summary-item .value { font-size: 18px; font-weight: 700; }
-    .summary-item.green .value { color: #16a34a; }
-    .summary-item.red .value { color: #dc2626; }
-    .summary-item.orange .value { color: #d97706; }
-    .summary-item.blue .value { color: #1e40af; }
-    .missing-section { margin-bottom: 20px; }
-    .missing-section h3 { font-size: 14px; color: #1f2937; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #e5e7eb; }
-    .missing-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: #fef2f2; border-radius: 6px; margin-bottom: 6px; border-left: 3px solid #dc2626; gap: 10px; }
-    .missing-item .name { font-size: 12px; color: #374151; flex: 1; }
-    .missing-item .pts { font-size: 11px; font-weight: 600; color: #dc2626; }
-    .report-actions { display: flex; gap: 10px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
-    .btn { padding: 10px 18px; border: none; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
-    .btn-primary { background: linear-gradient(135deg, #1e40af, #3b82f6); color: #fff; }
-    .btn-secondary { background: #e5e7eb; color: #374151; }
-    .btn-success { background: #16a34a; color: #fff; }
-    .btn-warning { background: #d97706; color: #fff; }
-    @media (max-width: 768px) {
-        .report-container { padding: 20px; margin: 20px; }
-        .report-hotel-info { grid-template-columns: 1fr; }
-        .report-summary { grid-template-columns: repeat(2, 1fr); }
-    }
-</style>
-</head>
-<body>
-    <div class="report-container">
-        ${reportBodyHtml}
-    </div>
-</body>
-</html>`;
-}
-
-function buildAssessmentWindowHtml(data) {
-    const payload = JSON.stringify(data || {});
-    const scriptClose = '</scr' + 'ipt>';
-    const lang = currentLang || 'en';
-    const text = UI_TEXT[lang] || UI_TEXT.en;
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${text.assessmentTitle}</title>
-<style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-        --primary: #0b2e59;
-        --primary-light: #1f4d8b;
-        --success: #1f7a45;
-        --gray-50: #f8fafc;
-        --gray-200: #e2e8f0;
-        --gray-500: #64748b;
-        --gray-700: #334155;
-        --gray-800: #1f2937;
-    }
-    body {
-        font-family: "Segoe UI", Tahoma, sans-serif;
-        background-color: #eef2f6;
-        background-image:
-            linear-gradient(180deg, #f8fafc 0%, #eef2f6 100%),
-            repeating-linear-gradient(0deg, rgba(11,46,89,.04) 0 1px, transparent 1px 12px);
-        color: var(--gray-800);
-    }
-    .container { max-width: 900px; margin: 0 auto; padding: 24px; }
-    h1 { font-size: 20px; margin-bottom: 16px; color: var(--primary); }
-    .section-card {
-        background: #fff;
-        border-radius: 12px;
-        margin-bottom: 16px;
-        border: 1px solid var(--gray-200);
-        box-shadow: 0 2px 8px rgba(15, 23, 42, .06);
-        overflow: hidden;
-    }
-    .section-header { background: var(--primary); color: #fff; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
-    .section-header h3 { font-size: 14px; }
-    .toggle { font-size: 16px; transition: transform .2s; }
-    .toggle.open { transform: rotate(180deg); }
-    .section-content { padding: 16px; display: none; }
-    .section-content.open { display: block; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
-    .form-group label { display: block; margin-bottom: 6px; color: var(--gray-700); font-weight: 600; font-size: 13px; }
-    .required-mark { color: #b91c1c; font-weight: 700; margin-left: 4px; }
-    .form-group input { width: 100%; padding: 10px 12px; border: 1.5px solid var(--gray-200); border-radius: 10px; font-size: 14px; }
-    .form-group input:focus { outline: none; border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(31,77,139,.12); }
-    .form-group input.invalid { border-color: #b91c1c; background: #fff1f2; }
-    .validation-message {
-        display: none;
-        margin-top: 8px;
-        margin-bottom: 2px;
-        font-size: 12px;
-        color: #b91c1c;
-        font-weight: 600;
-    }
-    .validation-message.active { display: block; }
-    .actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
-    .btn { padding: 10px 20px; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; }
-    .btn-primary { background: var(--primary); color: #fff; }
-    .btn-primary:hover { background: var(--primary-light); }
-    .btn-success { background: var(--success); color: #fff; }
-</style>
-</head>
-<body>
-    <div class="container">
-        <h1>${text.assessmentTitle}</h1>
-        <div class="section-card">
-            <div class="section-header" onclick="toggleSection(this)">
-                <h3>🏨 ${text.hotelInfo}</h3>
-                <span class="toggle open">▼</span>
-            </div>
-            <div class="section-content open">
-                <div class="grid">
-                    <div class="form-group">
-                        <label>${text.hotelName}<span class="required-mark">*</span></label>
-                        <input type="text" id="hotelName" placeholder="${text.hotelName}" required>
-                    </div>
-                    <div class="form-group">
-                        <label>${text.address}<span class="required-mark">*</span></label>
-                        <input type="text" id="hotelAddress" placeholder="${text.address}" required>
-                    </div>
-                    <div class="form-group">
-                        <label>${text.roomCount}<span class="required-mark">*</span></label>
-                        <input type="number" id="roomCount" min="1" placeholder="${text.roomCount}" required>
-                    </div>
-                    <div class="form-group">
-                        <label>${text.assessmentDate}<span class="required-mark">*</span></label>
-                        <input type="date" id="assessmentDate" required>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="section-card">
-            <div class="section-header" onclick="toggleSection(this)">
-                <h3>📞 ${text.contactDetails}</h3>
-                <span class="toggle open">▼</span>
-            </div>
-            <div class="section-content open">
-                <div class="grid">
-                    <div class="form-group">
-                        <label>${text.contactPerson}<span class="required-mark">*</span></label>
-                        <input type="text" id="contactName" placeholder="${text.contactPerson}" required>
-                    </div>
-                    <div class="form-group">
-                        <label>${text.phone}<span class="required-mark">*</span></label>
-                        <input type="tel" id="contactPhone" placeholder="${text.phone}" required>
-                    </div>
-                    <div class="form-group">
-                        <label>${text.email}<span class="required-mark">*</span></label>
-                        <input type="email" id="contactEmail" placeholder="${text.email}" required>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="validation-message" id="assessmentValidationMessage">${text.assessmentRequiredFields || ''}</div>
         <div class="actions">
-            <button class="btn btn-primary" onclick="startAssessment('compliance')">${text.start3220}</button>
-            <button class="btn btn-success" onclick="startAssessment('classification')">${text.start3296}</button>
+          <button class="btn primary sm" data-act="open">${esc(t('open'))}</button>
+          <button class="btn sm" data-act="dup">${esc(t('duplicate'))}</button>
+          <button class="btn sm" data-act="json">${esc(t('exportJson'))}</button>
+          <button class="btn danger sm" data-act="del">${esc(t('delete'))}</button>
+        </div></div>`;
+    }).join('');
+  }
+  $('#assessList').addEventListener('click', e => {
+    const b = e.target.closest('button[data-act]'); if (!b) return;
+    const card = e.target.closest('[data-id]'); const a = state.assessments.find(x => x.id === card.dataset.id); if (!a) return;
+    if (b.dataset.act === 'open') { state.currentId = a.id; state.step = facilityValid(a).ok ? (state.step || 1) : 1; save(); showPage('assess'); }
+    if (b.dataset.act === 'dup') { const c = JSON.parse(JSON.stringify(a)); c.id = uid(); c.createdAt = c.updatedAt = new Date().toISOString(); c.facility.name = (c.facility.name || '') + ' (2)'; state.assessments.push(c); save(); renderList(); }
+    if (b.dataset.act === 'json') exportJson(a);
+    if (b.dataset.act === 'del') { if (confirm(t('confirmDelete'))) { state.assessments = state.assessments.filter(x => x.id !== a.id); if (state.currentId === a.id) state.currentId = null; save(true); renderList(); if (C.enabled && C.user) C.remove(a.id).catch(e => console.warn(e)); } }
+  });
+  $('#btnNew').onclick = () => { const a = newAssessment(); state.assessments.push(a); state.currentId = a.id; state.step = 1; save(); showPage('assess'); };
+  $('#importFile').onchange = e => { const f = e.target.files[0]; if (f) importJsonFile(f); e.target.value = ''; };
+
+  // ---------------------------------------------------------------- step 1
+  function renderStep1(a) {
+    const f = a.facility;
+    const sel = $('#kindSelect');
+    const groups = ['hotel', 'bnb', 'specialized', 'individual', 'hostel', 'dormitory'];
+    sel.innerHTML = `<option value="">${esc(t('selectKind'))}</option>` + groups.map(g => `<optgroup label="${esc(groupName(g))}">` +
+      S958.kinds.filter(k => k.group === g).map(k => `<option value="${k.id}">${esc(kindName(k.id))}</option>`).join('') + '</optgroup>').join('');
+    $$('#step-1 [data-f]').forEach(el => { const k = el.dataset.f; el.value = f[k] == null ? '' : f[k]; el.classList.remove('invalid'); });
+    updateKindDisplay(a);
+    const sp = $('#starPicker'); sp.innerHTML = STARS.map(s => `<button type="button" data-star="${s}" class="${f.target === s ? 'active' : ''}"><span class="s">${starStr(s)}</span>${s}</button>`).join('');
+    const flagDefs = [['seasonal', 'flagSeasonal', 'flagSeasonalD'], ['heritage', 'flagHeritage', 'flagHeritageD'], ['rural', 'flagRural', 'flagRuralD'], ['naturalWater', 'flagNaturalWater', 'flagNaturalWaterD'], ['sensorDoors', 'flagSensorDoors', 'flagSensorDoorsD'], ['brand', 'flagBrand', 'flagBrandD']];
+    $('#flagGrid').innerHTML = flagDefs.map(([k, l, d]) => `<label class="check ${f[k] ? 'on' : ''}"><input type="checkbox" data-flag="${k}" ${f[k] ? 'checked' : ''}><span><span class="lbl">${esc(t(l))}</span><br><span class="desc">${esc(t(d))}</span></span></label>`).join('');
+  }
+  function updateKindDisplay(a) {
+    const k = kindInfo(a.facility.kind);
+    $('#groupDisplay').value = k ? `${groupName(k.group)} — ${t('annex')} ${S958.groups[k.group].annex}` : '';
+    $('#clsDisplay').textContent = k ? (k.cls ? `${t('pointsGroup')}: ${clsName(k.cls)}` : t('noPoints')) : '';
+    $('#targetGroup').style.opacity = k && !k.cls ? .5 : 1;
+    $('#noPointsNote').textContent = k && !k.cls ? t('noPoints') : '';
+  }
+  $('#step-1').addEventListener('input', e => {
+    const a = cur(); if (!a) return; const el = e.target;
+    if (el.dataset.f) { a.facility[el.dataset.f] = el.type === 'number' ? el.value : el.value; el.classList.remove('invalid'); if (el.dataset.f === 'kind') updateKindDisplay(a); touch(a); }
+  });
+  $('#step-1').addEventListener('change', e => {
+    const a = cur(); if (!a) return; const el = e.target;
+    if (el.dataset.flag) { a.facility[el.dataset.flag] = el.checked; el.closest('.check').classList.toggle('on', el.checked); touch(a); }
+  });
+  $('#starPicker').addEventListener('click', e => { const b = e.target.closest('button[data-star]'); if (!b) return; const a = cur(); a.facility.target = +b.dataset.star; touch(a); $$('#starPicker button').forEach(x => x.classList.toggle('active', x === b)); });
+  $('#btnStep1Next').onclick = () => {
+    const a = cur(); const v = facilityValid(a);
+    if (!v.ok) { toast(t('fillRequired', { fields: v.missing.join(', ') }), 'error'); ['name', 'kind', 'date'].forEach(k => { if (!String(a.facility[k] || '').trim()) $(`#step-1 [data-f="${k}"]`).classList.add('invalid'); }); return; }
+    showStep(2);
+  };
+  $$('[data-goto]').forEach(b => b.onclick = () => showStep(+b.dataset.goto));
+  $('#stepper').addEventListener('click', e => { const b = e.target.closest('button[data-step]'); if (b && !b.disabled) showStep(+b.dataset.step); });
+
+  // ---------------------------------------------------------------- step 2 (958)
+  function noteText(key, n, annex) { const notes = annex.notes || {}; return tr(`958${key}note:${n}`, notes[n] || ''); }
+  function renderStep2(a) {
+    const ax = annexFor(a); const box = $('#list958');
+    if (!ax) { box.innerHTML = ''; return; }
+    $('#annexLabel').textContent = `— ${tr('958' + ax.key + ':title', ax.annex.title)}`;
+    const leaves = leaves958(a); const q = filters.q958.trim().toLowerCase();
+    const bySec = new Map(); leaves.forEach(l => { if (!bySec.has(l.sec.id)) bySec.set(l.sec.id, []); bySec.get(l.sec.id).push(l); });
+    let html = '';
+    bySec.forEach((ls, secId) => {
+      const sec = ls[0].sec; const app = ls.filter(l => l.applies); const done = app.filter(l => a.a958[l.id] && a.a958[l.id].v).length;
+      const visible = ls.filter(l => {
+        if (q) { const txt = (tr(`958${ax.key}:${l.id}`, l.leaf.title) + ' ' + (l.parent ? tr(`958${ax.key}:${l.parent.id}`, l.parent.title) : '') + ' ' + l.id).toLowerCase(); if (!txt.includes(q)) return false; }
+        if (filters.f958 === 'unanswered') return l.applies && !(a.a958[l.id] && a.a958[l.id].v);
+        if (filters.f958 === 'no') return a.a958[l.id] && a.a958[l.id].v === 'no';
+        return true;
+      });
+      if (!visible.length) return;
+      const isOpen = open958.has(secId) || !!q || !!filters.f958 || (open958.size === 0 && html === '');
+      html += `<div class="section ${isOpen ? 'open' : ''}" data-sec="${secId}"><div class="sec-head"><h3>${esc(sec.id)}. ${esc(tr(`958${ax.key}sec:${sec.id}`, sec.title))}</h3><span class="cnt mono">${done}/${app.length}</span><span class="arrow">▾</span></div><div class="sec-progress"><span style="width:${app.length ? Math.round(100 * done / app.length) : 100}%"></span></div><div class="sec-body">${(sec.notes || []).filter(n => !(ax.annex.rules || {})[n]).length ? `<div class="sec-notes">${(sec.notes || []).filter(n => !(ax.annex.rules || {})[n]).map(n => `(${n}) ${esc(noteText(ax.key, n, ax.annex))}`).join('<br>')}</div>` : ''}`;
+      let lastParent = null;
+      visible.forEach(l => {
+        if (l.parent && l.parent !== lastParent) { html += `<div class="item parent"><div><span class="id">${esc(l.parent.id)}</span>${esc(tr(`958${ax.key}:${l.parent.id}`, l.parent.title))}</div></div>`; }
+        lastParent = l.parent;
+        html += renderRow958(a, l, ax);
+      });
+      html += '</div></div>';
+    });
+    box.innerHTML = html || `<div class="card empty">${esc(t('none'))}</div>`;
+    updateProgress958(a);
+  }
+  function renderRow958(a, l, ax) {
+    const ans = a.a958[l.id] || {}; const v = l.applies ? (ans.v || '') : '';
+    const title = tr(`958${ax.key}:${l.id}`, l.leaf.title);
+    const infoNotes = l.info.map(n => `<div>• (${n}) ${esc(noteText(ax.key, n, ax.annex))}</div>`).join('');
+    const hasExtra = !!(ans.note || (ans.photos && ans.photos.length));
+    const allNotes = [...new Set([].concat(l.item.notes || [], l.leaf === l.item ? [] : (l.leaf.notes || []), (ax.col != null && l.leaf.marks && l.leaf.marks[ax.col]) ? l.leaf.marks[ax.col].notes : []))];
+    return `<div class="item ${l.applies ? (v ? 'answered-' + v : '') : 'na'} ${hasExtra ? 'open-extras' : ''}" id="i958-${esc(l.id)}" data-id="${esc(l.id)}">
+      <div><span class="id">${esc(l.id)}</span><span class="txt">${esc(title)}</span>${allNotes.length ? `<sup class="fn">${allNotes.join(', ')}</sup>` : ''}
+        <div class="meta">${l.leaf.changed ? `<span class="badge new">${esc(t('changed'))}</span>` : ''}${l.applies ? '' : l.reasons.map(r => `<span class="badge">${esc(r)}</span>`).join('')}</div>
+        ${infoNotes ? `<div class="notes">${infoNotes}</div>` : ''}
+        ${ans.v === 'na' && l.applies ? `<div class="notes" style="color:var(--warning)">${esc(t('naMandatoryWarn'))}</div>` : ''}
+      </div>
+      <div class="item-actions">
+        ${l.applies ? `<div class="seg"><button class="yes ${v === 'yes' ? 'active' : ''}" data-v="yes">${esc(t('yes'))}</button><button class="no ${v === 'no' ? 'active' : ''}" data-v="no">${esc(t('no'))}</button><button class="na ${v === 'na' ? 'active' : ''}" data-v="na" title="${esc(t('naFull'))}">${esc(t('na'))}</button></div>
+        <button class="btn sm ghost" data-extra="1">✎ ${esc(t('addNote'))}</button>` : ''}
+      </div>
+      <div class="extras">
+        <textarea data-note="1" placeholder="${esc(t('note'))}">${esc(ans.note || '')}</textarea>
+        <div class="photos">${(ans.photos || []).map((p, i) => `<div class="ph"><img src="${p}" alt=""><button data-rmphoto="${i}">×</button></div>`).join('')}<label class="add" title="${esc(t('photo'))}">📷<input type="file" accept="image/*" capture="environment" data-photo="1"></label></div>
+      </div></div>`;
+  }
+  function updateProgress958(a) {
+    const e = eval958(a); const pct = e.applicable ? Math.round(100 * e.answered / e.applicable) : 0;
+    $('#progress958Text').textContent = `${e.answered} ${t('of')} ${e.applicable} ${t('answered')}`;
+    const bar = $('#progress958Bar'); bar.style.width = pct + '%'; bar.parentElement.className = 'progress ' + (e.no.length ? 'danger' : (e.unanswered.length ? '' : 'ok'));
+    $$('#list958 .section').forEach(secEl => {
+      const secId = secEl.dataset.sec; const ls = leaves958(a).filter(l => l.sec.id === secId && l.applies); const done = ls.filter(l => a.a958[l.id] && a.a958[l.id].v).length;
+      $('.cnt', secEl).textContent = `${done}/${ls.length}`; $('.sec-progress span', secEl).style.width = (ls.length ? Math.round(100 * done / ls.length) : 100) + '%';
+    });
+  }
+  $('#list958').addEventListener('click', e => {
+    const a = cur(); if (!a) return;
+    const head = e.target.closest('.sec-head');
+    if (head) { const sec = head.parentElement; sec.classList.toggle('open'); const id = sec.dataset.sec; if (sec.classList.contains('open')) open958.add(id); else open958.delete(id); return; }
+    const row = e.target.closest('.item[data-id]'); if (!row) return; const id = row.dataset.id;
+    const vb = e.target.closest('button[data-v]');
+    if (vb) { const ans = a.a958[id] || (a.a958[id] = {}); ans.v = ans.v === vb.dataset.v ? '' : vb.dataset.v; touch(a);
+      $$('button[data-v]', row).forEach(b => b.classList.toggle('active', b.dataset.v === ans.v)); row.className = row.className.replace(/answered-\w+/g, '').trim() + (ans.v ? ' answered-' + ans.v : ''); updateProgress958(a); return; }
+    if (e.target.closest('button[data-extra]')) { row.classList.toggle('open-extras'); return; }
+    const rm = e.target.closest('button[data-rmphoto]');
+    if (rm) { const ans = a.a958[id]; if (ans && ans.photos) { ans.photos.splice(+rm.dataset.rmphoto, 1); touch(a); rm.parentElement.remove(); } }
+  });
+  $('#list958').addEventListener('input', e => { const a = cur(); const row = e.target.closest('.item[data-id]'); if (!a || !row || !e.target.dataset.note) return; const ans = a.a958[row.dataset.id] || (a.a958[row.dataset.id] = {}); ans.note = e.target.value; touch(a); });
+  $('#list958').addEventListener('change', e => { if (e.target.dataset.photo) { const row = e.target.closest('.item[data-id]'); addPhoto(e.target, 'a958', row.dataset.id, row); } });
+  $('#search958').oninput = e => { filters.q958 = e.target.value; renderStep2(cur()); };
+  $$('[data-filter958]').forEach(b => b.onclick = () => { filters.f958 = filters.f958 === b.dataset.filter958 ? null : b.dataset.filter958; $$('[data-filter958]').forEach(x => x.classList.toggle('active', x.dataset.filter958 === filters.f958)); renderStep2(cur()); });
+  $('#expand958').onclick = () => { const a = cur(); const all = $$('#list958 .section'); const anyClosed = all.some(s => !s.classList.contains('open')); all.forEach(s => { s.classList.toggle('open', anyClosed); if (anyClosed) open958.add(s.dataset.sec); else open958.delete(s.dataset.sec); }); $('#expand958').textContent = anyClosed ? t('collapseAll') : t('expandAll'); };
+
+  // ---------------------------------------------------------------- photos
+  function addPhoto(input, store, id, row) {
+    const file = input.files[0]; if (!file) return; const a = cur();
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const max = 1024; let w = img.width, h = img.height; if (w > max || h > max) { const r = Math.min(max / w, max / h); w = Math.round(w * r); h = Math.round(h * r); }
+        const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').drawImage(img, 0, 0, w, h);
+        const data = c.toDataURL('image/jpeg', 0.72);
+        const ans = a[store][id] || (a[store][id] = {}); (ans.photos || (ans.photos = [])).push(data); touch(a);
+        const box = $('.photos', row); const div = document.createElement('div'); div.className = 'ph'; div.innerHTML = `<img src="${data}" alt=""><button data-rmphoto="${ans.photos.length - 1}">×</button>`; box.insertBefore(div, $('label.add', box));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file); input.value = '';
+  }
+
+  // ---------------------------------------------------------------- step 3 (125)
+  function renderStep3(a) {
+    const cls = clsOf(a); const box = $('#list125');
+    $('#noPoints125').classList.toggle('hidden', !!cls);
+    if (!cls) { box.innerHTML = ''; $('#progress125Text').textContent = ''; $('#progress125Bar').style.width = '0%'; $('#groupLabel125').textContent = ''; return; }
+    $('#groupLabel125').textContent = `— ${clsName(cls)}`;
+    const q = filters.q125.trim().toLowerCase(); const target = a.facility.target;
+    let html = '';
+    S125.categories.forEach(c => {
+      const leaves = c.items.filter(i => !i.header); const done = leaves.filter(i => a.a125[i.id] && a.a125[i.id].v).length;
+      const visible = c.items.filter(i => {
+        if (q) { const txt = (tr('125:' + i.id, i.text) + ' ' + i.label).toLowerCase(); if (!txt.includes(q)) return false; }
+        if (i.header) return !filters.f125;
+        if (filters.f125 === 'unanswered') return !(a.a125[i.id] && a.a125[i.id].v);
+        if (filters.f125 === 'mandatory') return isMandatory(i, target, a);
+        return true;
+      });
+      if (!visible.length) return;
+      const isOpen = open125.has(c.id) || !!q || !!filters.f125 || (open125.size === 0 && html === '');
+      const catPts = leaves.reduce((s, i) => s + earned125(i, a), 0);
+      html += `<div class="section ${isOpen ? 'open' : ''}" data-sec="${c.id}"><div class="sec-head"><h3>${esc(c.id)}. ${esc(tr('125cat:' + c.id, c.name))}${c.ref ? ` <span class="badge info">${esc(c.ref)}</span>` : ''}</h3><span class="cnt mono"><span class="pts">${catPts} ${esc(t('pts'))}</span> · ${done}/${leaves.length}</span><span class="arrow">▾</span></div><div class="sec-progress"><span style="width:${leaves.length ? Math.round(100 * done / leaves.length) : 0}%"></span></div><div class="sec-body">`;
+      visible.forEach(i => { html += i.header ? `<div class="item parent"><div><span class="id">${esc(i.label)}</span>${esc(tr('125:' + i.id, i.text))}${i.ann.length ? ' ' + i.ann.map(x => `<span class="badge info">${x}</span>`).join(' ') : ''}</div></div>` : renderRow125(a, i); });
+      html += '</div></div>';
+    });
+    box.innerHTML = html || `<div class="card empty">${esc(t('none'))}</div>`;
+    updateProgress125(a);
+  }
+  function renderRow125(a, i) {
+    const ans = a.a125[i.id] || {}; const v = ans.v || ''; const target = a.facility.target;
+    const mStars = mandatoryStars(i, a); const isM = mStars.includes(target);
+    const annNotes = i.ann.map(x => `<div>• ${x}: ${esc(tr('125ann:' + x, S125.annotations[x] || ''))}</div>`).join('');
+    const hasExtra = !!(ans.note || (ans.photos && ans.photos.length));
+    const ptsLabel = i.rule ? t('perUnit', { p: i.rule.per_unit, m: i.rule.max }) : `${i.points} ${t('pts')}`;
+    return `<div class="item ${v ? 'answered-' + v : ''} ${hasExtra ? 'open-extras' : ''}" id="i125-${esc(i.id)}" data-id="${esc(i.id)}">
+      <div><span class="id">${esc(i.label)}</span><span class="txt">${esc(tr('125:' + i.id, i.text))}</span>
+        <div class="meta"><span class="pts">${esc(ptsLabel)}</span>
+          ${mStars.length ? `<span class="badge ${isM ? 'm' : ''}">${esc(t('mandatoryFor', { stars: mStars.map(s => s + '★').join(' ') }))}</span>` : `<span class="badge">${esc(t('optionalItem'))}</span>`}
+          ${i.ann.map(x => `<span class="badge info">${x}</span>`).join('')}
+          ${i.tier != null ? `<span class="tier-note">${esc(t('tierHint'))}</span>` : ''}
         </div>
-    </div>
-<script>
-    const data = ${payload};
-    if (!data.assessmentDate) {
-        data.assessmentDate = new Date().toISOString().split('T')[0];
-    }
-    function toggleSection(header) {
-        const content = header.nextElementSibling;
-        const toggle = header.querySelector('.toggle');
-        content.classList.toggle('open');
-        toggle.classList.toggle('open');
-    }
-    function bindField(id, field) {
-        const input = document.getElementById(id);
-        if (!input) return;
-        input.value = data[field] || '';
-        input.addEventListener('input', () => {
-            input.classList.remove('invalid');
-            const validationMessage = document.getElementById('assessmentValidationMessage');
-            if (validationMessage) validationMessage.classList.remove('active');
-            if (window.opener && window.opener.setAssessmentField) {
-                window.opener.setAssessmentField(field, input.value);
-            }
-        });
-    }
-    function validateRequiredFields() {
-        const requiredIds = ['hotelName', 'hotelAddress', 'roomCount', 'assessmentDate', 'contactName', 'contactPhone', 'contactEmail'];
-        let firstInvalid = null;
-        requiredIds.forEach(id => {
-            const input = document.getElementById(id);
-            if (!input) return;
-            const value = (input.value || '').trim();
-            const isInvalid = !value || (id === 'roomCount' && Number(value) <= 0);
-            input.classList.toggle('invalid', isInvalid);
-            if (isInvalid && !firstInvalid) firstInvalid = input;
-        });
-        const validationMessage = document.getElementById('assessmentValidationMessage');
-        const isValid = !firstInvalid;
-        if (validationMessage) validationMessage.classList.toggle('active', !isValid);
-        if (firstInvalid) firstInvalid.focus();
-        return isValid;
-    }
-    function startAssessment(page) {
-        if (!validateRequiredFields()) return;
-        if (window.opener && window.opener.showPage) {
-            window.opener.showPage(page);
-            window.opener.focus();
-        }
-        window.close();
-    }
-    document.addEventListener('DOMContentLoaded', () => {
-        bindField('hotelName', 'hotelName');
-        bindField('hotelAddress', 'hotelAddress');
-        bindField('roomCount', 'roomCount');
-        bindField('assessmentDate', 'assessmentDate');
-        bindField('contactName', 'contactName');
-        bindField('contactPhone', 'contactPhone');
-        bindField('contactEmail', 'contactEmail');
+        ${annNotes ? `<div class="notes">${annNotes}</div>` : ''}
+      </div>
+      <div class="item-actions">
+        ${i.rule ? `<input type="number" class="input qty" min="0" inputmode="numeric" data-qty="1" value="${esc(ans.qty || '')}" placeholder="${esc(t('qty'))}">` : ''}
+        <div class="seg"><button class="yes ${v === 'yes' ? 'active' : ''}" data-v="yes">${esc(t('yes'))}</button><button class="no ${v === 'no' ? 'active' : ''}" data-v="no">${esc(t('no'))}</button></div>
+        <button class="btn sm ghost" data-extra="1">✎</button>
+      </div>
+      <div class="extras">
+        <textarea data-note="1" placeholder="${esc(t('note'))}">${esc(ans.note || '')}</textarea>
+        <div class="photos">${(ans.photos || []).map((p, k) => `<div class="ph"><img src="${p}" alt=""><button data-rmphoto="${k}">×</button></div>`).join('')}<label class="add" title="${esc(t('photo'))}">📷<input type="file" accept="image/*" capture="environment" data-photo="1"></label></div>
+      </div></div>`;
+  }
+  function updateProgress125(a) {
+    const p = progress125(a); const e = eval125(a, a.facility.target); if (!e) return;
+    $('#progress125Text').innerHTML = `<strong>${e.points}</strong> / ${e.threshold} ${esc(t('pts'))} · ${p.answered}/${p.total}`;
+    const bar = $('#progress125Bar'); bar.style.width = Math.round(100 * p.answered / p.total) + '%'; bar.parentElement.className = 'progress ' + (e.points >= e.threshold ? 'ok' : '');
+    $$('#list125 .section').forEach(secEl => {
+      const c = S125.categories.find(x => x.id === secEl.dataset.sec); const leaves = c.items.filter(i => !i.header);
+      const done = leaves.filter(i => a.a125[i.id] && a.a125[i.id].v).length; const pts = leaves.reduce((s, i) => s + earned125(i, a), 0);
+      $('.cnt', secEl).innerHTML = `<span class="pts">${pts} ${esc(t('pts'))}</span> · ${done}/${leaves.length}`; $('.sec-progress span', secEl).style.width = Math.round(100 * done / leaves.length) + '%';
     });
-${scriptClose}
-</body>
-</html>`;
-}
+  }
+  function setAnswer125(a, id, v) {
+    const it = ITEM125[id]; const ans = a.a125[id] || (a.a125[id] = {});
+    ans.v = ans.v === v ? '' : v;
+    if (ans.v === 'yes' && it.tier != null) { (S125.tiers[it.tier] || []).forEach(o => { if (o !== id && a.a125[o] && a.a125[o].v === 'yes') { a.a125[o].v = 'no'; const r = $(`#i125-${CSS.escape(o)}`); if (r) { $$('button[data-v]', r).forEach(b => b.classList.toggle('active', b.dataset.v === 'no')); r.className = r.className.replace(/answered-\w+/g, '').trim() + ' answered-no'; } } }); }
+    touch(a);
+  }
+  $('#list125').addEventListener('click', e => {
+    const a = cur(); if (!a) return;
+    const head = e.target.closest('.sec-head');
+    if (head) { const sec = head.parentElement; sec.classList.toggle('open'); if (sec.classList.contains('open')) open125.add(sec.dataset.sec); else open125.delete(sec.dataset.sec); return; }
+    const row = e.target.closest('.item[data-id]'); if (!row) return; const id = row.dataset.id;
+    const vb = e.target.closest('button[data-v]');
+    if (vb) { setAnswer125(a, id, vb.dataset.v); const v = a.a125[id].v; $$('button[data-v]', row).forEach(b => b.classList.toggle('active', b.dataset.v === v)); row.className = row.className.replace(/answered-\w+/g, '').trim() + (v ? ' answered-' + v : ''); updateProgress125(a); return; }
+    if (e.target.closest('button[data-extra]')) { row.classList.toggle('open-extras'); return; }
+    const rm = e.target.closest('button[data-rmphoto]');
+    if (rm) { const ans = a.a125[id]; if (ans && ans.photos) { ans.photos.splice(+rm.dataset.rmphoto, 1); touch(a); rm.parentElement.remove(); } }
+  });
+  $('#list125').addEventListener('input', e => {
+    const a = cur(); const row = e.target.closest('.item[data-id]'); if (!a || !row) return; const id = row.dataset.id; const ans = a.a125[id] || (a.a125[id] = {});
+    if (e.target.dataset.note) { ans.note = e.target.value; touch(a); }
+    if (e.target.dataset.qty) { ans.qty = e.target.value; if (Number(ans.qty) > 0 && ans.v !== 'yes') { ans.v = 'yes'; $$('button[data-v]', row).forEach(b => b.classList.toggle('active', b.dataset.v === 'yes')); row.className = row.className.replace(/answered-\w+/g, '').trim() + ' answered-yes'; } touch(a); updateProgress125(a); }
+  });
+  $('#list125').addEventListener('change', e => { if (e.target.dataset.photo) { const row = e.target.closest('.item[data-id]'); addPhoto(e.target, 'a125', row.dataset.id, row); } });
+  $('#search125').oninput = e => { filters.q125 = e.target.value; renderStep3(cur()); };
+  $$('[data-filter125]').forEach(b => b.onclick = () => { filters.f125 = filters.f125 === b.dataset.filter125 ? null : b.dataset.filter125; $$('[data-filter125]').forEach(x => x.classList.toggle('active', x.dataset.filter125 === filters.f125)); renderStep3(cur()); });
+  $('#expand125').onclick = () => { const all = $$('#list125 .section'); const anyClosed = all.some(s => !s.classList.contains('open')); all.forEach(s => { s.classList.toggle('open', anyClosed); if (anyClosed) open125.add(s.dataset.sec); else open125.delete(s.dataset.sec); }); $('#expand125').textContent = anyClosed ? t('collapseAll') : t('expandAll'); };
 
-// =====================================================
-// UTILITIES
-// =====================================================
-
-function getOpenSectionIds(containerId) {
-    const openSectionIds = new Set();
-    const container = document.getElementById(containerId);
-    if (!container) return openSectionIds;
-
-    container.querySelectorAll('.section-card').forEach(card => {
-        const content = card.querySelector('.section-content');
-        if (content && content.classList.contains('open')) {
-            const sectionId = card.getAttribute('data-section-id');
-            if (sectionId) openSectionIds.add(sectionId);
-        }
-    });
-
-    return openSectionIds;
-}
-
-function populateFilters() {
-    const sections = CLASSIFICATION_DATA_3296.sections || [];
-    const categoryOptions = sections.map(section => {
-        return `<option value="${section.id}">${getSectionTitle(section)}</option>`;
-    }).join('');
-
-    const classificationCategory = document.getElementById('classificationCategoryFilter');
-    if (classificationCategory) {
-        const current = classificationCategory.value;
-        classificationCategory.innerHTML = `<option value="">${t('allCategories')}</option>${categoryOptions}`;
-        if (current) classificationCategory.value = current;
-    }
-
-    const compareCategory = document.getElementById('compareCategoryFilter');
-    if (compareCategory) {
-        const current = compareCategory.value;
-        compareCategory.innerHTML = `<option value="">${t('allCategories')}</option>${categoryOptions}`;
-        if (current) compareCategory.value = current;
-    }
-}
-
-function getSectionTitle(section) {
-    if (!section || !section.name) return '';
-    return section.name[currentLang] || section.name.en || section.name.uz || section.name.ru || '';
-}
-
-function getAccommodationTypes() {
-    if (!CLASSIFICATION_DATA_3296 || typeof CLASSIFICATION_DATA_3296 !== 'object') return {};
-    if (CLASSIFICATION_DATA_3296.accommodationTypes && typeof CLASSIFICATION_DATA_3296.accommodationTypes === 'object') {
-        return CLASSIFICATION_DATA_3296.accommodationTypes;
-    }
-    return {};
-}
-
-function ensureAccommodationTypeSelection() {
-    const types = getAccommodationTypes();
-    const keys = Object.keys(types);
-    if (!keys.length) {
-        selectedAccommodationType = 'hotels_and_similar';
-        return;
-    }
-    if (!keys.includes(selectedAccommodationType)) {
-        selectedAccommodationType = CLASSIFICATION_DATA_3296.defaultAccommodationType && keys.includes(CLASSIFICATION_DATA_3296.defaultAccommodationType)
-            ? CLASSIFICATION_DATA_3296.defaultAccommodationType
-            : keys[0];
-    }
-}
-
-function getAccommodationTypeLabel(type) {
-    if (!type) return '';
-    return type.name?.[currentLang] || type.name?.en || type.key || '';
-}
-
-function getComplianceFacilityTypes() {
-    if (!COMPLIANCE_DATA_3220 || typeof COMPLIANCE_DATA_3220 !== 'object') return {};
-    if (COMPLIANCE_DATA_3220.facilityTypes && typeof COMPLIANCE_DATA_3220.facilityTypes === 'object') {
-        return COMPLIANCE_DATA_3220.facilityTypes;
-    }
-    return {};
-}
-
-function ensureComplianceFacilityTypeSelection() {
-    const types = getComplianceFacilityTypes();
-    const keys = Object.keys(types);
-    if (!keys.length) {
-        selectedComplianceFacilityType = 'hotels_and_similar';
-        return;
-    }
-    if (!keys.includes(selectedComplianceFacilityType)) {
-        selectedComplianceFacilityType = COMPLIANCE_DATA_3220.defaultFacilityType && keys.includes(COMPLIANCE_DATA_3220.defaultFacilityType)
-            ? COMPLIANCE_DATA_3220.defaultFacilityType
-            : keys[0];
-    }
-}
-
-function getComplianceFacilityLabel(value) {
-    if (!value) return '';
-    return value[currentLang] || value.en || value.uz || value.ru || '';
-}
-
-function populateComplianceFacilityTypeOptions() {
-    const select = document.getElementById('complianceFacilityTypeSelect');
-    if (!select) return;
-    ensureComplianceFacilityTypeSelection();
-    const types = getComplianceFacilityTypes();
-    const keys = Object.keys(types);
-    if (!keys.length) {
-        select.innerHTML = '';
-        select.disabled = true;
-        return;
-    }
-    select.disabled = false;
-    select.innerHTML = keys.map(key => {
-        const label = getComplianceFacilityLabel(types[key]);
-        return `<option value="${key}">${escapeHtml(label)}</option>`;
-    }).join('');
-    select.value = selectedComplianceFacilityType;
-}
-
-function isComplianceRequirementMandatory(req) {
-    if (req && req.applicability && typeof req.applicability === 'object') {
-        ensureComplianceFacilityTypeSelection();
-        return req.applicability[selectedComplianceFacilityType] === '+';
-    }
-    return Boolean(req && req.mandatory);
-}
-
-function getMinPointsForStar(star) {
-    ensureAccommodationTypeSelection();
-    const types = getAccommodationTypes();
-    const selectedType = types[selectedAccommodationType];
-    const selectedTypeMin = selectedType?.minScores ? Number(selectedType.minScores[Number(star)]) : NaN;
-    if (Number.isFinite(selectedTypeMin)) return selectedTypeMin;
-
-    const starLevel = getStarLevel(star);
-    return starLevel ? Number(starLevel.minTotalPoints) || 0 : 0;
-}
-
-function populateAccommodationTypeOptions() {
-    const select = document.getElementById('accommodationTypeSelect');
-    if (!select) return;
-    ensureAccommodationTypeSelection();
-    const types = getAccommodationTypes();
-    const keys = Object.keys(types);
-    if (!keys.length) {
-        select.innerHTML = '';
-        select.disabled = true;
-        return;
-    }
-    select.disabled = false;
-    select.innerHTML = keys.map(key => {
-        const label = getAccommodationTypeLabel(types[key]);
-        return `<option value="${key}">${escapeHtml(label)}</option>`;
-    }).join('');
-    select.value = selectedAccommodationType;
-}
-
-function getStarLevel(star) {
-    if (!CLASSIFICATION_DATA_3296 || !Array.isArray(CLASSIFICATION_DATA_3296.starLevels)) return null;
-    return CLASSIFICATION_DATA_3296.starLevels.find(level => Number(level.star) === Number(star)) || null;
-}
-
-function isAssessableClassificationCriterion(criterion) {
-    if (!criterion || typeof criterion !== 'object') return false;
-    if (typeof criterion.assessable === 'boolean') return criterion.assessable;
-    return !Boolean(criterion.isGroupHeader);
-}
-
-function getStrictStarKey(star) {
-    const key = String(Number(star));
-    return STAR_KEYS.includes(key) ? key : null;
-}
-
-function isPerUnitCriterion(criterion) {
-    return Boolean(criterion && criterion.scoringRule && criterion.scoringRule.type === 'per_unit');
-}
-
-function getCriterionMaxPoints(criterion) {
-    if (!criterion) return 0;
-    const explicitMax = Number(criterion.maxPoints);
-    if (Number.isFinite(explicitMax) && explicitMax >= 0) return explicitMax;
-    if (isPerUnitCriterion(criterion)) {
-        const ruleMax = Number(criterion.scoringRule.maxPoints);
-        if (Number.isFinite(ruleMax) && ruleMax >= 0) return ruleMax;
-    }
-    return Number(criterion.points) || 0;
-}
-
-function getCriterionQuantity(criterionId) {
-    return normalizeQuantityValue(classificationQuantities[String(criterionId)]);
-}
-
-function getCriterionEarnedPoints(criterion) {
-    if (!criterion) return 0;
-    if (classificationAnswers[criterion.id] !== 'yes') return 0;
-    if (isPerUnitCriterion(criterion)) {
-        const quantity = getCriterionQuantity(criterion.id);
-        const pointsPerUnit = Number(criterion.scoringRule.pointsPerUnit) || 0;
-        const maxPoints = getCriterionMaxPoints(criterion);
-        return Math.min(quantity * pointsPerUnit, maxPoints);
-    }
-    return Number(criterion.points) || 0;
-}
-
-function isMandatoryCriterionSatisfied(criterion) {
-    if (!criterion) return false;
-    const status = classificationAnswers[criterion.id];
-    if (status === 'na') return true;
-    if (status !== 'yes') return false;
-    if (isPerUnitCriterion(criterion)) {
-        return getCriterionQuantity(criterion.id) > 0;
-    }
-    return true;
-}
-
-function isMandatoryCriterionIdSatisfied(criterionId) {
-    const criterion = getCriterionById(criterionId);
-    return isMandatoryCriterionSatisfied(criterion);
-}
-
-function setClassificationQuantity(criterionId, rawValue) {
-    const id = String(criterionId);
-    const quantity = normalizeQuantityValue(rawValue);
-    if (quantity > 0) {
-        classificationQuantities[id] = quantity;
+  // ---------------------------------------------------------------- step 4 (result)
+  function renderStep4(a) {
+    const e958 = eval958(a); const cls = clsOf(a); const target = a.facility.target; const ax = annexFor(a);
+    const eT = cls ? eval125(a, target) : null; const best = cls ? bestStar(a) : 0;
+    const incomplete = e958.unanswered.length > 0 || (cls && progress125(a).answered < progress125(a).total);
+    let hero;
+    if (cls) {
+      const finalStar = e958.compliant ? best : 0;
+      hero = `<div class="result-hero ${finalStar ? 'pass' : 'fail'}"><div class="stars ${finalStar ? '' : 'none'}">${starStr(finalStar)}</div>
+        <h2>${finalStar ? `${esc(t('achieved'))}: ${finalStar}★` : esc(t('notAchieved'))}</h2>
+        <div>${e958.compliant ? `<span class="badge ok">${esc(t('genReqs'))}: ${esc(t('compliant'))}</span>` : `<span class="badge m">${esc(t('genReqs'))}: ${esc(incomplete && !e958.no.length ? t('incomplete') : t('nonCompliant'))}</span>`}
+        <span class="badge ${eT.achieved && e958.compliant ? 'ok' : 'warn'}">${esc(t('fTarget'))} ${starStr(target)}: ${esc(eT.achieved && e958.compliant ? t('targetMet') : t('targetNotMet'))}</span></div></div>`;
     } else {
-        delete classificationQuantities[id];
+      hero = `<div class="result-hero ${e958.compliant ? 'pass' : 'fail'}"><div class="stars ${e958.compliant ? '' : 'none'}">${e958.compliant ? '✔' : '✖'}</div>
+        <h2>${esc(t('genReqs'))}: ${esc(e958.compliant ? t('compliant') : (incomplete && !e958.no.length ? t('incomplete') : t('nonCompliant')))}</h2>
+        <div class="small muted">${esc(kindName(a.facility.kind))} — ${esc(t('annex'))} ${ax ? ax.key : ''}</div></div>`;
     }
-    renderClassificationCriteria();
-    updateStats();
-}
-
-function getAnnotationText(code) {
-    if (!CLASSIFICATION_DATA_3296 || !Array.isArray(CLASSIFICATION_DATA_3296.annotations)) return '';
-    const target = String(code || '').toUpperCase();
-    if (!target) return '';
-    const annotation = CLASSIFICATION_DATA_3296.annotations.find(item => String(item.code || '').toUpperCase() === target);
-    if (!annotation) return '';
-    return annotation[`text_${currentLang}`] || annotation.text_en || annotation.text_uz || annotation.text_ru || '';
-}
-
-function isCriterionMandatoryForAccommodationType(criterion, starKey, accommodationType = selectedAccommodationType) {
-    if (!criterion || !starKey) return false;
-    let isMandatory = criterion?.mandatory?.[starKey] === true;
-    const referenceCodes = Array.isArray(criterion.referenceCodes)
-        ? criterion.referenceCodes
-        : normalizeReferenceCodes(criterion.reference || '');
-    const hasCode = code => referenceCodes.includes(code);
-    const typeKey = String(accommodationType || '').trim();
-    const isAparthotel = typeKey === 'aparthotels';
-    const isSpecialized = typeKey === 'specialized';
-
-    // Exemption annotations
-    if (isAparthotel && hasCode('A8')) isMandatory = false;
-    if (isSpecialized && hasCode('A11')) isMandatory = false;
-
-    // Inclusion annotations
-    if (isAparthotel && hasCode('A9')) isMandatory = true;
-    if (isSpecialized && hasCode('A12')) isMandatory = true;
-
-    return isMandatory === true;
-}
-
-function getStarCriteriaBuckets(star, accommodationType = selectedAccommodationType) {
-    const starKey = getStrictStarKey(star);
-    if (!starKey) {
-        return { mandatory: [], optional: [], all: [], ids: new Set() };
+    let kpis = `<div class="kpis">
+      <div class="kpi ${e958.no.length ? 'bad' : (e958.unanswered.length ? 'warn' : 'ok')}"><div class="l">${esc(t('genReqs'))}</div><div class="v">${e958.yes + e958.na.length}/${e958.applicable}</div><div class="small muted">${e958.no.length} ✖ · ${e958.unanswered.length} ${esc(t('unanswered'))}</div></div>`;
+    if (eT) kpis += `<div class="kpi ${eT.points >= eT.threshold ? 'ok' : 'bad'}"><div class="l">${esc(t('pointsTotal'))} (${starStr(target)})</div><div class="v">${eT.points} / ${eT.threshold}</div><div class="small muted">${esc(t('shortfall'))}: ${eT.shortfall}</div></div>
+      <div class="kpi ${eT.missing.length ? 'bad' : 'ok'}"><div class="l">${esc(t('mandatoryMet'))} (${starStr(target)})</div><div class="v">${eT.mandatory.length - eT.missing.length}/${eT.mandatory.length}</div></div>
+      <div class="kpi"><div class="l">${esc(t('progress'))}</div><div class="v">${progress125(a).answered}/${progress125(a).total}</div><div class="small muted">MSt 125</div></div>`;
+    kpis += '</div>';
+    let starTable = '';
+    if (cls) {
+      starTable = `<div class="card"><div class="card-title"><h3>${esc(t('starTable'))}</h3><span class="badge info">${esc(clsName(cls))}</span></div><div class="table-wrap"><table class="tbl"><tr><th>${esc(t('star'))}</th><th class="num">${esc(t('mandatoryMet'))}</th><th class="num">${esc(t('points'))}</th><th class="num">${esc(t('threshold'))}</th><th>${esc(t('status'))}</th></tr>` +
+        STARS.map(s => { const e = eval125(a, s); const st = e.achieved ? `<span class="badge ok">${esc(t('achievedShort'))}</span>` : (e.missing.length ? `<span class="badge m">${esc(t('missingMandatory'))}: ${e.missing.length}</span>` : `<span class="badge warn">${esc(t('shortfall'))}: ${e.shortfall}</span>`);
+          return `<tr class="${s === target ? 'hl' : ''}"><td>${starStr(s)}</td><td class="num">${e.mandatory.length - e.missing.length}/${e.mandatory.length}</td><td class="num">${e.points}</td><td class="num">${e.threshold}</td><td>${st}</td></tr>`; }).join('') + '</table></div></div>';
     }
-    ensureAccommodationTypeSelection();
-    const types = getAccommodationTypes();
-    const effectiveAccommodationType = Object.prototype.hasOwnProperty.call(types, accommodationType)
-        ? accommodationType
-        : selectedAccommodationType;
+    let gap = '';
+    if (eT && !(eT.achieved && e958.compliant)) {
+      gap += `<div class="card"><div class="card-title"><h3>${esc(t('gapTitle'))} (${starStr(target)})</h3></div>`;
+      if (eT.missing.length) gap += `<p class="small muted"><strong>${esc(t('gapMandatory'))}</strong></p>` + eT.missing.map(i => `<div class="list-item"><a href="#" data-jump125="${esc(i.id)}"><b>${esc(i.label)}</b> ${esc(tr('125:' + i.id, i.text))}</a><span class="pts">${i.points} ${esc(t('pts'))}</span></div>`).join('');
+      if (eT.shortfall > 0) {
+        const cands = leaves125().filter(i => !satisfied125(i, a) && !(a.a125[i.id] && a.a125[i.id].v === 'yes')).sort((x, y) => y.points - x.points).slice(0, 12);
+        gap += `<p class="small muted" style="margin-top:8px"><strong>${esc(t('gapPoints', { n: eT.shortfall }))}</strong></p>` + cands.map(i => `<div class="list-item info"><a href="#" data-jump125="${esc(i.id)}"><b>${esc(i.label)}</b> ${esc(tr('125:' + i.id, i.text))}</a><span class="pts">+${i.points}</span></div>`).join('');
+      }
+      gap += '</div>';
+    }
+    let g958 = '';
+    if (e958.no.length || e958.unanswered.length || e958.na.length) {
+      g958 = `<div class="card"><div class="card-title"><h3>${esc(t('genReqs'))}</h3></div>`;
+      if (e958.no.length) g958 += `<p class="small muted"><strong>${esc(t('failed958'))} (${e958.no.length})</strong></p>` + e958.no.map(l => `<div class="list-item"><a href="#" data-jump958="${esc(l.id)}"><b>${esc(l.id)}</b> ${esc(tr(`958${ax.key}:${l.id}`, l.leaf.title))}</a></div>`).join('');
+      if (e958.unanswered.length) g958 += `<p class="small muted" style="margin-top:8px"><strong>${esc(t('unanswered958'))} (${e958.unanswered.length})</strong></p>` + e958.unanswered.slice(0, 30).map(l => `<div class="list-item warn"><a href="#" data-jump958="${esc(l.id)}"><b>${esc(l.id)}</b> ${esc(tr(`958${ax.key}:${l.id}`, l.leaf.title))}</a></div>`).join('') + (e958.unanswered.length > 30 ? `<div class="small muted">… +${e958.unanswered.length - 30}</div>` : '');
+      if (e958.na.length) g958 += `<p class="small muted" style="margin-top:8px"><strong>${esc(t('naFlagged'))} (${e958.na.length})</strong></p>` + e958.na.map(l => `<div class="list-item info"><a href="#" data-jump958="${esc(l.id)}"><b>${esc(l.id)}</b> ${esc(tr(`958${ax.key}:${l.id}`, l.leaf.title))}</a><span class="small">${esc((a.a958[l.id] || {}).note || '')}</span></div>`).join('');
+      g958 += '</div>';
+    }
+    let cats = '';
+    if (eT) {
+      cats = `<div class="card"><div class="card-title"><h3>${esc(t('byCategory'))}</h3><span class="badge">${eT.points} / ${maxPoints125()}</span></div>` + S125.categories.map(c => { const max = c.items.filter(i => !i.header).reduce((s, i) => s + i.points, 0); const got = eT.byCat[c.id] || 0; return `<div class="cat-bar"><span>${esc(c.id)}. ${esc(tr('125cat:' + c.id, c.name))}</span><span class="mono">${got} / ${max}</span><div class="progress"><span style="width:${max ? Math.round(100 * got / max) : 0}%"></span></div></div>`; }).join('') + '</div>';
+    }
+    $('#resultView').innerHTML = hero + kpis + starTable + gap + g958 + cats;
+  }
+  $('#resultView').addEventListener('click', e => {
+    const j1 = e.target.closest('[data-jump125]'); const j2 = e.target.closest('[data-jump958]'); if (!j1 && !j2) return; e.preventDefault();
+    if (j1) { const id = j1.dataset.jump125; const cat = ITEM125[id].cat.id; open125.add(cat); showStep(3); setTimeout(() => { const el = $(`#i125-${CSS.escape(id)}`); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.style.outline = '2px solid var(--gold)'; setTimeout(() => el.style.outline = '', 2500); } }, 50); }
+    if (j2) { const id = j2.dataset.jump958; const l = leaves958(cur()).find(x => x.id === id); if (l) open958.add(l.sec.id); showStep(2); setTimeout(() => { const el = $(`#i958-${CSS.escape(id)}`); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.style.outline = '2px solid var(--gold)'; setTimeout(() => el.style.outline = '', 2500); } }, 50); }
+  });
+  $('#btnReset').onclick = () => { const a = cur(); if (a && confirm(t('confirmReset'))) { a.a958 = {}; a.a125 = {}; touch(a); renderStep4(a); } };
 
-    const allCriteria = getAllClassificationCriteria()
-        .slice()
-        .sort((a, b) => compareCriterionIds(a.id, b.id));
+  // ---------------------------------------------------------------- report
+  function buildReportHtml(a, opts) {
+    const e958 = eval958(a); const cls = clsOf(a); const target = a.facility.target; const ax = annexFor(a);
+    const eT = cls ? eval125(a, target) : null; const best = cls ? bestStar(a) : 0; const finalStar = e958.compliant ? best : 0; const f = a.facility;
+    const ansTxt = v => v === 'yes' ? `<span class="yes">${esc(t('yes'))}</span>` : v === 'no' ? `<span class="no">${esc(t('no'))}</span>` : v === 'na' ? `<span class="na">${esc(t('na'))}</span>` : `<span class="none">—</span>`;
+    const photos = ans => opts.photos && ans && ans.photos && ans.photos.length ? `<div class="rp-photos">${ans.photos.map(p => `<img src="${p}" alt="">`).join('')}</div>` : '';
+    const note = ans => opts.notes && ans && ans.note ? esc(ans.note) : '';
+    let h = `<div class="rp-head"><div><h1>${esc(t('reportTitle'))}</h1><div class="std">${esc(t('reportBasis'))}</div></div><div class="rp-stars">${cls ? starStr(finalStar) : (e958.compliant ? '✔' : '✖')}</div></div>`;
+    h += `<div class="rp-info">
+      <div><b>${esc(t('fName'))}</b><span>${esc(f.name)}</span></div><div><b>${esc(t('fKind'))}</b><span>${esc(kindName(f.kind))}</span></div>
+      <div><b>${esc(t('fAddress'))}</b><span>${esc([f.region, f.address].filter(Boolean).join(', '))}</span></div><div><b>${esc(t('fGroup'))}</b><span>${esc(groupName((kindInfo(f.kind) || {}).group))} (${esc(t('annex'))} ${ax ? ax.key : ''})</span></div>
+      <div><b>${esc(t('fRooms'))} / ${esc(t('fBeds'))}</b><span>${esc(f.rooms || '—')} / ${esc(f.beds || '—')}</span></div><div><b>${esc(t('fFloors'))}</b><span>${esc(f.floors || '—')}</span></div>
+      <div><b>${esc(t('fContact'))}</b><span>${esc([f.contact, f.phone, f.email].filter(Boolean).join(', ') || '—')}</span></div><div><b>${esc(t('fInspector'))}</b><span>${esc(f.inspector || '—')}</span></div>
+      <div><b>${esc(t('fDate'))}</b><span>${esc(fmtDate(f.date))}</span></div><div><b>${esc(t('fTarget'))}</b><span>${cls ? starStr(target) : '—'}</span></div>
+      ${(() => { const fl = [['seasonal', 'flagSeasonal'], ['heritage', 'flagHeritage'], ['rural', 'flagRural'], ['naturalWater', 'flagNaturalWater'], ['sensorDoors', 'flagSensorDoors'], ['brand', 'flagBrand']].filter(x => f[x[0]]).map(x => t(x[1])); return fl.length ? `<div style="grid-column:1/-1"><b>${esc(t('fFlags'))}</b><span>${esc(fl.join('; '))}</span></div>` : ''; })()}
+    </div>`;
+    h += `<div class="rp-verdict"><div class="big ${e958.compliant ? 'ok' : 'bad'}">${esc(t('genReqs'))}: ${esc(e958.compliant ? t('compliant') : (e958.no.length ? t('nonCompliant') : t('incomplete')))} (${e958.yes + e958.na.length}/${e958.applicable}${e958.no.length ? `, ✖ ${e958.no.length}` : ''}${e958.unanswered.length ? `, ${e958.unanswered.length} ${esc(t('unanswered'))}` : ''})</div>`;
+    if (cls) h += `<div class="big ${finalStar ? 'ok' : 'bad'}">${finalStar ? `${esc(t('achieved'))}: ${starStr(finalStar)} (${finalStar})` : esc(t('notAchieved'))}</div><div>${esc(t('fTarget'))} ${starStr(target)}: ${esc(eT.achieved && e958.compliant ? t('targetMet') : t('targetNotMet'))} — ${esc(t('pointsTotal'))} <b>${eT.points}</b> / ${esc(t('threshold'))} <b>${eT.threshold}</b>; ${esc(t('mandatoryMet'))} <b>${eT.mandatory.length - eT.missing.length}/${eT.mandatory.length}</b></div>`;
+    h += '</div>';
+    if (cls) {
+      h += `<h2>${esc(t('starTable'))} — ${esc(clsName(cls))}</h2><table><tr><th>${esc(t('star'))}</th><th class="c">${esc(t('mandatoryMet'))}</th><th class="c">${esc(t('points'))}</th><th class="c">${esc(t('threshold'))}</th><th>${esc(t('status'))}</th></tr>` +
+        STARS.map(s => { const e = eval125(a, s); return `<tr><td>${starStr(s)}</td><td class="c">${e.mandatory.length - e.missing.length}/${e.mandatory.length}</td><td class="c">${e.points}</td><td class="c">${e.threshold}</td><td>${e.achieved ? `<span class="yes">${esc(t('achievedShort'))}</span>` : (e.missing.length ? `<span class="no">${esc(t('missingMandatory'))}: ${e.missing.length}</span>` : `<span class="none">${esc(t('shortfall'))}: ${e.shortfall}</span>`)}</td></tr>`; }).join('') + '</table>';
+      if (eT.missing.length) h += `<h2>${esc(t('gapMandatory'))} (${starStr(target)})</h2><table><tr><th>${esc(t('reqNo'))}</th><th>${esc(t('requirement'))}</th><th class="c">${esc(t('points'))}</th></tr>` + eT.missing.map(i => `<tr><td class="c">${esc(i.label)}</td><td>${esc(tr('125:' + i.id, i.text))}</td><td class="c">${i.points}</td></tr>`).join('') + '</table>';
+    }
+    if (e958.no.length) h += `<h2>${esc(t('failed958'))}</h2><table><tr><th>${esc(t('reqNo'))}</th><th>${esc(t('requirement'))}</th><th>${esc(t('notesCol'))}</th></tr>` + e958.no.map(l => `<tr><td class="c">${esc(l.id)}</td><td>${esc(tr(`958${ax.key}:${l.id}`, l.leaf.title))}${photos(a.a958[l.id])}</td><td>${note(a.a958[l.id])}</td></tr>`).join('') + '</table>';
+    if (e958.na.length) h += `<h2>${esc(t('naFlagged'))}</h2><table><tr><th>${esc(t('reqNo'))}</th><th>${esc(t('requirement'))}</th><th>${esc(t('notesCol'))}</th></tr>` + e958.na.map(l => `<tr><td class="c">${esc(l.id)}</td><td>${esc(tr(`958${ax.key}:${l.id}`, l.leaf.title))}</td><td>${note(a.a958[l.id])}</td></tr>`).join('') + '</table>';
+    if (opts.full && ax) {
+      h += `<h2>${esc(t('detail958'))} — ${esc(tr('958' + ax.key + ':title', ax.annex.title))}</h2><table><tr><th style="width:44px">${esc(t('reqNo'))}</th><th>${esc(t('requirement'))}</th><th class="c" style="width:56px">${esc(t('answer'))}</th><th style="width:22%">${esc(t('notesCol'))}</th></tr>`;
+      const leaves = leaves958(a); let lastSec = null, lastPar = null;
+      leaves.forEach(l => {
+        if (l.sec !== lastSec) { h += `<tr><td class="sec" colspan="4">${esc(l.sec.id)}. ${esc(tr(`958${ax.key}sec:${l.sec.id}`, l.sec.title))}</td></tr>`; lastSec = l.sec; lastPar = null; }
+        if (l.parent && l.parent !== lastPar) { h += `<tr><td class="c par">${esc(l.parent.id)}</td><td class="par" colspan="3">${esc(tr(`958${ax.key}:${l.parent.id}`, l.parent.title))}</td></tr>`; }
+        lastPar = l.parent; const ans = a.a958[l.id] || {};
+        h += `<tr><td class="c">${esc(l.id)}</td><td>${esc(tr(`958${ax.key}:${l.id}`, l.leaf.title))}${l.applies ? '' : ` <i style="color:#777">(${esc(l.reasons.join('; '))})</i>`}${photos(ans)}</td><td class="c">${l.applies ? ansTxt(ans.v) : '<span class="na">n/a</span>'}</td><td>${note(ans)}</td></tr>`;
+      });
+      h += '</table>';
+      if (cls) {
+        h += `<h2>${esc(t('detail125'))} — ${esc(clsName(cls))}</h2><table><tr><th style="width:44px">${esc(t('reqNo'))}</th><th>${esc(t('requirement'))}</th><th class="c">${esc(t('points'))}</th><th class="c">${esc(t('mand'))}</th><th class="c">${esc(t('answer'))}</th><th class="c">${esc(t('earned'))}</th><th style="width:18%">${esc(t('notesCol'))}</th></tr>`;
+        S125.categories.forEach(c => {
+          h += `<tr><td class="sec" colspan="7">${esc(c.id)}. ${esc(tr('125cat:' + c.id, c.name))}</td></tr>`;
+          c.items.forEach(i => {
+            if (i.header) { h += `<tr><td class="c par">${esc(i.label)}</td><td class="par" colspan="6">${esc(tr('125:' + i.id, i.text))}</td></tr>`; return; }
+            const ans = a.a125[i.id] || {}; const ms = mandatoryStars(i, a);
+            h += `<tr><td class="c">${esc(i.label)}</td><td>${esc(tr('125:' + i.id, i.text))}${photos(ans)}</td><td class="c">${i.rule ? `${i.rule.per_unit}×/${i.rule.max}` : i.points}</td><td class="c">${ms.length ? ms.join(',') : '—'}</td><td class="c">${ansTxt(ans.v)}${i.rule && ans.qty ? ` (${esc(ans.qty)})` : ''}</td><td class="c">${earned125(i, a)}</td><td>${note(ans)}</td></tr>`;
+          });
+        });
+        h += '</table>';
+      }
+    }
+    // footnotes used in this report
+    if (ax) {
+      const used = new Set(); leaves958(a).forEach(l => { [].concat(l.sec.notes || [], l.item.notes || [], l.leaf === l.item ? [] : (l.leaf.notes || []), (ax.col != null && l.leaf.marks && l.leaf.marks[ax.col]) ? l.leaf.marks[ax.col].notes : []).forEach(n => used.add(n)); });
+      const usedAnn = new Set(); if (cls) leaves125().forEach(i => (i.ann || []).forEach(x => usedAnn.add(x)));
+      h += `<h2>${esc(t('footnotes'))} — ${esc(tr('958' + ax.key + ':title', ax.annex.title))}</h2><div class="rp-note">` + [...used].sort((x, y) => x - y).map(n => `<div><b>${n}</b> — ${esc(tr(`958${ax.key}note:${n}`, ax.annex.notes[n] || ''))}</div>`).join('') + '</div>';
+      if (cls) h += `<h2>${esc(t('footnotes'))} — ${esc(S125.standard)}</h2><div class="rp-note">` + [...usedAnn].sort().map(x => `<div><b>${x}</b> — ${esc(tr('125ann:' + x, S125.annotations[x] || ''))}</div>`).join('') + '</div>';
+      h += `<h2>${esc(t('bibliography'))}</h2><div class="rp-note">` + (S958.references || []).map(r => `<div><b>${esc(r[0])}</b> ${esc(r[1])}</div>`).join('') + Object.keys(S958.bibliography || {}).map(n => `<div><b>[${n}]</b> ${esc(S958.bibliography[n])}</div>`).join('') + '</div>';
+    }
+    h += `<div class="rp-sign"><div>${esc(t('signInspector'))}: ${esc(f.inspector || '')}<br><br>______________________</div><div>${esc(t('signFacility'))}: ${esc(f.contact || '')}<br><br>______________________</div></div>`;
+    h += `<div class="rp-foot">${esc(t('generated'))}: ${new Date().toLocaleString()} · ${esc(t('versionNote'))}</div>`;
+    return h;
+  }
+  const reportOpts = () => ({ full: $('#optFull').checked, notes: $('#optNotes').checked, photos: $('#optPhotos').checked });
+  function showReport() { const a = cur(); if (!a) return; $('#reportBody').innerHTML = buildReportHtml(a, reportOpts()); document.body.classList.add('printing'); $('#reportView').style.display = 'block'; window.scrollTo({ top: 0 }); }
+  function closeReport() { document.body.classList.remove('printing'); $('#reportView').style.display = 'none'; }
+  $('#btnReport').onclick = showReport;
+  $('#btnCloseReport').onclick = closeReport;
+  $('#btnPrint').onclick = () => { showReport(); setTimeout(() => window.print(), 150); };
+  $('#btnPrint2').onclick = () => window.print();
+  $('#btnJson').onclick = () => exportJson(cur());
+  $('#btnExcel').onclick = () => exportExcel(cur());
+  $('#btnExcel2').onclick = () => exportExcel(cur());
+  $('#btnShare').onclick = () => {
+    const a = cur(); const e958 = eval958(a); const cls = clsOf(a); const eT = cls ? eval125(a, a.facility.target) : null; const best = cls && e958.compliant ? bestStar(a) : 0;
+    const text = t('shareText', { name: a.facility.name || t('untitled'), result: cls ? (best ? `${t('achieved')} ${starStr(best)}` : t('notAchieved')) : t('genReqs'), pts: eT ? eT.points : '—', thr: eT ? eT.threshold : '—', c: e958.compliant ? t('compliant') : t('nonCompliant') });
+    if (navigator.share) navigator.share({ title: t('reportTitle'), text }).catch(() => { });
+    else if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => toast(t('copied'), 'success'));
+    else window.location.href = 'mailto:?subject=' + encodeURIComponent(t('reportTitle')) + '&body=' + encodeURIComponent(text);
+  };
 
-    const mandatory = allCriteria.filter(criterion => {
-        return isCriterionMandatoryForAccommodationType(criterion, starKey, effectiveAccommodationType);
-    });
-    const optional = allCriteria.filter(criterion => {
-        return !isCriterionMandatoryForAccommodationType(criterion, starKey, effectiveAccommodationType);
-    });
-    const all = allCriteria;
-    return {
-        mandatory,
-        optional,
-        all,
-        ids: new Set(all.map(criterion => String(criterion.id)))
+  // ---------------------------------------------------------------- export / import
+  function download(name, blob) { const url = URL.createObjectURL(blob); const l = document.createElement('a'); l.href = url; l.download = name; document.body.appendChild(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000); toast(t('exported'), 'success'); }
+  const fileBase = a => ((a.facility.name || 'assessment').replace(/[^\wЀ-ӿ‘’ʻ-]+/g, '_').slice(0, 40)) + '_' + (a.facility.date || todayIso());
+  function exportJson(a) { const payload = { app: 'star-rating-v2', version: 2, exportedAt: new Date().toISOString(), assessment: a }; download(fileBase(a) + '.json', new Blob([JSON.stringify(payload, null, 1)], { type: 'application/json' })); }
+  function importJsonFile(file) {
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const d = JSON.parse(r.result); const list = d.assessment ? [d.assessment] : (Array.isArray(d.assessments) ? d.assessments : null);
+        if (!list) throw new Error('bad');
+        list.forEach(a => { if (!a.facility) throw new Error('bad'); const c = JSON.parse(JSON.stringify(a)); if (state.assessments.some(x => x.id === c.id)) c.id = uid(); c.a958 = c.a958 || {}; c.a125 = c.a125 || {}; state.assessments.push(c); });
+        save(true); renderList(); toast(t('imported'), 'success');
+      } catch (e) { toast(t('importError'), 'error'); }
     };
-}
-
-function getAssessableCriterionIdSet(star = selectedStar) {
-    return getStarCriteriaBuckets(star).ids;
-}
-
-function getMandatoryCriteriaForStar(star) {
-    return getStarCriteriaBuckets(star).mandatory;
-}
-
-function getOptionalCriteriaForStar(star) {
-    return getStarCriteriaBuckets(star).optional;
-}
-
-function getMandatoryIdsForLevel(level) {
-    if (!level) return [];
-    return Array.from(new Set(getMandatoryCriteriaForStar(level.star).map(criterion => String(criterion.id))));
-}
-
-function getTotalClassificationCriteriaCount() {
-    if (!CLASSIFICATION_DATA_3296 || !Array.isArray(CLASSIFICATION_DATA_3296.sections)) return 0;
-    return CLASSIFICATION_DATA_3296.sections.reduce((sum, section) => {
-        const count = (section.criteria || []).filter(isAssessableClassificationCriterion).length;
-        return sum + count;
-    }, 0);
-}
-
-function getDashboardVisualTotalCriteriaCount() {
-    return DASHBOARD_VISUAL_TOTAL_CRITERIA;
-}
-
-function getMaxPointsForStar(star = selectedStar) {
-    const configuredMaxPoints = Number(CLASSIFICATION_DATA_3296?.maxPoints);
-    if (Number.isFinite(configuredMaxPoints) && configuredMaxPoints > 0) {
-        return configuredMaxPoints;
+    r.readAsText(file);
+  }
+  function exportExcel(a) {
+    const e958 = eval958(a); const cls = clsOf(a); const ax = annexFor(a); const target = a.facility.target; const f = a.facility;
+    const summary = [[t('reportTitle')], [], [t('fName'), f.name], [t('fKind'), kindName(f.kind)], [t('fAddress'), [f.region, f.address].filter(Boolean).join(', ')], [t('fRooms'), f.rooms], [t('fBeds'), f.beds], [t('fDate'), f.date], [t('fInspector'), f.inspector], [t('fContact'), [f.contact, f.phone, f.email].filter(Boolean).join(', ')], [],
+      [t('genReqs'), e958.compliant ? t('compliant') : (e958.no.length ? t('nonCompliant') : t('incomplete')), `${e958.yes + e958.na.length}/${e958.applicable}`]];
+    if (cls) {
+      const best = e958.compliant ? bestStar(a) : 0; summary.push([t('achieved'), best || t('notAchieved')], [t('fTarget'), target], []);
+      summary.push([t('star'), t('mandatoryMet'), t('points'), t('threshold'), t('status')]);
+      STARS.forEach(s => { const e = eval125(a, s); summary.push([s, `${e.mandatory.length - e.missing.length}/${e.mandatory.length}`, e.points, e.threshold, e.achieved ? t('achievedShort') : (e.missing.length ? `${t('missingMandatory')}: ${e.missing.length}` : `${t('shortfall')}: ${e.shortfall}`)]); });
     }
-    return getStarCriteriaBuckets(star).all.reduce((sum, criterion) => {
-        return sum + getCriterionMaxPoints(criterion);
-    }, 0);
-}
-
-function getAllClassificationCriteria() {
-    if (!CLASSIFICATION_DATA_3296 || !Array.isArray(CLASSIFICATION_DATA_3296.sections)) return [];
-    const items = [];
-    CLASSIFICATION_DATA_3296.sections.forEach(section => {
-        section.criteria.forEach(criterion => {
-            if (!isAssessableClassificationCriterion(criterion)) return;
-            items.push({
-                ...criterion,
-                sectionId: String(section.id),
-                sectionTitle: getSectionTitle(section)
-            });
-        });
-    });
-    return items;
-}
-
-function getCriterionById(id) {
-    const target = String(id);
-    for (const section of (CLASSIFICATION_DATA_3296.sections || [])) {
-        const criterion = section.criteria.find(c => String(c.id) === target && isAssessableClassificationCriterion(c));
-        if (criterion) {
-            return {
-                ...criterion,
-                sectionId: String(section.id),
-                sectionTitle: getSectionTitle(section)
-            };
-        }
+    const rows958 = [[t('reqNo'), t('requirement'), 'Applicable', t('answer'), t('notesCol')]];
+    if (ax) leaves958(a).forEach(l => { const ans = a.a958[l.id] || {}; rows958.push([l.id, (l.parent ? tr(`958${ax.key}:${l.parent.id}`, l.parent.title) + ' — ' : '') + tr(`958${ax.key}:${l.id}`, l.leaf.title), l.applies ? 'yes' : l.reasons.join('; '), l.applies ? (ans.v || '') : '', ans.note || '']); });
+    const rows125 = [[t('reqNo'), 'Category', t('requirement'), t('points'), t('mand'), t('answer'), t('qty'), t('earned'), t('notesCol')]];
+    if (cls) ITEMS125.forEach(i => { if (i.header) { rows125.push([i.label, tr('125cat:' + i.cat.id, i.cat.name), tr('125:' + i.id, i.text), '', '', '', '', '', '']); return; } const ans = a.a125[i.id] || {}; rows125.push([i.label, tr('125cat:' + i.cat.id, i.cat.name), tr('125:' + i.id, i.text), i.rule ? `${i.rule.per_unit}x max ${i.rule.max}` : i.points, mandatoryStars(i, a).join(','), ans.v || '', ans.qty || '', earned125(i, a), ans.note || '']); });
+    if (window.XLSX) {
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summary), t('excelSummary'));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows958), t('excel958'));
+      if (cls) XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows125), t('excel125'));
+      const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      download(fileBase(a) + '.xlsx', new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+    } else {
+      toast(t('noExcelLib'));
+      const csv = [summary, [[]], rows958, [[]], rows125].flat().map(r => r.map(c => '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"').join(';')).join('\n');
+      download(fileBase(a) + '.csv', new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }));
     }
-    return null;
-}
+  }
 
-function buildMandatoryStarMap() {
-    const map = new Map();
-    [1, 2, 3, 4, 5].forEach(star => {
-        getMandatoryCriteriaForStar(star).forEach(criterion => {
-            const key = String(criterion.id);
-            if (!map.has(key)) map.set(key, new Set());
-            map.get(key).add(star);
-        });
-    });
-    return map;
-}
-
-function compareCriterionIds(a, b) {
-    const ax = String(a).split('.').map(part => Number(part));
-    const bx = String(b).split('.').map(part => Number(part));
-    const len = Math.max(ax.length, bx.length);
-    for (let i = 0; i < len; i++) {
-        const av = Number.isFinite(ax[i]) ? ax[i] : -1;
-        const bv = Number.isFinite(bx[i]) ? bx[i] : -1;
-        if (av !== bv) return av - bv;
-    }
-    return String(a).localeCompare(String(b), undefined, { numeric: true });
-}
-
-function isFilterActive(id) {
-    const element = document.getElementById(id);
-    return Boolean(element && element.classList.contains('active'));
-}
-
-function getEvidenceCount() {
-    return Object.values(evidenceData).reduce((sum, files) => sum + (Array.isArray(files) ? files.length : 0), 0);
-}
-
-function formatDateTime(isoString) {
-    if (!isoString) return '—';
-    const date = new Date(isoString);
-    if (Number.isNaN(date.getTime())) return isoString;
-    return date.toLocaleString();
-}
-
-function escapeHtml(value) {
-    return String(value ?? '')
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#39;');
-}
-
-function showToast(message, type = 'info') {
-    const toast = document.getElementById('toast');
-    if (!toast) return;
-    toast.textContent = message;
-    toast.className = 'toast';
-    if (type === 'success' || type === 'error') toast.classList.add(type);
-    toast.classList.add('active');
-    if (toastTimerId) clearTimeout(toastTimerId);
-    toastTimerId = setTimeout(() => {
-        toast.classList.remove('active');
-    }, 2600);
-}
-
-function openModal(id) {
-    const modal = document.getElementById(id);
-    if (!modal) return;
-    modal.classList.add('active');
-    modal.setAttribute('aria-hidden', 'false');
-}
-
-function closeModal(id) {
-    const modal = document.getElementById(id);
-    if (!modal) return;
-    modal.classList.remove('active');
-    modal.setAttribute('aria-hidden', 'true');
-}
-
-function isMasterUser() {
-    if (!currentUser) return false;
-    const role = normalizeUserRole(currentUser.role);
-    return role === 'master' || role === 'admin';
-}
-
-function applyMasterVisibility() {
-    const isMaster = isMasterUser();
-    document.querySelectorAll('[data-master-only]').forEach(element => {
-        if (isMaster) {
-            if (element.id === 'userManagementCard' || element.id === 'resolutionCard') {
-                element.style.display = 'block';
-            } else if (element.id === 'notificationBtn') {
-                element.style.display = 'inline-flex';
-            } else {
-                element.style.display = '';
-            }
+  // ---------------------------------------------------------------- standards page
+  let stdCls = 'hotel';
+  const linkRefs = (text, prefix) => esc(text).replace(/\[(\d+)\]/g, (m, n) => `<a href="#${prefix}-${n}" class="ref">[${n}]</a>`);
+  function markCell(m) { if (!m) return ''; return (m.req ? '+' : '−') + (m.notes && m.notes.length ? `<sup class="fn">${m.notes.join(', ')}</sup>` : ''); }
+  function annexTableHtml(key) {
+    const an = S958['annex' + key]; const cols = key === 'A' ? an.columns : null; const rules = an.rules || {};
+    let h = `<h3 style="margin-top:14px">${esc(tr('958' + key + ':title', an.title))}</h3><div class="table-wrap"><table class="tbl annex"><tr><th>${esc(t('reqNo'))}</th><th>${esc(t('requirement'))}</th>${cols ? cols.map((c, i) => `<th class="num">${esc(tr('958Acol:' + i, c))}</th>`).join('') : ''}</tr>`;
+    an.sections.forEach(sec => {
+      h += `<tr><td colspan="${2 + (cols ? cols.length : 0)}" style="background:var(--gray-50)"><b>${esc(sec.id)}. ${esc(tr(`958${key}sec:${sec.id}`, sec.title))}</b>${sec.notes.length ? `<sup class="fn">${sec.notes.join(', ')}</sup>` : ''}</td></tr>`;
+      sec.items.forEach(it => {
+        const supIt = it.notes.length ? `<sup class="fn">${it.notes.join(', ')}</sup>` : '';
+        if (it.sub) {
+          h += `<tr><td class="mono">${esc(it.id)}</td><td colspan="${1 + (cols ? cols.length : 0)}"><b>${esc(tr(`958${key}:${it.id}`, it.title))}</b>${supIt}</td></tr>`;
+          it.sub.forEach(x => { h += `<tr><td class="mono small muted">${esc(x.id)}</td><td>${esc(tr(`958${key}:${x.id}`, x.title))}${x.notes.length ? `<sup class="fn">${x.notes.join(', ')}</sup>` : ''}${x.changed ? ` <span class="badge new">${esc(t('changed'))}</span>` : ''}</td>${cols ? x.marks.map(m => `<td class="num">${markCell(m)}</td>`).join('') : ''}</tr>`; });
         } else {
-            element.style.display = 'none';
-            element.classList.remove('active');
+          h += `<tr><td class="mono">${esc(it.id)}</td><td>${esc(tr(`958${key}:${it.id}`, it.title))}${supIt}${it.changed ? ` <span class="badge new">${esc(t('changed'))}</span>` : ''}</td>${cols ? it.marks.map(m => `<td class="num">${markCell(m)}</td>`).join('') : ''}</tr>`;
         }
+      });
     });
-}
+    h += '</table></div>';
+    h += `<div class="footnotes"><b>${esc(t('footnotes'))}</b>` + Object.keys(an.notes).map(n => `<div id="fn${key}-${n}" class="fn-row"><span class="fn-n">${n}</span><span>${esc(tr(`958${key}note:${n}`, an.notes[n]))}${rules[n] ? ` <span class="badge info">${rules[n].type === 'exempt' ? esc(t('exemptBy', { n })) : esc(t('onlyFor', { n }))}</span>` : ''}</span></div>`).join('') + '</div>';
+    return h;
+  }
+  function renderStandards() {
+    const a = cur(); const target = a ? a.facility.target : 0;
+    let h = `<div class="card"><div class="card-title"><h2>${esc(S125.standard)} — ${esc(t('stdThresholds'))}</h2></div><p class="small muted">${esc(S125.amendment)}</p><div class="table-wrap"><table class="tbl"><tr><th></th>${STARS.map(s => `<th class="num">${starStr(s)}</th>`).join('')}</tr>` +
+      Object.keys(S125.thresholds).map(k => `<tr><td>${esc(clsName(k))}</td>${STARS.map(s => `<td class="num">${S125.thresholds[k].min[s]}</td>`).join('')}</tr>`).join('') + '</table></div></div>';
+    // mandatory matrix
+    const fake = { facility: { kind: stdCls === 'hotel' ? 'hotel' : stdCls === 'aparthotel' ? 'aparthotel' : 'sanatorium', rooms: '' } };
+    h += `<div class="card"><div class="card-title"><h2>${esc(t('stdCompare'))}</h2><select id="stdClsSel" style="width:auto">${Object.keys(S125.thresholds).map(k => `<option value="${k}" ${k === stdCls ? 'selected' : ''}>${esc(clsName(k))}</option>`).join('')}</select></div>
+      <p class="small muted">${esc(t('legendM'))}. ${esc(t('starMatrixHint'))}</p><div class="table-wrap"><table class="tbl"><tr><th>${esc(t('reqNo'))}</th><th>${esc(t('requirement'))}</th><th class="num">${esc(t('points'))}</th>${STARS.map(s => `<th class="num">${s}★</th>`).join('')}</tr>`;
+    STARS.forEach(() => { });
+    const counts = STARS.map(s => leaves125().filter(i => isMandatory(i, s, fake)).length); const mpts = STARS.map(s => leaves125().filter(i => isMandatory(i, s, fake)).reduce((x, i) => x + i.points, 0));
+    h += `<tr><td></td><td><b>${esc(t('mandCount'))} / ${esc(t('mandPts'))}</b></td><td></td>${STARS.map((s, k) => `<td class="num"><b>${counts[k]}</b> / ${mpts[k]}</td>`).join('')}</tr>`;
+    S125.categories.forEach(c => { h += `<tr><td colspan="${3 + STARS.length}" style="background:var(--gray-50)"><b>${esc(c.id)}. ${esc(tr('125cat:' + c.id, c.name))}</b></td></tr>`; c.items.forEach(i => { const ms = i.header ? [] : mandatoryStars(i, fake); h += `<tr class="${i.header ? '' : ''}"><td class="mono">${esc(i.label)}</td><td>${i.header ? '<b>' : ''}${esc(tr('125:' + i.id, i.text))}${i.ann.length ? ' <span class="small muted">' + i.ann.join(', ') + '</span>' : ''}${i.header ? '</b>' : ''}</td><td class="num">${i.header ? '' : (i.rule ? `${i.rule.per_unit}×/${i.rule.max}` : i.points)}</td>${STARS.map(s => `<td class="num" style="${s === target ? 'background:var(--gold-soft)' : ''}">${ms.includes(s) ? '<b>m</b>' : ''}</td>`).join('')}</tr>`; }); });
+    h += '</table></div></div>';
+    h += `<div class="card"><div class="card-title"><h2>${esc(t('stdBreakfast'))}</h2></div><p class="small muted">${esc(S125.breakfast.note)}</p><div class="table-wrap"><table class="tbl"><tr><th>${esc(t('product'))}</th><th class="num">${esc(t('categoryI'))}</th><th class="num">${esc(t('categoryII'))}</th><th class="num">${esc(t('categoryIII'))}</th></tr>${S125.breakfast.rows.map(r => `<tr><td>${esc(tr('125bf:' + r[0], r[0]))}</td><td class="num">${r[1]}</td><td class="num">${r[2]}</td><td class="num">${r[3]}</td></tr>`).join('')}</table></div></div>`;
+    h += `<div class="card"><div class="card-title"><h2>${esc(t('stdNotes125'))}</h2></div>${Object.keys(S125.annotations).map(k => `<div class="small" style="margin-bottom:4px"><b>${k}</b> — ${esc(tr('125ann:' + k, S125.annotations[k]))}</div>`).join('')}</div>`;
+    h += `<div class="card"><div class="card-title"><h2>${esc(S958.standard)} — ${esc(t('stdKinds'))}</h2></div><p class="small muted">${esc(tr('958title', S958.title))} · ${esc(S958.effective)} · ${esc(S958.replaces)} →</p><div class="table-wrap"><table class="tbl"><tr><th>${esc(t('fGroup'))}</th><th>${esc(t('annex'))}</th><th>${esc(t('fKind'))}</th><th>${esc(t('pointsGroup'))}</th></tr>` +
+      Object.keys(S958.groups).map(g => `<tr><td>${esc(groupName(g))}</td><td>${S958.groups[g].annex}${S958.groups[g].col != null ? ` (${esc(t('column'))} ${S958.groups[g].col + 1})` : ''}</td><td>${S958.kinds.filter(k => k.group === g).map(k => esc(kindName(k.id))).join(', ')}</td><td>${[...new Set(S958.kinds.filter(k => k.group === g && k.cls).map(k => clsName(k.cls)))].join(', ') || '—'}</td></tr>`).join('') + '</table></div></div>';
+    h += `<div class="card"><div class="card-title"><h2>${esc(t('stdNotes958'))}</h2></div>` + ['A', 'B', 'C'].map(ax => `<h3 style="margin-top:10px">${esc(tr('958' + ax + ':title', S958['annex' + ax].title))}</h3>` + Object.keys(S958['annex' + ax].notes).map(n => `<div class="small" style="margin-bottom:3px"><b>${n}</b> — ${esc(tr(`958${ax}note:${n}`, S958['annex' + ax].notes[n]))}</div>`).join('')).join('') + '</div>';
+    // normative documents, clauses and annex tables with footnotes
+    h += `<div class="card"><div class="card-title"><h2>${esc(t('stdRefs'))}</h2></div><p class="small muted">${esc(t('refNote'))}</p>
+      <h3>${esc(t('normRefs'))} — ${esc(S958.standard)}</h3>${(S958.references || []).map(r => `<div class="fn-row"><span class="fn-n" style="min-width:auto"><b>${esc(r[0])}</b></span><span>${esc(r[1])}</span></div>`).join('')}
+      <h3 style="margin-top:14px">${esc(t('stdGeneral'))}</h3>${(S958.general || []).map(g => `<div class="fn-row"><span class="fn-n">${esc(g.id)}</span><span>${linkRefs(tr('958gen:' + g.id, g.text), 'bib958')}</span></div>`).join('')}
+      <h3 style="margin-top:14px">${esc(t('bibliography'))} — ${esc(S958.standard)}</h3>${Object.keys(S958.bibliography || {}).map(n => `<div class="fn-row" id="bib958-${n}"><span class="fn-n">[${n}]</span><span>${esc(S958.bibliography[n])}</span></div>`).join('')}
+      <h3 style="margin-top:14px">${esc(t('clauses125'))}</h3>${(S125.clauses || []).map(g => `<div class="fn-row"><span class="fn-n">${esc(g.id)}</span><span>${linkRefs(tr('125cl:' + g.id, g.text), 'bib125')}</span></div>`).join('')}
+      <h3 style="margin-top:14px">${esc(t('bibliography'))} — ${esc(S125.standard)}</h3>${Object.keys(S125.bibliography || {}).map(n => `<div class="fn-row" id="bib125-${n}"><span class="fn-n">[${n}]</span><span>${esc(S125.bibliography[n])}</span></div>`).join('')}
+    </div>`;
+    h += `<div class="card"><div class="card-title"><h2>${esc(t('stdAnnexTables'))} — ${esc(S958.standard)}</h2></div><p class="small muted">${esc(t('refNote'))}</p>${annexTableHtml('A')}${annexTableHtml('B')}${annexTableHtml('C')}</div>`;
+    $('#standardsView').innerHTML = h;
+    const sel = $('#stdClsSel'); if (sel) sel.onchange = () => { stdCls = sel.value; renderStandards(); };
+  }
 
-function setAssessmentField(field, value) {
-    if (!Object.prototype.hasOwnProperty.call(assessmentData, field)) return;
-    assessmentData[field] = value;
-    persistWorkingState();
-}
-
-function getAssessmentData() {
-    return { ...assessmentData };
-}
-
-function createId(prefix) {
-    return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function isValidEmail(email) {
-    const value = String(email || '').trim();
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-}
-
-function getInviteTokenFromUrl() {
-    const url = new URL(window.location.href);
-    let inviteToken = String(url.searchParams.get(INVITE_TOKEN_PARAM) || '').trim();
-    if (!inviteToken) {
-        const hash = String(url.hash || '').replace(/^#/, '');
-        if (hash) {
-            const hashParams = new URLSearchParams(hash);
-            inviteToken = String(hashParams.get(INVITE_TOKEN_PARAM) || '').trim();
-        }
-    }
-    return inviteToken;
-}
-
-function encodeInvitePayload(payload) {
+  // ---------------------------------------------------------------- auth UI
+  let authMode = 'signin';
+  function showAuth(mode) {
+    authMode = mode; const v = $('#authView'); v.classList.remove('hidden');
+    $('#authForm').classList.toggle('hidden', mode === 'pending'); $('#authToggle').parentElement.classList.toggle('hidden', mode === 'pending');
+    $('#authPending').classList.toggle('hidden', mode !== 'pending');
+    $('#authNameGroup').classList.toggle('hidden', mode !== 'signup');
+    $('#authSubmit').textContent = t(mode === 'signup' ? 'signUp' : 'signIn'); $('#authToggle').textContent = t(mode === 'signup' ? 'haveAccount' : 'noAccount');
+    $('#authPassword').autocomplete = mode === 'signup' ? 'new-password' : 'current-password';
+    $$('#authLang button').forEach(b => b.classList.toggle('active', b.dataset.lang === state.lang));
+  }
+  function hideAuth() { $('#authView').classList.add('hidden'); }
+  function applyUserUi() {
+    const box = $('#userBox');
+    if (!C.enabled) { box.classList.add('hidden'); $('#tabRegistry').classList.add('hidden'); $('#tabUsers').classList.add('hidden'); return; }
+    box.classList.toggle('hidden', !C.user);
+    if (C.user) { $('#userName').textContent = (C.profile && (C.profile.full_name || C.profile.email)) || C.user.email; $('#userRole').textContent = t('role' + ((C.profile && C.profile.role) || 'pending').replace(/^./, c => c.toUpperCase())); }
+    $('#tabRegistry').classList.toggle('hidden', !C.isAdmin()); $('#tabUsers').classList.toggle('hidden', !C.isAdmin());
+  }
+  async function enterApp() {
+    hideAuth(); applyUserUi();
+    if (C.enabled && C.user && !state.assessments.some(a => a.facility.inspector) ) { /* nothing */ }
+    await pullFromCloud();
+    showPage(state.currentId && cur() ? 'assess' : 'list');
+  }
+  async function gate() {
+    if (!C.enabled) { applyUserUi(); showPage(state.currentId && cur() ? 'assess' : 'list'); return; }
+    if (!C.user) { showAuth('signin'); return; }
+    if (!C.isActive()) { applyUserUi(); showAuth('pending'); return; }
+    await enterApp();
+  }
+  $('#authForm').addEventListener('submit', async e => {
+    e.preventDefault(); const email = $('#authEmail').value.trim(); const pw = $('#authPassword').value; const btn = $('#authSubmit'); btn.disabled = true;
     try {
-        return btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
-    } catch (err) {
-        return '';
-    }
-}
+      if (authMode === 'signup') { const r = await C.signUp(email, pw, $('#authName').value.trim()); if (!r.session) { toast(t('checkEmail'), 'success'); showAuth('signin'); return; } }
+      else await C.signIn(email, pw);
+      await gate();
+    } catch (err) { toast(t('authError', { msg: err.message || err }), 'error'); }
+    finally { btn.disabled = false; }
+  });
+  $('#authToggle').onclick = () => showAuth(authMode === 'signup' ? 'signin' : 'signup');
+  $('#authForgot').onclick = async () => { const email = $('#authEmail').value.trim(); if (!email) { $('#authEmail').focus(); return; } try { await C.resetPassword(email); toast(t('resetSent'), 'success'); } catch (err) { toast(t('authError', { msg: err.message }), 'error'); } };
+  const doSignOut = async () => { await C.signOut(); state.currentId = null; save(true); applyUserUi(); showAuth('signin'); };
+  $('#btnSignOut').onclick = doSignOut; $('#authPendingOut').onclick = doSignOut;
+  $$('#authLang button').forEach(b => b.onclick = () => { state.lang = b.dataset.lang; save(); applyUiText(); showAuth(authMode); });
+  if (C.enabled) C.onAuthChange = () => gate();
 
-function decodeInvitePayload(rawValue) {
-    try {
-        if (!rawValue) return null;
-        return JSON.parse(decodeURIComponent(escape(atob(rawValue))));
-    } catch (err) {
-        return null;
-    }
-}
-
-function getInvitePayloadFromUrl() {
-    const url = new URL(window.location.href);
-    let rawValue = String(url.searchParams.get(INVITE_PAYLOAD_PARAM) || '').trim();
-    if (!rawValue) {
-        const hash = String(url.hash || '').replace(/^#/, '');
-        if (hash) {
-            const hashParams = new URLSearchParams(hash);
-            rawValue = String(hashParams.get(INVITE_PAYLOAD_PARAM) || '').trim();
-        }
-    }
-    return decodeInvitePayload(rawValue);
-}
-
-function showInvitePage(message = '', disableSubmit = false) {
-    const loginPage = document.getElementById('loginPage');
-    const appContainer = document.getElementById('appContainer');
-    const invitePage = document.getElementById('invitePage');
-    if (loginPage) loginPage.style.display = 'none';
-    if (appContainer) appContainer.style.display = 'none';
-    if (invitePage) invitePage.style.display = 'flex';
-
-    const messageNode = document.getElementById('invitePageMessage');
-    if (messageNode) messageNode.textContent = message || '';
-
-    const submitBtn = document.getElementById('invitePageSubmitBtn');
-    if (submitBtn) submitBtn.disabled = Boolean(disableSubmit);
-}
-
-function getActiveInviteInputs() {
-    const invitePage = document.getElementById('invitePage');
-    const isInvitePageVisible = Boolean(invitePage && invitePage.style.display !== 'none');
-    if (isInvitePageVisible) {
-        return {
-            usernameInput: document.getElementById('invitePageUsername'),
-            passwordInput: document.getElementById('invitePagePassword'),
-            passwordConfirmInput: document.getElementById('invitePagePasswordConfirm')
-        };
-    }
-    return {
-        usernameInput: document.getElementById('inviteUsername'),
-        passwordInput: document.getElementById('invitePassword'),
-        passwordConfirmInput: document.getElementById('invitePasswordConfirm')
-    };
-}
-
-function buildInviteLink(inviteToken, payload = null) {
-    const url = new URL(window.location.href);
-    url.searchParams.set(INVITE_TOKEN_PARAM, inviteToken);
-    const encodedPayload = encodeInvitePayload(payload);
-    if (encodedPayload) {
-        url.searchParams.set(INVITE_PAYLOAD_PARAM, encodedPayload);
-    }
-    return `${url.origin}${url.pathname}?${url.searchParams.toString()}`;
-}
-
-function clearInviteTokenFromUrl() {
-    const url = new URL(window.location.href);
-    url.searchParams.delete(INVITE_TOKEN_PARAM);
-    url.searchParams.delete(INVITE_PAYLOAD_PARAM);
-    let hash = String(url.hash || '');
-    if (hash) {
-        const hashText = hash.replace(/^#/, '');
-        const hashParams = new URLSearchParams(hashText);
-        hashParams.delete(INVITE_TOKEN_PARAM);
-        hashParams.delete(INVITE_PAYLOAD_PARAM);
-        const nextHash = hashParams.toString();
-        hash = nextHash ? `#${nextHash}` : '';
-    }
-    const clean = `${url.pathname}${url.searchParams.toString() ? `?${url.searchParams.toString()}` : ''}${hash}`;
-    window.history.replaceState({}, document.title, clean);
-}
-
-function sendUserInvite(user) {
-    if (!user || !user.inviteToken || !user.email) return;
-    const inviteLink = buildInviteLink(user.inviteToken, {
-        id: user.id || '',
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        fullName: user.fullName || '',
-        email: user.email || '',
-        role: normalizeUserRole(user.role),
-        invitedAt: user.invitedAt || new Date().toISOString(),
-        inviteToken: user.inviteToken
+  // ---------------------------------------------------------------- registry (admin)
+  let registryRows = [];
+  const starOf = n => n ? '★'.repeat(n) : '—';
+  function registryStatus(r) { if (!r.complete) return ['warn', t('inProgress')]; if (!r.compliant_958) return ['m', t('nonCompliant')]; if (r.threshold == null) return ['ok', t('compliant')]; return r.result_star ? ['gold', starOf(r.result_star)] : ['m', t('notAchieved')]; }
+  async function renderRegistry(refetch) {
+    const box = $('#registryList');
+    if (!C.enabled || !C.isAdmin()) { box.innerHTML = ''; return; }
+    if (refetch || !registryRows.length) { box.innerHTML = `<div class="card empty">${esc(t('syncing'))}</div>`; try { registryRows = await C.listAll(); } catch (e) { box.innerHTML = `<div class="card empty">${esc(t('cloudError'))}</div>`; return; } }
+    const inspectors = [...new Set(registryRows.map(r => r.owner_name).filter(Boolean))].sort();
+    const selI = $('#registryInspector'); const curI = selI.value; selI.innerHTML = `<option value="">${esc(t('allInspectors'))}</option>` + inspectors.map(i => `<option value="${esc(i)}" ${i === curI ? 'selected' : ''}>${esc(i)}</option>`).join('');
+    const selS = $('#registryStatus'); const curS = selS.value; selS.innerHTML = [['', t('filterAll')], ['progress', t('inProgress')], ['nc', t('nonCompliant')], ['star', t('achieved')], ['nostar', t('notAchieved')]].map(([v, l]) => `<option value="${v}" ${v === curS ? 'selected' : ''}>${esc(l)}</option>`).join('');
+    const q = $('#registrySearch').value.trim().toLowerCase();
+    const rows = registryRows.filter(r => {
+      if (q && !((r.facility_name || '') + ' ' + (r.region || '') + ' ' + kindName(r.facility_kind)).toLowerCase().includes(q)) return false;
+      if (curI && r.owner_name !== curI) return false;
+      if (curS === 'progress' && r.complete) return false; if (curS === 'nc' && (!r.complete || r.compliant_958)) return false;
+      if (curS === 'star' && !r.result_star) return false; if (curS === 'nostar' && (!r.complete || r.result_star || r.threshold == null)) return false;
+      return true;
     });
-    const subject = encodeURIComponent('Star-UZ account invitation');
-    const body = encodeURIComponent(
-        `Hello ${getUserFullName(user)},\n\n` +
-        `Use this link to create your login and password:\n${inviteLink}\n\n` +
-        'This invitation link can be used once.'
-    );
-    window.location.href = `mailto:${encodeURIComponent(user.email)}?subject=${subject}&body=${body}`;
-    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-        navigator.clipboard.writeText(inviteLink).catch(() => {});
-    }
-}
-
-function processInviteLinkFromUrl() {
-    const inviteToken = getInviteTokenFromUrl();
-    if (!inviteToken) return;
-
-    let users = getStoredUsers();
-    let inviteUser = users.find(user => user.status === 'invited' && user.inviteToken === inviteToken);
-
-    if (!inviteUser) {
-        const invitePayload = getInvitePayloadFromUrl();
-        if (invitePayload && String(invitePayload.inviteToken || '').trim() === inviteToken) {
-            const hydratedUser = normalizeStoredUser({
-                id: invitePayload.id || createId('user'),
-                firstName: invitePayload.firstName || '',
-                lastName: invitePayload.lastName || '',
-                fullName: invitePayload.fullName || '',
-                email: invitePayload.email || '',
-                username: '',
-                password: '',
-                role: normalizeUserRole(invitePayload.role),
-                status: 'invited',
-                inviteToken,
-                invitedAt: invitePayload.invitedAt || new Date().toISOString(),
-                activatedAt: ''
-            });
-            if (hydratedUser) {
-                const existingIndex = users.findIndex(user =>
-                    (user.inviteToken && user.inviteToken === inviteToken)
-                    || (hydratedUser.email && user.email === hydratedUser.email)
-                );
-                if (existingIndex >= 0) {
-                    users[existingIndex] = normalizeStoredUser({
-                        ...users[existingIndex],
-                        ...hydratedUser,
-                        status: 'invited',
-                        inviteToken
-                    });
-                } else {
-                    users.push(hydratedUser);
-                }
-                setStoredUsers(users);
-                users = getStoredUsers();
-                inviteUser = users.find(user => user.status === 'invited' && user.inviteToken === inviteToken);
-            }
-        }
-    }
-
-    if (!inviteUser) {
-        pendingInviteToken = null;
-        showInvitePage(t('inviteInvalid'), true);
-        return;
-    }
-
-    pendingInviteToken = inviteToken;
-    showInvitePage('', false);
-    const { usernameInput, passwordInput, passwordConfirmInput } = getActiveInviteInputs();
-    if (usernameInput) usernameInput.value = '';
-    if (passwordInput) passwordInput.value = '';
-    if (passwordConfirmInput) passwordConfirmInput.value = '';
-    if (usernameInput) usernameInput.focus();
-}
-
-function completeInviteSetup() {
-    if (!pendingInviteToken) {
-        showInvitePage(t('inviteInvalid'), true);
-        return;
-    }
-    const { usernameInput, passwordInput, passwordConfirmInput } = getActiveInviteInputs();
-
-    const usernameVal = usernameInput ? usernameInput.value.trim() : '';
-    const passwordVal = passwordInput ? passwordInput.value.trim() : '';
-    const passwordConfirmVal = passwordConfirmInput ? passwordConfirmInput.value.trim() : '';
-
-    if (!usernameVal || !passwordVal || !passwordConfirmVal) {
-        showToast(t('fillAllFields'), 'error');
-        return;
-    }
-    if (passwordVal !== passwordConfirmVal) {
-        showToast(t('passwordMismatch'), 'error');
-        return;
-    }
-    if (usernameVal === MASTER_ACCOUNT.username) {
-        showToast(t('usernameReserved'), 'error');
-        return;
-    }
-
-    const users = getStoredUsers();
-    if (users.some(user => user.status === 'active' && user.username === usernameVal)) {
-        showToast(t('usernameExists'), 'error');
-        return;
-    }
-
-    const userIndex = users.findIndex(user => user.status === 'invited' && user.inviteToken === pendingInviteToken);
-    if (userIndex === -1) {
-        showToast(t('inviteInvalid'), 'error');
-        pendingInviteToken = null;
-        showInvitePage(t('inviteInvalid'), true);
-        return;
-    }
-
-    users[userIndex] = normalizeStoredUser({
-        ...users[userIndex],
-        username: usernameVal,
-        password: passwordVal,
-        status: 'active',
-        inviteToken: '',
-        activatedAt: new Date().toISOString()
-    });
-    setStoredUsers(users);
-
-    if (usernameInput) usernameInput.value = '';
-    if (passwordInput) passwordInput.value = '';
-    if (passwordConfirmInput) passwordConfirmInput.value = '';
-    const activatedUser = users[userIndex];
-    pendingInviteToken = null;
-    clearInviteTokenFromUrl();
-
-    const loginUsernameInput = document.getElementById('username');
-    if (loginUsernameInput) loginUsernameInput.value = usernameVal;
-    enterAppAsUser(activatedUser, 'dashboard');
-    showToast(t('inviteSetupSuccess'), 'success');
-}
-
-function createAssessmentRecord() {
-    const evaluation = evaluate3296();
-    return {
-        id: createId('assessment'),
-        hotelName: assessmentData.hotelName || 'Hotel',
-        star: selectedStar,
-        accommodationType: selectedAccommodationType,
-        complianceFacilityType: selectedComplianceFacilityType,
-        assessmentData: { ...assessmentData },
-        complianceAnswers: { ...complianceAnswers },
-        classificationAnswers: { ...classificationAnswers },
-        classificationQuantities: { ...classificationQuantities },
-        evidenceData: JSON.parse(JSON.stringify(evidenceData)),
-        summary: {
-            points: evaluation.points || 0,
-            achieved: Boolean(evaluation.achieved),
-            achievedStar: evaluation.achieved ? evaluation.star : 0
-        },
-        createdAt: new Date().toISOString(),
-        createdBy: currentUser ? currentUser.username : 'system'
-    };
-}
-
-function saveAssessmentRecord(record) {
-    if (!record || !record.id) return;
-    assessments.unshift(record);
-    assessments = assessments.slice(0, 200);
-    setStoredArray(STORAGE_KEYS.assessments, assessments);
-}
-
-function saveReportRecord(record) {
-    if (!record || !record.id) return;
-    reports.unshift(record);
-    reports = reports.slice(0, 200);
-    setStoredArray(STORAGE_KEYS.reports, reports);
-}
-
-function loadAssessmentRecordById(id) {
-    const record = assessments.find(item => item.id === id);
-    if (!record) return;
-    selectedStar = Number(record.star) || selectedStar;
-    if (typeof record.accommodationType === 'string' && record.accommodationType.trim()) {
-        selectedAccommodationType = record.accommodationType;
-    }
-    if (typeof record.complianceFacilityType === 'string' && record.complianceFacilityType.trim()) {
-        selectedComplianceFacilityType = record.complianceFacilityType;
-    }
-    assessmentData = { ...assessmentData, ...(record.assessmentData || {}) };
-    complianceAnswers = { ...(record.complianceAnswers || {}) };
-    classificationAnswers = { ...(record.classificationAnswers || {}) };
-    classificationQuantities = normalizeQuantityMap(record.classificationQuantities || {});
-    evidenceData = { ...(record.evidenceData || {}) };
-    populateAccommodationTypeOptions();
-    populateComplianceFacilityTypeOptions();
-    initStarCards();
-    renderComplianceSections();
-    renderClassificationCriteria();
-    updateStats();
-    renderCompareTable();
-    showPage('classification');
-    showToast(t('viewAction'), 'success');
-}
-
-function deleteAssessmentRecord(id) {
-    assessments = assessments.filter(item => item.id !== id);
-    setStoredArray(STORAGE_KEYS.assessments, assessments);
-    renderManagementLists();
-}
-
-function openSavedReport(id) {
-    const report = reports.find(item => item.id === id);
-    if (!report) return;
-    const win = window.open('', '_blank', 'width=1000,height=750');
-    if (!win) {
-        showToast(t('popupBlocked'), 'error');
-        return;
-    }
-    win.document.write(buildReportWindowHtml(report.html || `<p>${t('reportPlaceholder')}</p>`));
-    win.document.close();
-}
-
-function deleteReportRecord(id) {
-    reports = reports.filter(item => item.id !== id);
-    setStoredArray(STORAGE_KEYS.reports, reports);
-    renderManagementLists();
-}
-
-function deleteUser(userId) {
-    if (!isMasterUser()) return;
-    const users = getStoredUsers().filter(user => String(user.id) !== String(userId));
-    setStoredUsers(users);
-    renderManagementLists();
-}
-
-function makeActionButton(text, className, onClick) {
-    const button = document.createElement('button');
-    button.className = className;
-    button.textContent = text;
-    button.type = 'button';
-    button.addEventListener('click', onClick);
-    return button;
-}
-
-function renderAssessmentsList() {
-    const container = document.getElementById('assessmentsList');
-    if (!container) return;
-    container.innerHTML = '';
-    if (!assessments.length) {
-        container.innerHTML = `<p style="text-align:center;color:var(--gray-500);padding:20px">${t('noAssessments')}</p>`;
-        return;
-    }
-
-    assessments
-        .slice()
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        .forEach(record => {
-            const row = document.createElement('div');
-            row.className = 'list-row';
-
-            const info = document.createElement('div');
-            const title = document.createElement('div');
-            title.className = 'title';
-            title.textContent = record.hotelName || record.assessmentData?.hotelName || 'Hotel';
-            const meta = document.createElement('div');
-            meta.className = 'meta';
-            const points = record.summary?.points ?? 0;
-            meta.textContent = `${formatDateTime(record.createdAt)} • ${points} ${t('pointsLabel')}`;
-            info.appendChild(title);
-            info.appendChild(meta);
-
-            const actions = document.createElement('div');
-            actions.className = 'list-actions';
-            actions.appendChild(makeActionButton(t('viewAction'), 'btn btn-secondary btn-sm', () => loadAssessmentRecordById(record.id)));
-            if (isMasterUser()) {
-                actions.appendChild(makeActionButton(t('deleteAction'), 'btn btn-danger btn-sm', () => deleteAssessmentRecord(record.id)));
-            }
-
-            row.appendChild(info);
-            row.appendChild(actions);
-            container.appendChild(row);
-        });
-}
-
-function renderReportsList() {
-    const container = document.getElementById('reportsList');
-    if (!container) return;
-    container.innerHTML = '';
-    if (!reports.length) {
-        container.innerHTML = `<p style="text-align:center;color:var(--gray-500);padding:20px">${t('noReports')}</p>`;
-        return;
-    }
-
-    reports
-        .slice()
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        .forEach(report => {
-            const row = document.createElement('div');
-            row.className = 'list-row';
-
-            const info = document.createElement('div');
-            const title = document.createElement('div');
-            title.className = 'title';
-            title.textContent = report.hotelName || 'Hotel Report';
-            const meta = document.createElement('div');
-            meta.className = 'meta';
-            meta.textContent = `${formatDateTime(report.createdAt)} • ${report.createdBy || 'system'}`;
-            info.appendChild(title);
-            info.appendChild(meta);
-
-            const actions = document.createElement('div');
-            actions.className = 'list-actions';
-            actions.appendChild(makeActionButton(t('viewAction'), 'btn btn-secondary btn-sm', () => openSavedReport(report.id)));
-            if (isMasterUser()) {
-                actions.appendChild(makeActionButton(t('deleteAction'), 'btn btn-danger btn-sm', () => deleteReportRecord(report.id)));
-            }
-
-            row.appendChild(info);
-            row.appendChild(actions);
-            container.appendChild(row);
-        });
-}
-
-function renderUsersTable() {
-    const tbody = document.getElementById('userTableBody');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-    const users = getStoredUsers();
-    if (!users.length) {
-        const row = document.createElement('tr');
-        row.innerHTML = `<td colspan="5" style="text-align:center;color:var(--gray-500)">${t('noUsers')}</td>`;
-        tbody.appendChild(row);
-        return;
-    }
-
-    users.forEach(user => {
-        const row = document.createElement('tr');
-        const actionCell = document.createElement('td');
-        if (isMasterUser()) {
-            actionCell.appendChild(makeActionButton(t('deleteAction'), 'btn btn-danger btn-sm', () => deleteUser(user.id)));
-        } else {
-            actionCell.textContent = '—';
-        }
-        const userName = getUserFullName(user) || '—';
-        const loginOrEmail = user.username || user.email || '—';
-        const roleLabel = getUserRoleLabel(user.role);
-        const statusLabel = user.status === 'invited' ? t('statusInvited') : t('statusActive');
-        row.innerHTML = `
-            <td>${escapeHtml(loginOrEmail)}</td>
-            <td>${escapeHtml(userName)}</td>
-            <td><span class="role-badge">${escapeHtml(roleLabel)}</span></td>
-            <td>${escapeHtml(statusLabel)}</td>
-        `;
-        row.appendChild(actionCell);
-        tbody.appendChild(row);
-    });
-}
-
-function renderManagementLists() {
-    renderAssessmentsList();
-    renderReportsList();
-    renderUsersTable();
-}
-
-function updateNotifications() {
-    const list = document.getElementById('notificationList');
-    const countEl = document.getElementById('notificationCount');
-    if (!list || !countEl) return;
-
-    const unreadCount = notifications.filter(item => !item.read).length;
-    countEl.textContent = String(unreadCount);
-    countEl.classList.toggle('show', unreadCount > 0);
-
-    list.innerHTML = '';
-    if (!notifications.length) {
-        list.innerHTML = `<div style="padding:30px;text-align:center;color:var(--gray-400);font-size:13px">${t('notificationEmpty')}</div>`;
-        persistWorkingState();
-        return;
-    }
-
-    notifications
-        .slice()
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        .forEach(item => {
-            const node = document.createElement('div');
-            node.className = `notification-item ${item.read ? '' : 'unread'}`.trim();
-            node.innerHTML = `
-                <div class="title">${escapeHtml(item.title)}</div>
-                <div class="message">${escapeHtml(item.message)}</div>
-                <div class="time">${formatDateTime(item.createdAt)}</div>
-            `;
-            node.addEventListener('click', () => {
-                item.read = true;
-                updateNotifications();
-            });
-            list.appendChild(node);
-        });
-    persistWorkingState();
-}
-
-function addNotification(title, message) {
-    notifications.unshift({
-        id: createId('notification'),
-        title,
-        message,
-        read: false,
-        createdAt: new Date().toISOString()
-    });
-    notifications = notifications.slice(0, 150);
-    updateNotifications();
-}
-
-function renderResolutions() {
-    const container = document.getElementById('resolutionList');
-    if (!container) return;
-    container.innerHTML = '';
-    if (!resolutions.length) {
-        container.innerHTML = `<p style="text-align:center;color:var(--gray-500);padding:30px">${t('resolutionEmpty')}</p>`;
-        persistWorkingState();
-        return;
-    }
-
-    resolutions
-        .slice()
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        .forEach(item => {
-            const criterion = getCriterionById(item.criterionId);
-            const title = criterion ? (criterion.title[currentLang] || criterion.title.en || criterion.id) : item.criterionId;
-            const card = document.createElement('div');
-            card.className = `resolution-item ${item.status === 'submitted' ? 'submitted' : 'pending'}`;
-
-            const evidenceList = Array.isArray(item.evidence) && item.evidence.length
-                ? `<div style="font-size:11px;color:var(--gray-600);margin-top:8px">${item.evidence.map(file => escapeHtml(file.name)).join(', ')}</div>`
-                : '';
-
-            card.innerHTML = `
-                <div class="resolution-status ${item.status === 'submitted' ? 'submitted' : 'pending'}">
-                    ${item.status === 'submitted' ? t('resolutionStatusSubmitted') : t('resolutionStatusPending')}
-                </div>
-                <div style="font-weight:700;color:var(--gray-800);margin-bottom:6px">#${escapeHtml(item.criterionId)} - ${escapeHtml(title)}</div>
-                <div style="font-size:12px;color:var(--gray-500)">
-                    ${(item.star || selectedStar)}★ • ${formatDateTime(item.createdAt)}
-                </div>
-                ${evidenceList}
-            `;
-
-            const actions = document.createElement('div');
-            actions.className = 'list-actions';
-            actions.style.marginTop = '10px';
-
-            if (item.status !== 'submitted') {
-                actions.appendChild(makeActionButton(`📷 ${t('photoLabel')}`, 'btn btn-secondary btn-sm', () => uploadResolutionEvidence(item.id, 'photo')));
-                actions.appendChild(makeActionButton(`🎥 ${t('videoLabel')}`, 'btn btn-secondary btn-sm', () => uploadResolutionEvidence(item.id, 'video')));
-                actions.appendChild(makeActionButton(`📄 ${t('documentLabel')}`, 'btn btn-secondary btn-sm', () => uploadResolutionEvidence(item.id, 'document')));
-                actions.appendChild(makeActionButton(t('resolutionSubmit'), 'btn btn-success btn-sm', () => submitResolution(item.id)));
-            }
-
-            card.appendChild(actions);
-            container.appendChild(card);
-        });
-    persistWorkingState();
-}
-
-function uploadResolutionEvidence(resolutionId, type) {
-    currentUpload = { mode: 'resolution', id: resolutionId, type };
-    const input = document.getElementById(type + 'Input');
-    if (input) input.click();
-}
-
-function submitResolution(resolutionId) {
-    const item = resolutions.find(entry => entry.id === resolutionId);
-    if (!item) return;
-    item.status = 'submitted';
-    item.submittedAt = new Date().toISOString();
-    renderResolutions();
-    addNotification(t('resolutionSubmittedTitle'), `#${item.criterionId}`);
-    showToast(t('resolutionSubmittedTitle'), 'success');
-}
-
-function sendToResolution() {
-    if (!isMasterUser()) return;
-    const currentStarLevel = getStarLevel(selectedStar);
-    if (!currentStarLevel) return;
-
-    const missingIds = getMandatoryIdsForLevel(currentStarLevel).filter(id => {
-        return !isMandatoryCriterionIdSatisfied(id);
-    });
-
-    if (!missingIds.length) {
-        showToast(t('reportAllMandatoryMet'), 'success');
-        return;
-    }
-
-    let added = 0;
-    missingIds.forEach(id => {
-        const exists = resolutions.some(item =>
-            String(item.criterionId) === String(id) &&
-            Number(item.star) === Number(selectedStar) &&
-            item.status !== 'closed'
-        );
-        if (exists) return;
-        resolutions.push({
-            id: createId('resolution'),
-            criterionId: String(id),
-            star: selectedStar,
-            status: 'pending',
-            evidence: [],
-            createdAt: new Date().toISOString()
-        });
-        added++;
-    });
-
-    renderResolutions();
-    if (added > 0) {
-        const message = t('resolutionRequiredMessage').replace('{count}', added);
-        addNotification(t('resolutionRequiredTitle'), message);
-        showToast(message, 'success');
-    }
-}
-
-function resetClassification() {
-    if (!window.confirm(t('resetConfirm'))) return;
-    classificationAnswers = {};
-    classificationQuantities = {};
-    evidenceData = {};
-    renderClassificationCriteria();
-    updateStats();
-    showToast(t('resetAssessment'), 'success');
-}
-
-function renderCompareTable() {
-    const container = document.getElementById('compareTable');
-    if (!container) return;
-    const categoryFilter = document.getElementById('compareCategoryFilter')?.value || '';
-    const mandatoryMap = buildMandatoryStarMap();
-    const sections = (CLASSIFICATION_DATA_3296.sections || []).filter(section => {
-        return !categoryFilter || String(section.id) === String(categoryFilter);
-    });
-
-    let rowsHtml = '';
-    sections.forEach(section => {
-        const sectionRows = section.criteria
-            .filter(isAssessableClassificationCriterion)
-            .sort((a, b) => compareCriterionIds(a.id, b.id));
-        if (!sectionRows.length) return;
-
-        rowsHtml += `
-            <tr class="category-row">
-                <td colspan="6">${escapeHtml(getSectionTitle(section))}</td>
-            </tr>
-        `;
-        sectionRows.forEach(criterion => {
-            const stars = mandatoryMap.get(String(criterion.id)) || new Set();
-            const title = criterion.title[currentLang] || criterion.title.en || '';
-            rowsHtml += `
-                <tr>
-                    <td>#${escapeHtml(criterion.id)} - ${escapeHtml(title)}</td>
-                    ${[1, 2, 3, 4, 5].map(star => stars.has(star)
-                        ? '<td style="text-align:center"><span class="compare-mark">✓</span></td>'
-                        : '<td style="text-align:center"><span class="compare-dash">—</span></td>').join('')}
-                </tr>
-            `;
-        });
-    });
-
-    if (!rowsHtml) {
-        container.innerHTML = `<p style="color:var(--gray-500);font-size:12px">${t('noItems')}</p>`;
-        return;
-    }
-
-    container.innerHTML = `
-        <table class="compare-table">
-            <thead>
-                <tr>
-                    <th>${t('criterionLabel')}</th>
-                    <th>1★</th>
-                    <th>2★</th>
-                    <th>3★</th>
-                    <th>4★</th>
-                    <th>5★</th>
-                </tr>
-            </thead>
-            <tbody>${rowsHtml}</tbody>
-        </table>
-    `;
-}
-
-function calculateTotalYesPoints(star = selectedStar) {
-    const activeCriteriaIds = getAssessableCriterionIdSet(star);
-    let points = 0;
-    (CLASSIFICATION_DATA_3296.sections || []).forEach(section => {
-        section.criteria.forEach(criterion => {
-            if (!isAssessableClassificationCriterion(criterion)) return;
-            if (!activeCriteriaIds.has(String(criterion.id))) return;
-            points += getCriterionEarnedPoints(criterion);
-        });
-    });
-    return points;
-}
-
-function isStarAchievable(star) {
-    const starLevel = getStarLevel(star);
-    if (!starLevel) return false;
-    const totalPoints = calculateTotalYesPoints(star);
-    const mandatoryOk = getMandatoryIdsForLevel(starLevel).every(id => {
-        return isMandatoryCriterionIdSatisfied(id);
-    });
-    return mandatoryOk && totalPoints >= getMinPointsForStar(star);
-}
-
-function getEligibleStar() {
-    for (let star = 5; star >= 1; star--) {
-        if (isStarAchievable(star)) return star;
-    }
-    return 0;
-}
-
-function updateAssessmentPanel() {
-    const points = calculateTotalYesPoints(selectedStar);
-    const assessableIds = getAssessableCriterionIdSet();
-    const assessedCount = Object.entries(classificationAnswers)
-        .filter(([id, status]) => Boolean(status) && assessableIds.has(String(id)))
-        .length;
-    const mandatoryFiveStar = getStarLevel(5) || { mandatoryIds: [] };
-    const mandatoryIds = getMandatoryIdsForLevel(mandatoryFiveStar);
-    const fulfilledMandatory = mandatoryIds.filter(id => {
-        return isMandatoryCriterionIdSatisfied(id);
-    }).length;
-    const mandatoryPct = mandatoryIds.length
-        ? Math.round((fulfilledMandatory / mandatoryIds.length) * 100)
-        : 0;
-    const eligibleStar = getEligibleStar();
-    const starsString = eligibleStar > 0
-        ? `${'★'.repeat(eligibleStar)}${'☆'.repeat(5 - eligibleStar)}`
-        : '☆☆☆☆☆';
-
-    const assessPoints = document.getElementById('assessPoints');
-    const assessCount = document.getElementById('assessCount');
-    const assessMandatoryPct = document.getElementById('assessMandatoryPct');
-    const assessEligible = document.getElementById('assessEligible');
-
-    if (assessPoints) assessPoints.textContent = String(points);
-    if (assessCount) assessCount.textContent = String(assessedCount);
-    if (assessMandatoryPct) assessMandatoryPct.textContent = `${mandatoryPct}%`;
-    if (assessEligible) assessEligible.textContent = starsString;
-}
-
-function updateDashboardStats() {
-    const totalCriteria = getDashboardVisualTotalCriteriaCount();
-    const categories = (CLASSIFICATION_DATA_3296.sections || []).length;
-    const maxPoints = getMaxPointsForStar(selectedStar);
-    const mandatory5 = getMandatoryIdsForLevel(getStarLevel(5)).length;
-
-    const statTotalCriteria = document.getElementById('statTotalCriteria');
-    const statCategories = document.getElementById('statCategories');
-    const statMaxPoints = document.getElementById('statMaxPoints');
-    const statMandatory5 = document.getElementById('statMandatory5');
-
-    if (statTotalCriteria) statTotalCriteria.textContent = String(totalCriteria);
-    if (statCategories) statCategories.textContent = String(categories);
-    if (statMaxPoints) statMaxPoints.textContent = String(maxPoints);
-    if (statMandatory5) statMandatory5.textContent = String(mandatory5);
-}
-
-function buildStarListingHtml(starLevel, type) {
-    const criteria = (type === 'mandatory'
-        ? getMandatoryCriteriaForStar(starLevel.star)
-        : getOptionalCriteriaForStar(starLevel.star))
-        .slice()
-        .sort((a, b) => compareCriterionIds(a.id, b.id));
-
-    return `<!DOCTYPE html>
-<html lang="${currentLang}">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${starLevel.star}★ ${type}</title>
-<style>
-    body { font-family: "Segoe UI", Tahoma, sans-serif; margin: 0; background: #f8fafc; color: #111827; }
-    .wrap { max-width: 980px; margin: 24px auto; padding: 0 16px; }
-    h1 { font-size: 20px; margin-bottom: 8px; }
-    p { color: #64748b; margin-bottom: 16px; font-size: 13px; }
-    table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e2e8f0; }
-    th, td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; text-align: left; font-size: 13px; vertical-align: top; }
-    th { background: #f8fafc; font-size: 11px; text-transform: uppercase; color: #475569; letter-spacing: .04em; }
-    .id { font-weight: 700; color: #334155; white-space: nowrap; }
-    .sec { color: #64748b; font-size: 11px; margin-top: 3px; }
-</style>
-</head>
-<body>
-    <div class="wrap">
-        <h1>${starLevel.label} ${t('starLabel')} - ${type === 'mandatory' ? t('mandatory') : t('optional')}</h1>
-        <p>${t('criterionLabel')}: ${criteria.length}</p>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>${t('criterionLabel')}</th>
-                    <th>${t('pointsLabel')}</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${criteria.map(criterion => {
-                    const title = criterion.title[currentLang] || criterion.title.en || '';
-                    const pointsText = isPerUnitCriterion(criterion)
-                        ? `${criterion.scoringRule.pointsPerUnit}×${t('unitLabel')} (max ${getCriterionMaxPoints(criterion)})`
-                        : String(criterion.points);
-                    return `
-                        <tr>
-                            <td class="id">#${escapeHtml(criterion.id)}</td>
-                            <td>
-                                <div>${escapeHtml(title)}</div>
-                                <div class="sec">${escapeHtml(criterion.sectionTitle)}</div>
-                            </td>
-                            <td>${escapeHtml(pointsText)}</td>
-                        </tr>
-                    `;
-                }).join('')}
-            </tbody>
-        </table>
-    </div>
-</body>
-</html>`;
-}
-
-function openHtmlWindow(title, bodyHtml) {
-    const win = window.open('', '_blank', 'width=1000,height=760');
-    if (!win) {
-        showToast(t('popupBlocked'), 'error');
-        return;
-    }
-    win.document.write(`<!DOCTYPE html>
-<html lang="${currentLang}">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${escapeHtml(title)}</title>
-<style>
-    body { margin: 0; font-family: "Segoe UI", Tahoma, sans-serif; background: #f8fafc; color: #111827; }
-    .container { max-width: 1000px; margin: 24px auto; padding: 0 16px; }
-    h1 { font-size: 22px; margin-bottom: 12px; }
-    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 14px; }
-    .item { padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
-    .item:last-child { border-bottom: none; }
-</style>
-</head>
-<body>
-    <div class="container">
-        <h1>${escapeHtml(title)}</h1>
-        ${bodyHtml}
-    </div>
-</body>
-</html>`);
-    win.document.close();
-}
-
-function showGapReport() {
-    let body = '';
-
-    [1, 2, 3, 4, 5].forEach(star => {
-        const level = getStarLevel(star);
-        if (!level) return;
-        const totalPoints = calculateTotalYesPoints(star);
-        const maxPoints = getMaxPointsForStar(star);
-        const failedMandatory = getMandatoryIdsForLevel(level).filter(id => {
-            return !isMandatoryCriterionIdSatisfied(id);
-        });
-        const minPoints = getMinPointsForStar(star);
-        const pointsGap = Math.max(0, minPoints - totalPoints);
-        body += `
-            <div class="card">
-                <h3>${'★'.repeat(star)} (${star}★)</h3>
-                <div class="item">${t('reportRequired')} <strong>${minPoints}</strong> ${t('pointsLabel')}</div>
-                <div class="item">${t('reportTotalPoints')} <strong>${totalPoints}</strong> / <strong>${maxPoints}</strong></div>
-                <div class="item">${t('reportShortfall')} <strong>${pointsGap}</strong></div>
-                <div class="item">${t('mandatory')}: <strong>${failedMandatory.length}</strong> missing</div>
-            </div>
-        `;
-    });
-
-    openHtmlWindow(t('gapReportTitle'), body);
-}
-
-function showMandatoryChecklist() {
-    const level = getStarLevel(selectedStar);
-    if (!level) return;
-    const items = getMandatoryIdsForLevel(level)
-        .map(id => getCriterionById(id))
-        .filter(Boolean)
-        .sort((a, b) => compareCriterionIds(a.id, b.id));
-
-    const body = `
-        <div class="card">
-            ${items.map(item => {
-                const mark = isMandatoryCriterionIdSatisfied(item.id) ? '✅' : '❌';
-                const title = item.title[currentLang] || item.title.en || item.id;
-                return `<div class="item">${mark} #${escapeHtml(item.id)} - ${escapeHtml(title)}</div>`;
-            }).join('')}
-        </div>
-    `;
-
-    openHtmlWindow(`${t('mandatoryReportTitle')} (${selectedStar}★)`, body);
-}
-
-function getAssessmentExportPayload() {
-    return {
-        exportedAt: new Date().toISOString(),
-        user: currentUser ? (currentUser.username || getUserFullName(currentUser) || 'unknown') : 'unknown',
-        selectedStar,
-        selectedAccommodationType,
-        selectedComplianceFacilityType,
-        assessmentData,
-        complianceAnswers,
-        classificationAnswers,
-        classificationQuantities,
-        evidenceData,
-        summary: {
-            compliance: evaluate3220(),
-            classification: evaluate3296()
-        }
-    };
-}
-
-function exportAssessmentData() {
-    const payload = getAssessmentExportPayload();
-
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${t('exportFileName')}-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    showToast(t('reportCardExportTitle'), 'success');
-}
-
-function exportAssessmentDataPdf() {
-    const payload = getAssessmentExportPayload();
-    const win = window.open('', '_blank', 'width=980,height=760');
-    if (!win) {
-        showToast(t('popupBlocked'), 'error');
-        return;
-    }
-
-    win.document.write(`<!DOCTYPE html>
-<html lang="${currentLang}">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${escapeHtml(t('reportCardExportPdfTitle'))}</title>
-<style>
-    body { margin: 0; font-family: "Segoe UI", Tahoma, sans-serif; background: #f8fafc; color: #111827; }
-    .wrap { max-width: 980px; margin: 22px auto; padding: 0 16px; }
-    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 12px; }
-    h1 { margin: 0 0 10px; font-size: 22px; }
-    .meta { font-size: 12px; color: #475569; margin-bottom: 6px; }
-    pre { white-space: pre-wrap; word-break: break-word; font-size: 11px; line-height: 1.45; color: #1f2937; margin: 0; }
-    .actions { display: flex; gap: 8px; margin-bottom: 12px; }
-    button { border: 1px solid #cbd5e1; background: #fff; padding: 8px 10px; border-radius: 6px; cursor: pointer; }
-</style>
-</head>
-<body>
-    <div class="wrap">
-        <div class="actions">
-            <button onclick="window.print()">${escapeHtml(t('savePdfAction'))}</button>
-            <button onclick="window.close()">${escapeHtml(t('closeAction'))}</button>
-        </div>
-        <div class="card">
-            <h1>${escapeHtml(t('reportCardExportPdfTitle'))}</h1>
-            <div class="meta">${escapeHtml(payload.exportedAt)}</div>
-            <pre>${escapeHtml(JSON.stringify(payload, null, 2))}</pre>
-        </div>
-    </div>
-</body>
-</html>`);
-    win.document.close();
-    showToast(t('reportCardExportPdfTitle'), 'success');
-}
-
-function applyLanguage() {
-    const textMap = {
-        loginTitle: 'loginTitle',
-        loginSubtitle: 'loginSubtitle',
-        loginUsernameLabel: 'usernameLabel',
-        loginPasswordLabel: 'passwordLabel',
-        loginButton: 'loginButton',
-        loginHint: 'loginHint',
-        headerTitle: 'headerTitle',
-        navDashboard: 'navDashboard',
-        navAssessment: 'navAssessment',
-        navCompare: 'navCompare',
-        navReports: 'navReports',
-        logoutBtn: 'logout',
-        dashboardTitle: 'dashboardTitle',
-        accommodationTypeLabel: 'accommodationTypeLabel',
-        compareTitle: 'compareTitle',
-        compareSubtitle: 'compareSubtitle',
-        complianceTitle: 'complianceTitle',
-        complianceFacilityTypeLabel: 'complianceFacilityTypeLabel',
-        classificationTitle: 'classificationTitle',
-        complete3220Btn: 'complete3220',
-        complete3296Btn: 'complete3296',
-        generateReportBtn: 'generateReport',
-        assessmentPanelTitle: 'assessmentPanelTitle',
-        assessmentPanelSubtitle: 'assessmentPanelSubtitle',
-        assessPointsLabel: 'assessPointsLabel',
-        assessCountLabel: 'assessCountLabel',
-        assessMandatoryLabel: 'assessMandatoryLabel',
-        assessEligibleLabel: 'assessEligibleLabel',
-        openHotelInfoBtn: 'openHotelInfo',
-        openComplianceBtn: 'openCompliance',
-        resetAssessmentBtn: 'resetAssessment',
-        openFullReportBtn: 'generateReport',
-        reportToolsTitle: 'reportToolsTitle',
-        reportToolsSubtitle: 'reportToolsSubtitle',
-        reportCardFullTitle: 'reportCardFullTitle',
-        reportCardFullDesc: 'reportCardFullDesc',
-        reportCardGapTitle: 'reportCardGapTitle',
-        reportCardGapDesc: 'reportCardGapDesc',
-        reportCardMandatoryTitle: 'reportCardMandatoryTitle',
-        reportCardMandatoryDesc: 'reportCardMandatoryDesc',
-        reportCardExportTitle: 'reportCardExportTitle',
-        reportCardExportDesc: 'reportCardExportDesc',
-        reportCardExportPdfTitle: 'reportCardExportPdfTitle',
-        reportCardExportPdfDesc: 'reportCardExportPdfDesc',
-        assessmentsTitle: 'assessmentsTitle',
-        reportsTitle: 'reportsTitle',
-        usersTitle: 'usersTitle',
-        reportPlaceholder: 'reportPlaceholder',
-        progressTitle: 'progressTitle',
-        assessedLabel: 'assessedLabel',
-        pointsLabel: 'pointsLabel',
-        fulfilledLabel: 'fulfilledLabel',
-        fulfilledSub: 'fulfilledSub',
-        missingLabel: 'missingLabel',
-        missingSub: 'missingSub',
-        mandatoryLabel: 'mandatoryLabel',
-        mandatorySub: 'mandatorySub',
-        evidenceLabel: 'evidenceLabel',
-        evidenceSub: 'evidenceSub',
-        statTotalLabel: 'statTotalLabel',
-        statCategoriesLabel: 'statCategoriesLabel',
-        statMaxPointsLabel: 'statMaxPointsLabel',
-        statMandatoryLabel: 'statMandatoryLabel',
-        filterMandatoryBtn: 'filterMandatory',
-        filterMissingBtn: 'filterMissing',
-        classificationHideCheckedLabel: 'classificationHideCheckedLabel',
-        notificationTitle: 'notificationTitle',
-        clearNotificationsBtn: 'notificationClear',
-        resolutionTitle: 'resolutionTitle',
-        resolutionHeaderTitle: 'resolutionHeaderTitle',
-        resolutionHeaderSubtitle: 'resolutionHeaderSubtitle',
-        resolutionEmpty: 'resolutionEmpty',
-        adminUsersTitle: 'adminUsersTitle',
-        openAddUserBtn: 'addUserOpen',
-        userTableUsername: 'userTableUsername',
-        userTableName: 'userTableName',
-        userTableRole: 'userTableRole',
-        userTableStatus: 'userTableStatus',
-        userTableActions: 'userTableActions',
-        addUserTitle: 'addUserTitle',
-        addUserSubtitle: 'addUserSubtitle',
-        newFirstNameLabel: 'newFirstNameLabel',
-        newLastNameLabel: 'newLastNameLabel',
-        newEmailLabel: 'newEmailLabel',
-        newRoleLabel: 'newRoleLabel',
-        addUserCancelBtn: 'addUserCancel',
-        addUserSubmitBtn: 'addUserSubmit',
-        roleOptionUser: 'roleUser',
-        roleOptionAdmin: 'roleAdmin',
-        inviteSetupTitle: 'inviteSetupTitle',
-        inviteSetupSubtitle: 'inviteSetupSubtitle',
-        inviteUsernameLabel: 'inviteUsernameLabel',
-        invitePasswordLabel: 'invitePasswordLabel',
-        invitePasswordConfirmLabel: 'invitePasswordConfirmLabel',
-        inviteSetupSubmitBtn: 'inviteSetupSubmitBtn',
-        invitePageTitle: 'invitePageTitle',
-        invitePageSubtitle: 'invitePageSubtitle',
-        invitePageUsernameLabel: 'invitePageUsernameLabel',
-        invitePagePasswordLabel: 'invitePagePasswordLabel',
-        invitePagePasswordConfirmLabel: 'invitePagePasswordConfirmLabel',
-        invitePageSubmitBtn: 'invitePageSubmitBtn',
-        invitePageBackBtn: 'invitePageBackBtn',
-        starModalMandatoryBtn: 'mandatory',
-        starModalOptionalBtn: 'optional',
-        starModalCloseBtn: 'closeAction'
-    };
-
-    Object.entries(textMap).forEach(([id, key]) => {
-        const element = document.getElementById(id);
-        if (element) element.textContent = t(key);
-    });
-
-    const placeholders = [
-        ['username', 'usernamePlaceholder'],
-        ['password', 'passwordPlaceholder'],
-        ['classificationSearch', 'classificationSearchPlaceholder'],
-        ['newFirstName', 'newFirstNamePlaceholder'],
-        ['newLastName', 'newLastNamePlaceholder'],
-        ['newEmail', 'newEmailPlaceholder'],
-        ['inviteUsername', 'inviteUsernamePlaceholder'],
-        ['invitePassword', 'invitePasswordPlaceholder'],
-        ['invitePasswordConfirm', 'invitePasswordConfirmPlaceholder'],
-        ['invitePageUsername', 'inviteUsernamePlaceholder'],
-        ['invitePagePassword', 'invitePasswordPlaceholder'],
-        ['invitePagePasswordConfirm', 'invitePasswordConfirmPlaceholder']
-    ];
-    placeholders.forEach(([id, key]) => {
-        const input = document.getElementById(id);
-        if (input) input.placeholder = t(key);
-    });
-
-    document.documentElement.lang = currentLang;
-    document.querySelectorAll('.lang-btn').forEach(button => {
-        button.classList.toggle('active', button.dataset.lang === currentLang);
-    });
-
-    if (currentUser) {
-        const roleNode = document.getElementById('displayUserRole');
-        if (roleNode) {
-            roleNode.textContent = getUserRoleLabel(currentUser.role);
-        }
-    }
-
-    populateFilters();
-    populateAccommodationTypeOptions();
-    populateComplianceFacilityTypeOptions();
-    initStarCards();
-    renderComplianceSections();
-    renderClassificationCriteria();
-    renderCompareTable();
-    renderManagementLists();
-    updateNotifications();
-    renderResolutions();
-    updateStats();
-}
-
-// =====================================================
-// EXPORTS
-// =====================================================
-
-window.app = {
-    loadData,
-    t,
-    showPage,
-    openAssessmentWindow,
-    generateReport,
-    exportAssessmentData,
-    sendToResolution,
-    addNotification,
-    closeModal,
-    openModal,
-    resetClassification,
-    showGapReport,
-    showMandatoryChecklist
-};
+    if (!rows.length) { box.innerHTML = `<div class="card empty">${esc(t('noRows'))}</div>`; return; }
+    // group by facility name for history
+    const groups = new Map(); rows.forEach(r => { const k = (r.facility_name || t('untitled')).trim().toLowerCase(); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(r); });
+    box.innerHTML = [...groups.values()].map(list => {
+      list.sort((x, y) => (y.assessed_on || '').localeCompare(x.assessed_on || '') || (y.updated_at || '').localeCompare(x.updated_at || ''));
+      const latest = list[0]; const [cls, label] = registryStatus(latest);
+      return `<div class="card tight"><div class="registry-row">
+        <div><div class="fac" data-fac="${esc(latest.facility_name)}">${esc(latest.facility_name || t('untitled'))} <span class="badge ${cls}">${label}</span></div>
+          <div class="meta"><span>${esc(kindName(latest.facility_kind))}</span>${latest.region ? `<span>· ${esc(latest.region)}</span>` : ''}<span>· ${esc(fmtDate(latest.assessed_on))}</span><span>· ${esc(latest.owner_name || '')}</span>${latest.threshold != null ? `<span>· ${latest.points}/${latest.threshold} ${esc(t('pts'))}</span>` : ''}${list.length > 1 ? `<span class="badge info">${esc(t('history'))}: ${list.length}</span>` : ''}</div></div>
+        <div class="row"><button class="btn primary sm" data-open="${esc(latest.id)}">${esc(t('openRemote'))}</button><button class="btn danger sm" data-del="${esc(latest.id)}">${esc(t('delete'))}</button></div>
+        ${list.length > 1 ? `<div style="grid-column:1/-1" class="table-wrap"><table class="tbl"><tr><th>${esc(t('colDate'))}</th><th>${esc(t('colInspector'))}</th><th>${esc(t('col958'))}</th><th class="num">${esc(t('colPoints'))}</th><th>${esc(t('colStar'))}</th><th></th></tr>${list.map(r => { const [c2, l2] = registryStatus(r); return `<tr><td>${esc(fmtDate(r.assessed_on))}</td><td>${esc(r.owner_name || '')}</td><td>${r.complete ? (r.compliant_958 ? '✔' : '✖') : '…'}</td><td class="num">${r.threshold != null ? `${r.points}/${r.threshold}` : '—'}</td><td><span class="badge ${c2}">${l2}</span></td><td><button class="btn sm" data-open="${esc(r.id)}">${esc(t('openRemote'))}</button></td></tr>`; }).join('')}</table></div>` : ''}
+      </div></div>`;
+    }).join('');
+  }
+  $('#registryList').addEventListener('click', async e => {
+    const o = e.target.closest('[data-open]'); const d = e.target.closest('[data-del]'); const f = e.target.closest('[data-fac]');
+    if (f) { $('#registrySearch').value = f.dataset.fac; renderRegistry(); return; }
+    if (o) { try { const a = await C.load(o.dataset.open); if (!a) return; const i = state.assessments.findIndex(x => x.id === a.id); a.cloudSyncedAt = a.updatedAt; if (i >= 0) state.assessments[i] = a; else state.assessments.push(a); state.currentId = a.id; state.step = 4; save(true); showPage('assess'); } catch (err) { toast(t('cloudError'), 'error'); } }
+    if (d) { if (!confirm(t('confirmDeleteRemote'))) return; try { await C.remove(d.dataset.del); state.assessments = state.assessments.filter(x => x.id !== d.dataset.del); save(true); renderRegistry(true); } catch (err) { toast(t('cloudError'), 'error'); } }
+  });
+  $('#registrySearch').oninput = () => renderRegistry(); $('#registryStatus').onchange = () => renderRegistry(); $('#registryInspector').onchange = () => renderRegistry();
+  $('#btnRegistryRefresh').onclick = () => renderRegistry(true);
+  $('#btnRegistryExcel').onclick = () => {
+    const rows = [[t('colFacility'), t('colKind'), t('colRegion'), t('colDate'), t('colInspector'), t('col958'), t('colPoints'), t('threshold'), t('fTarget'), t('colStar'), t('status'), t('colUpdated')]];
+    registryRows.forEach(r => rows.push([r.facility_name, kindName(r.facility_kind), r.region, r.assessed_on, r.owner_name, r.complete ? (r.compliant_958 ? 'yes' : 'no') : '', r.points, r.threshold, r.target_star, r.result_star, registryStatus(r)[1], (r.updated_at || '').slice(0, 16).replace('T', ' ')]));
+    if (window.XLSX) { const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Registry'); download('registry_' + todayIso() + '.xlsx', new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })); }
+    else download('registry_' + todayIso() + '.csv', new Blob(['\ufeff' + rows.map(r => r.map(c => '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"').join(';')).join('\n')], { type: 'text/csv;charset=utf-8' }));
+  };
+
+  // ---------------------------------------------------------------- users (admin)
+  async function renderUsers() {
+    const box = $('#usersList'); if (!C.enabled || !C.isAdmin()) { box.innerHTML = ''; return; }
+    box.innerHTML = `<div class="card empty">${esc(t('syncing'))}</div>`;
+    let users = []; try { users = await C.listUsers(); } catch (e) { box.innerHTML = `<div class="card empty">${esc(t('cloudError'))}</div>`; return; }
+    const roles = [['pending', t('rolePending')], ['inspector', t('roleInspector')], ['admin', t('roleAdmin')]];
+    box.innerHTML = `<div class="card">` + users.map(u => `<div class="users-row"><div><div><b>${esc(u.full_name || '—')}</b> ${u.id === C.user.id ? '<span class="badge info">you</span>' : ''}</div><div class="small muted">${esc(u.email)} · ${esc(fmtDate(u.created_at))}</div></div>
+      <select data-user="${u.id}" ${u.id === C.user.id ? 'disabled' : ''}>${roles.map(([v, l]) => `<option value="${v}" ${u.role === v ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div>`).join('') + '</div>';
+  }
+  $('#usersList').addEventListener('change', async e => { const sel = e.target.closest('select[data-user]'); if (!sel) return; try { await C.setRole(sel.dataset.user, sel.value); toast(t('roleSaved'), 'success'); } catch (err) { toast(t('cloudError'), 'error'); } });
+
+  // ---------------------------------------------------------------- misc UI
+  let toastTimer;
+  function toast(msg, type) { const el = $('#toast'); el.textContent = msg; el.className = 'toast show ' + (type || ''); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 2800); }
+  $$('#mainTabs button').forEach(b => b.onclick = () => showPage(b.dataset.page));
+  $$('#langSwitch button').forEach(b => b.onclick = () => { state.lang = b.dataset.lang; save(); applyUiText(); const p = $('.page.active').id.replace('page-', ''); showPage(p); });
+  window.addEventListener('afterprint', () => { /* keep report open for further actions */ });
+  window.addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('printing')) closeReport(); });
+
+  // ---------------------------------------------------------------- init
+  load(); applyUiText();
+  (async () => {
+    if (C.enabled) { try { await C.init(); } catch (e) { console.warn('cloud init failed', e); } }
+    else if (window.CLOUD_CONFIG && (window.CLOUD_CONFIG.url || window.CLOUD_CONFIG.anonKey)) console.warn('Cloud config present but supabase library not loaded');
+    await gate();
+  })();
+})();
