@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0b2e59">
 <title>Joylashtirish vositalarini toifalash — 958:2026 / MSt 125</title>
-<link rel="stylesheet" href="css/app.css?v=202609141909">
+<link rel="stylesheet" href="css/app.css?v=202609141914">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
@@ -65,8 +65,9 @@
     <!-- Step 1: facility -->
     <div class="step" id="step-1">
       <div class="card">
-        <div class="card-title"><h2 data-ui="facilityInfo"></h2><span class="badge info" id="assessTypeBadge"></span></div>
+        <div class="card-title"><h2 data-ui="facilityInfo"></h2></div>
         <div class="grid cols-2">
+          <div class="form-group" style="grid-column:1/-1"><label class="field" data-ui="assessType"></label><select id="assessTypeSelect"></select><div class="hint" id="assessTypeHint"></div></div>
           <div class="form-group"><label class="field" data-ui="fName"></label><input type="text" data-f="name" autocomplete="organization"></div>
           <div class="form-group"><label class="field" data-ui="fRegion"></label><input type="text" data-f="region"></div>
           <div class="form-group" style="grid-column:1/-1"><label class="field" data-ui="fAddress"></label><input type="text" data-f="address"></div>
@@ -230,12 +231,12 @@
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="js/config.js?v=202609141909"></script>
-<script src="js/cloud.js?v=202609141909"></script>
-<script src="js/data_958.js?v=202609141909"></script>
-<script src="js/data_125.js?v=202609141909"></script>
-<script src="js/translations.js?v=202609141909"></script>
-<script src="js/i18n.js?v=202609141909"></script>
-<script src="js/app.js?v=202609141909"></script>
+<script src="js/config.js?v=202609141914"></script>
+<script src="js/cloud.js?v=202609141914"></script>
+<script src="js/data_958.js?v=202609141914"></script>
+<script src="js/data_125.js?v=202609141914"></script>
+<script src="js/translations.js?v=202609141914"></script>
+<script src="js/i18n.js?v=202609141914"></script>
+<script src="js/app.js?v=202609141914"></script>
 </body>
 </html>

@@ -314,7 +314,9 @@
     sel.innerHTML = `<option value="">${esc(t('selectKind'))}</option>` + groups.filter(g => !only125 || S958.kinds.some(k => k.group === g && k.cls)).map(g => `<optgroup label="${esc(groupName(g))}">` +
       S958.kinds.filter(k => k.group === g && (!only125 || k.cls)).map(k => `<option value="${k.id}">${esc(kindName(k.id))}</option>`).join('') + '</optgroup>').join('');
     $('#targetGroup').classList.toggle('hidden', typeOf(a) === '958');
-    $('#assessTypeBadge').textContent = typeLabel(a);
+    const ts = $('#assessTypeSelect'); ts.innerHTML = [['958', t('new958')], ['125', t('new125')]].map(([v, l]) => `<option value="${v}" ${typeOf(a) === v ? 'selected' : ''}>${esc(l)}</option>`).join('');
+    if (typeOf(a) === 'both') ts.innerHTML += `<option value="both" selected>${esc(t('type958'))} + ${esc(t('type125'))}</option>`;
+    $('#assessTypeHint').textContent = typeOf(a) === '125' ? t('new125D') : typeOf(a) === '958' ? t('new958D') : '';
     $$('#step-1 [data-f]').forEach(el => { const k = el.dataset.f; el.value = f[k] == null ? '' : f[k]; el.classList.remove('invalid'); });
     updateKindDisplay(a);
     const sp = $('#starPicker'); sp.innerHTML = STARS.map(s => `<button type="button" data-star="${s}" class="${f.target === s ? 'active' : ''}"><span class="s">${starStr(s)}</span>${s}</button>`).join('');
@@ -336,6 +338,7 @@
     const a = cur(); if (!a) return; const el = e.target;
     if (el.dataset.flag) { a.facility[el.dataset.flag] = el.checked; el.closest('.check').classList.toggle('on', el.checked); touch(a); }
   });
+  $('#assessTypeSelect').addEventListener('change', e => { const a = cur(); if (!a) return; a.type = e.target.value; if (a.type === '125' && a.facility.kind && !clsOf(a)) a.facility.kind = ''; touch(a); renderStep1(a); showStep(1); });
   $('#starPicker').addEventListener('click', e => { const b = e.target.closest('button[data-star]'); if (!b) return; const a = cur(); a.facility.target = +b.dataset.star; touch(a); $$('#starPicker button').forEach(x => x.classList.toggle('active', x === b)); });
   $('#btnStep1Next').onclick = () => {
     const a = cur(); const v = facilityValid(a);
